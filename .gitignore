@@ -1,3 +1,7 @@
+# Google Cloud service account keys
+*.credentials.json
+acorn-*.json
+
 # Dependencies
 node_modules
 .pnp
