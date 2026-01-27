@@ -147,7 +147,8 @@
     "loginDescription": "登录以管理您的冰箱",
     "welcomeBack": "欢迎回来！",
     "continueAsGuest": "以访客身份继续",
-    "guestModeNote": "访客模式下数据仅保存在此设备上"
+    "guestModeNote": "访客模式下数据仅保存在此设备上",
+    "loginRequired": "请登录以使用服务"
   },
   "features": {
     "scan": "收据扫描",

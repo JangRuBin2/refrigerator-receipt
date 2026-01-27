@@ -147,7 +147,8 @@
     "loginDescription": "Login to manage your fridge",
     "welcomeBack": "Welcome back!",
     "continueAsGuest": "Continue as Guest",
-    "guestModeNote": "In guest mode, data is only saved on this device"
+    "guestModeNote": "In guest mode, data is only saved on this device",
+    "loginRequired": "Please sign in to use the service"
   },
   "features": {
     "scan": "Receipt Scan",

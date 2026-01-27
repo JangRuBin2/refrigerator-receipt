@@ -147,7 +147,8 @@
     "loginDescription": "ログインして冷蔵庫を管理しましょう",
     "welcomeBack": "おかえりなさい！",
     "continueAsGuest": "ゲストとして続ける",
-    "guestModeNote": "ゲストモードではデータはこの端末にのみ保存されます"
+    "guestModeNote": "ゲストモードではデータはこの端末にのみ保存されます",
+    "loginRequired": "サービスを利用するにはログインが必要です"
   },
   "features": {
     "scan": "レシートスキャン",

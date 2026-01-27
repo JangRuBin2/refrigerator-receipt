@@ -50,10 +50,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleGuestLogin = () => {
-    router.push(`/${locale}`);
-  };
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-primary-50 to-white p-4 dark:from-gray-900 dark:to-gray-800">
       <div className="w-full max-w-sm">
@@ -113,28 +109,8 @@ export default function LoginPage() {
               {t('auth.loginWithGoogle')}
             </Button>
 
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200 dark:border-gray-700" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white px-4 text-sm text-gray-500 dark:bg-gray-800">
-                  or
-                </span>
-              </div>
-            </div>
-
-            <Button
-              variant="outline"
-              onClick={handleGuestLogin}
-              className="w-full"
-              size="lg"
-            >
-              {t('auth.continueAsGuest')}
-            </Button>
-
             <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
-              {t('auth.guestModeNote')}
+              {t('auth.loginRequired')}
             </p>
           </CardContent>
         </Card>
