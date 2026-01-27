@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app:*)",
+      "Bash(npx create-next-app@latest apps/web --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 10 npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(vercel --version:*)",
+      "Bash(vercel --yes)",
+      "Bash(vercel login)",
+      "Bash(vercel --prod --yes:*)",
+      "Bash(vercel inspect:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial project setup: Next.js app with Supabase and Google Cloud Vision integration\n\nFridge Mate - receipt OCR based ingredient management service with Next.js 14, Tailwind CSS, Supabase auth/DB, and Google Cloud Vision API scaffolding.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}
