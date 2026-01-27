@@ -52,7 +52,9 @@ export async function extractTextFromImage(imageBase64: string): Promise<string>
   );
 
   if (!response.ok) {
-    throw new Error(`Vision API error: ${response.statusText}`);
+    const errorBody = await response.text();
+    console.error('Vision API error response:', errorBody);
+    throw new Error(`Vision API error: ${response.status} ${response.statusText}`);
   }
 
   const data: VisionApiResponse = await response.json();
@@ -80,7 +82,7 @@ async function getAccessToken(credentials: {
     scope: 'https://www.googleapis.com/auth/cloud-vision',
   };
 
-  // JWT 생성 (edge runtime 호환)
+  // JWT 생성
   const header = { alg: 'RS256', typ: 'JWT' };
   const encodedHeader = base64UrlEncode(JSON.stringify(header));
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
@@ -102,7 +104,9 @@ async function getAccessToken(credentials: {
   });
 
   if (!tokenResponse.ok) {
-    throw new Error('Failed to get access token');
+    const errorBody = await tokenResponse.text();
+    console.error('Token exchange error:', errorBody);
+    throw new Error(`Failed to get access token: ${tokenResponse.status}`);
   }
 
   const tokenData = await tokenResponse.json();
@@ -110,8 +114,17 @@ async function getAccessToken(credentials: {
 }
 
 function base64UrlEncode(str: string): string {
-  const base64 = btoa(str);
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  // TextEncoder를 사용하여 바이트 배열로 변환 후 base64 인코딩
+  const bytes = new TextEncoder().encode(str);
+  return uint8ArrayToBase64Url(bytes);
+}
+
+function uint8ArrayToBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
 async function signRS256(input: string, privateKey: string): Promise<string> {
@@ -121,7 +134,11 @@ async function signRS256(input: string, privateKey: string): Promise<string> {
     .replace('-----END PRIVATE KEY-----', '')
     .replace(/\s/g, '');
 
-  const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+  const binaryString = atob(pemContents);
+  const binaryKey = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    binaryKey[i] = binaryString.charCodeAt(i);
+  }
 
   const cryptoKey = await crypto.subtle.importKey(
     'pkcs8',
@@ -137,5 +154,5 @@ async function signRS256(input: string, privateKey: string): Promise<string> {
     new TextEncoder().encode(input)
   );
 
-  return base64UrlEncode(String.fromCharCode(...new Uint8Array(signature)));
+  return uint8ArrayToBase64Url(new Uint8Array(signature));
 }

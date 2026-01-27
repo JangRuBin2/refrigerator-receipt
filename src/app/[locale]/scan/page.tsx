@@ -23,6 +23,12 @@ export default function ScanPage() {
   const locale = params.locale as string;
   const { addIngredient } = useStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+  }, []);
 
   const [step, setStep] = useState<'upload' | 'scanning' | 'confirm'>('upload');
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
@@ -138,46 +144,78 @@ export default function ScanPage() {
             )}
 
             {/* Upload Area */}
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex cursor-pointer flex-col items-center justify-center bg-gray-50 py-16 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
-                >
-                  <div className="mb-4 rounded-full bg-primary-100 p-4 dark:bg-primary-900">
-                    <Camera className="h-8 w-8 text-primary-600" />
+            {isMobile && (
+              <>
+                <Card className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div
+                      onClick={() => cameraInputRef.current?.click()}
+                      className="flex cursor-pointer flex-col items-center justify-center bg-gray-50 py-16 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+                    >
+                      <div className="mb-4 rounded-full bg-primary-100 p-4 dark:bg-primary-900">
+                        <Camera className="h-8 w-8 text-primary-600" />
+                      </div>
+                      <p className="text-lg font-medium">{t('scan.takePhoto')}</p>
+                      <p className="mt-1 text-sm text-gray-500">{t('home.scanDescription')}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200 dark:border-gray-700" />
                   </div>
-                  <p className="text-lg font-medium">{t('scan.takePhoto')}</p>
-                  <p className="mt-1 text-sm text-gray-500">{t('home.scanDescription')}</p>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-4 text-sm text-gray-500 dark:bg-gray-800">
+                      or
+                    </span>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </>
+            )}
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200 dark:border-gray-700" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white px-4 text-sm text-gray-500 dark:bg-gray-800">
-                  or
-                </span>
-              </div>
-            </div>
+            {!isMobile && (
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex cursor-pointer flex-col items-center justify-center bg-gray-50 py-16 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+                  >
+                    <div className="mb-4 rounded-full bg-primary-100 p-4 dark:bg-primary-900">
+                      <Upload className="h-8 w-8 text-primary-600" />
+                    </div>
+                    <p className="text-lg font-medium">{t('scan.uploadPhoto')}</p>
+                    <p className="mt-1 text-sm text-gray-500">{t('home.scanDescription')}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-            <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full"
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              {t('scan.uploadPhoto')}
-            </Button>
+            {isMobile && (
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {t('scan.uploadPhoto')}
+              </Button>
+            )}
 
+            {/* Camera input (mobile only) */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            {/* File upload input (no capture = file picker) */}
             <input
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               onChange={handleFileSelect}
               className="hidden"
             />

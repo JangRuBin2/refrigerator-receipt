@@ -39,14 +39,18 @@ export async function POST(request: NextRequest) {
       mode: 'ocr',
     });
   } catch (error) {
-    console.error('OCR Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('OCR Error:', errorMessage);
+    if (error instanceof Error && error.stack) {
+      console.error('Stack:', error.stack);
+    }
 
     // 에러 시 시뮬레이션 결과 반환
     return NextResponse.json({
       items: getSimulatedItems(),
-      rawText: '[OCR Error - Using simulation data]',
+      rawText: `[OCR Error: ${errorMessage}]`,
       mode: 'simulation',
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
     });
   }
 }
