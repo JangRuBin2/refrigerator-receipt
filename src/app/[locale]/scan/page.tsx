@@ -3,12 +3,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Camera, Upload, Check, Loader2, RefreshCw } from 'lucide-react';
+import { Camera, Upload, Check, Loader2, RefreshCw, Crown, Lock } from 'lucide-react';
+import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { Modal } from '@/components/ui/Modal';
 import { useStore } from '@/store/useStore';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import type { ScannedItem, Category, Unit, StorageType } from '@/types';
@@ -30,11 +32,22 @@ export default function ScanPage() {
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
 
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const isPremium = false; // TODO: check subscription from DB
+
   const [step, setStep] = useState<'upload' | 'scanning' | 'confirm'>('upload');
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+
+  const handleScanClick = (inputRef: React.RefObject<HTMLInputElement>) => {
+    if (!isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
+    inputRef.current?.click();
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -62,11 +75,11 @@ export default function ScanPage() {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error('Scan failed');
-      }
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Scan failed');
+      }
 
       const items: ScannedItem[] = data.items.map((item: {
         name: string;
@@ -149,7 +162,7 @@ export default function ScanPage() {
                 <Card className="overflow-hidden">
                   <CardContent className="p-0">
                     <div
-                      onClick={() => cameraInputRef.current?.click()}
+                      onClick={() => handleScanClick(cameraInputRef)}
                       className="flex cursor-pointer flex-col items-center justify-center bg-gray-50 py-16 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
                     >
                       <div className="mb-4 rounded-full bg-primary-100 p-4 dark:bg-primary-900">
@@ -178,7 +191,7 @@ export default function ScanPage() {
               <Card className="overflow-hidden">
                 <CardContent className="p-0">
                   <div
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => handleScanClick(fileInputRef)}
                     className="flex cursor-pointer flex-col items-center justify-center bg-gray-50 py-16 transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
                   >
                     <div className="mb-4 rounded-full bg-primary-100 p-4 dark:bg-primary-900">
@@ -194,7 +207,7 @@ export default function ScanPage() {
             {isMobile && (
               <Button
                 variant="outline"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => handleScanClick(fileInputRef)}
                 className="w-full"
               >
                 <Upload className="mr-2 h-4 w-4" />
@@ -348,6 +361,35 @@ export default function ScanPage() {
             </div>
           </>
         )}
+
+        {/* Premium Gate Modal */}
+        <Modal
+          isOpen={showPremiumModal}
+          onClose={() => setShowPremiumModal(false)}
+          title={t('pricing.premiumRequired')}
+        >
+          <div className="flex flex-col items-center py-4 text-center">
+            <div className="mb-4 rounded-full bg-yellow-100 p-4 dark:bg-yellow-900/30">
+              <Lock className="h-8 w-8 text-yellow-500" />
+            </div>
+            <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+              {t('pricing.premiumRequiredDescription')}
+            </p>
+            <Link href={`/${locale}/pricing`} className="w-full">
+              <Button className="w-full">
+                <Crown className="mr-2 h-4 w-4" />
+                {t('pricing.viewPlans')}
+              </Button>
+            </Link>
+            <Button
+              variant="ghost"
+              className="mt-2 w-full"
+              onClick={() => setShowPremiumModal(false)}
+            >
+              {t('common.close')}
+            </Button>
+          </div>
+        </Modal>
       </div>
     </div>
   );

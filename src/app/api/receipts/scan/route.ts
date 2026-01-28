@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractTextFromImage } from '@/lib/ocr/vision';
-import { parseReceiptText } from '@/lib/ocr/parser';
+import { parseReceiptText, isReceiptText } from '@/lib/ocr/parser';
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +29,14 @@ export async function POST(request: NextRequest) {
 
     // OCR 실행
     const rawText = await extractTextFromImage(base64Image);
+
+    // 영수증 형태인지 검증
+    if (!isReceiptText(rawText)) {
+      return NextResponse.json(
+        { error: '영수증 형태의 이미지가 아닙니다. 영수증 사진을 다시 촬영해주세요.' },
+        { status: 400 }
+      );
+    }
 
     // 텍스트 파싱
     const items = parseReceiptText(rawText);

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Camera, ChefHat, Clock, AlertTriangle, Sun, Moon, Sparkles } from 'lucide-react';
+import { Camera, AlertTriangle, Sparkles } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -115,26 +115,15 @@ export default function HomePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              <Link href={`/${locale}/recipes?meal=lunch`}>
-                <Button
-                  variant="outline"
-                  className="h-20 w-full flex-col gap-2"
-                >
-                  <Sun className="h-6 w-6 text-orange-400" />
-                  <span>{t('home.lunch')}</span>
-                </Button>
-              </Link>
-              <Link href={`/${locale}/recipes?meal=dinner`}>
-                <Button
-                  variant="outline"
-                  className="h-20 w-full flex-col gap-2"
-                >
-                  <Moon className="h-6 w-6 text-indigo-400" />
-                  <span>{t('home.dinner')}</span>
-                </Button>
-              </Link>
-            </div>
+            <Link href={`/${locale}/recommend`}>
+              <Button
+                className="h-20 w-full flex-col gap-2 bg-gradient-to-r from-orange-500 to-purple-500 text-white hover:from-orange-600 hover:to-purple-600"
+                size="lg"
+              >
+                <Sparkles className="h-6 w-6" />
+                <span>{t('recommend.title')}</span>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 

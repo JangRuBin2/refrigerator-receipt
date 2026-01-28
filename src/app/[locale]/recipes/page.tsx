@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2 } from 'lucide-react';
+import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, ExternalLink, Search, Youtube } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -12,7 +12,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import { sampleRecipes } from '@/data/recipes';
-import type { Recipe, RecipeIngredient } from '@/types';
+import type { Recipe, RecipeIngredient, ExternalRecipe } from '@/types';
 
 interface RecipeWithAvailability extends Recipe {
   matchRate: number;
@@ -33,6 +33,11 @@ function RecipesContent() {
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeWithAvailability | null>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'available' | 'favorites'>('all');
+  const [externalRecipes, setExternalRecipes] = useState<ExternalRecipe[]>([]);
+  const [externalLoading, setExternalLoading] = useState(false);
+  const [externalQuery, setExternalQuery] = useState('');
+  const [externalError, setExternalError] = useState('');
+  const [externalFilter, setExternalFilter] = useState<'all' | 'youtube' | 'google'>('all');
 
   // Check ingredient availability for each recipe
   const recipesWithAvailability = sampleRecipes.map((recipe) => {
@@ -85,6 +90,44 @@ function RecipesContent() {
       spinRoulette();
     }
   }, [meal]);
+
+  const searchExternalRecipes = async () => {
+    setExternalLoading(true);
+    setExternalError('');
+    try {
+      // Zustand의 재료 목록에서 랜덤 2~3개 선택
+      const names = ingredients.map(i => i.name);
+      if (names.length === 0) {
+        setExternalError(t('fridge.empty'));
+        setExternalLoading(false);
+        return;
+      }
+      const shuffled = [...names].sort(() => Math.random() - 0.5);
+      const count = Math.min(shuffled.length, Math.floor(Math.random() * 2) + 2);
+      const selected = shuffled.slice(0, count);
+      const ingredientsParam = selected.join(',');
+
+      const response = await fetch(`/api/recipes/search?ingredients=${encodeURIComponent(ingredientsParam)}&type=all`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setExternalError(data.error || t('common.error'));
+        return;
+      }
+
+      setExternalRecipes(data.results || []);
+      setExternalQuery(data.query || ingredientsParam);
+    } catch {
+      setExternalError(t('common.error'));
+    } finally {
+      setExternalLoading(false);
+    }
+  };
+
+  const filteredExternalRecipes = externalRecipes.filter(r => {
+    if (externalFilter === 'all') return true;
+    return r.source === externalFilter;
+  });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -243,6 +286,133 @@ function RecipesContent() {
           ))}
         </div>
       )}
+
+      {/* External Recipe Search Section */}
+      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+        <CardContent className="p-6">
+          <h2 className="mb-4 text-xl font-bold flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            {t('recipe.externalRecommend')}
+          </h2>
+
+          <Button
+            onClick={searchExternalRecipes}
+            disabled={externalLoading || ingredients.length === 0}
+            className="w-full"
+          >
+            {externalLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t('recipe.searching')}
+              </>
+            ) : (
+              <>
+                <Shuffle className="mr-2 h-4 w-4" />
+                {t('recipe.searchByIngredients')}
+              </>
+            )}
+          </Button>
+
+          {ingredients.length === 0 && (
+            <p className="mt-2 text-center text-sm text-gray-500">{t('fridge.empty')}</p>
+          )}
+
+          {externalError && (
+            <p className="mt-3 text-center text-sm text-red-500">{externalError}</p>
+          )}
+
+          {externalQuery && externalRecipes.length > 0 && (
+            <p className="mt-3 text-center text-sm text-gray-500">
+              {t('recipe.searchQuery', { query: externalQuery.replace(/,/g, ', ') })}
+            </p>
+          )}
+
+          {externalRecipes.length > 0 && (
+            <>
+              {/* Source Filter */}
+              <div className="mt-4 flex gap-2 justify-center">
+                {(['all', 'youtube', 'google'] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setExternalFilter(f)}
+                    className={cn(
+                      'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
+                      externalFilter === f
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
+                    )}
+                  >
+                    {f === 'all' ? t('fridge.all') : t(`recipe.${f}`)}
+                  </button>
+                ))}
+              </div>
+
+              {/* Results */}
+              <div className="mt-4 space-y-3">
+                {filteredExternalRecipes.map((recipe) => (
+                  <a
+                    key={recipe.id}
+                    href={recipe.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <Card className="transition-transform hover:scale-[1.01] overflow-hidden">
+                      <CardContent className="p-0">
+                        <div className="flex">
+                          {recipe.thumbnail && (
+                            <div className="relative h-24 w-32 flex-shrink-0">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={recipe.thumbnail}
+                                alt={recipe.title}
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 p-3 min-w-0">
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm line-clamp-2">{recipe.title}</h4>
+                                {recipe.snippet && (
+                                  <p className="mt-1 text-xs text-gray-500 line-clamp-1">{recipe.snippet}</p>
+                                )}
+                              </div>
+                              <ExternalLink className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <Badge
+                                variant={recipe.source === 'youtube' ? 'danger' : 'info'}
+                                className="text-xs"
+                              >
+                                {recipe.source === 'youtube' ? (
+                                  <span className="flex items-center gap-1">
+                                    <Youtube className="h-3 w-3" />
+                                    YouTube
+                                  </span>
+                                ) : (
+                                  'Google'
+                                )}
+                              </Badge>
+                              {recipe.channelName && (
+                                <span className="text-xs text-gray-500 truncate">{recipe.channelName}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </a>
+                ))}
+
+                {filteredExternalRecipes.length === 0 && (
+                  <p className="text-center text-sm text-gray-500 py-4">{t('recipe.noExternalResults')}</p>
+                )}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recipe Detail Modal */}
       <Modal

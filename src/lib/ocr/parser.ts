@@ -81,6 +81,31 @@ const excludePatterns = [
   /총\s*\d+/, /\*{3,}/, /={3,}/, /-{3,}/,
 ];
 
+// 영수증 형태의 텍스트인지 검증
+const receiptIndicators = [
+  /[\d,]+\s*원/, // 가격 (원)
+  /합계|소계|총액|결제|거스름/i,
+  /카드|현금|계좌/i,
+  /\d{4}[-/.]\d{2}[-/.]\d{2}/, // 날짜
+  /\d{2}:\d{2}/, // 시간
+  /이마트|홈플러스|롯데마트|하나로마트|GS25|CU|세븐일레븐|미니스톱|코스트코|트레이더스|노브랜드|다이소|편의점|마트|슈퍼/i,
+  /사업자.*번호|대표자|점포|매장|TEL|전화/i,
+  /영수증|거래명세/i,
+  /부가세|과세|면세|부가가치세/i,
+  /수량|단가|금액/i,
+];
+
+export function isReceiptText(text: string): boolean {
+  let matchCount = 0;
+  for (const pattern of receiptIndicators) {
+    if (pattern.test(text)) {
+      matchCount++;
+    }
+  }
+  // 최소 2개 이상의 영수증 특징이 있어야 영수증으로 판단
+  return matchCount >= 2;
+}
+
 export function parseReceiptText(text: string): ParsedItem[] {
   const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
   const items: ParsedItem[] = [];

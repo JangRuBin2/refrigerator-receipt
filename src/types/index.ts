@@ -57,6 +57,16 @@ export interface UserSettings {
   };
 }
 
+export interface ExternalRecipe {
+  id: string;
+  title: string;
+  thumbnail?: string;
+  url: string;
+  source: 'youtube' | 'google';
+  channelName?: string;
+  snippet?: string;
+}
+
 export interface ScannedItem {
   name: string;
   quantity?: number;
