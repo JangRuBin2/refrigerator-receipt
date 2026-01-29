@@ -1,30 +1,87 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useParams } from 'next/navigation';
-import { Check, Crown, Zap, Camera, Search, X } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { Check, Crown, Zap, X, Sparkles, BarChart3, ShoppingCart, Recycle, Camera, Search, Ban } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 
 export default function PricingPage() {
   const t = useTranslations();
   const params = useParams();
+  const router = useRouter();
   const locale = params.locale as string;
 
   const freePlan = [
-    t('pricing.feature.manualAdd'),
-    t('pricing.feature.fridgeManage'),
-    t('pricing.feature.expiryAlert'),
-    t('pricing.feature.recipeView'),
-    t('pricing.feature.menuRecommend'),
+    { text: t('pricing.feature.manualAdd'), included: true },
+    { text: t('pricing.feature.fridgeManage'), included: true },
+    { text: t('pricing.feature.expiryAlert'), included: true },
+    { text: t('pricing.feature.recipeView'), included: true },
+    { text: t('pricing.feature.menuRecommend'), included: true },
   ];
 
-  const premiumPlan = [
-    t('pricing.feature.receiptScan'),
-    t('pricing.feature.externalSearch'),
-    t('pricing.feature.allFreeFeatures'),
+  const premiumFeatures = [
+    {
+      icon: Camera,
+      title: t('pricing.feature.unlimitedScan'),
+      description: '카메라/갤러리로 영수증 촬영하여 자동 식재료 등록',
+      color: 'text-blue-500',
+    },
+    {
+      icon: Sparkles,
+      title: t('pricing.feature.aiRecipe'),
+      description: t('pricing.feature.aiRecipeDesc'),
+      color: 'text-purple-500',
+      highlight: true,
+    },
+    {
+      icon: BarChart3,
+      title: t('pricing.feature.nutritionAnalysis'),
+      description: t('pricing.feature.nutritionDesc'),
+      color: 'text-green-500',
+    },
+    {
+      icon: ShoppingCart,
+      title: t('pricing.feature.smartShopping'),
+      description: t('pricing.feature.smartShoppingDesc'),
+      color: 'text-orange-500',
+    },
+    {
+      icon: Recycle,
+      title: t('pricing.feature.wasteAnalysis'),
+      description: t('pricing.feature.wasteDesc'),
+      color: 'text-teal-500',
+    },
+    {
+      icon: Search,
+      title: t('pricing.feature.externalSearch'),
+      description: 'YouTube, Google에서 레시피 검색',
+      color: 'text-red-500',
+    },
+    {
+      icon: Ban,
+      title: t('pricing.feature.noAds'),
+      description: '깔끔한 광고 없는 환경',
+      color: 'text-gray-500',
+    },
+  ];
+
+  const comparisonFeatures = [
+    { feature: t('pricing.feature.manualAdd'), free: true, premium: true },
+    { feature: t('pricing.feature.fridgeManage'), free: true, premium: true },
+    { feature: t('pricing.feature.expiryAlert'), free: true, premium: true },
+    { feature: t('pricing.feature.recipeView'), free: true, premium: true },
+    { feature: t('pricing.feature.menuRecommend'), free: true, premium: true },
+    { feature: t('pricing.feature.unlimitedScan'), free: false, premium: true },
+    { feature: t('pricing.feature.aiRecipe'), free: false, premium: true },
+    { feature: t('pricing.feature.nutritionAnalysis'), free: false, premium: true },
+    { feature: t('pricing.feature.smartShopping'), free: false, premium: true },
+    { feature: t('pricing.feature.wasteAnalysis'), free: false, premium: true },
+    { feature: t('pricing.feature.externalSearch'), free: false, premium: true },
+    { feature: t('pricing.feature.noAds'), free: false, premium: true },
   ];
 
   return (
@@ -57,10 +114,10 @@ export default function PricingPage() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {freePlan.map((feature, i) => (
+              {freePlan.map((item, i) => (
                 <li key={i} className="flex items-center gap-3 text-sm">
                   <Check className="h-4 w-4 flex-shrink-0 text-green-500" />
-                  <span>{feature}</span>
+                  <span>{item.text}</span>
                 </li>
               ))}
             </ul>
@@ -96,24 +153,68 @@ export default function PricingPage() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              {premiumPlan.map((feature, i) => (
-                <li key={i} className="flex items-center gap-3 text-sm">
-                  <Check className="h-4 w-4 flex-shrink-0 text-primary-500" />
-                  <span className="font-medium">{feature}</span>
-                </li>
-              ))}
+              <li className="flex items-center gap-3 text-sm">
+                <Check className="h-4 w-4 flex-shrink-0 text-primary-500" />
+                <span className="font-medium">{t('pricing.feature.allFreeFeatures')}</span>
+              </li>
             </ul>
             <div className="mt-6 space-y-2">
-              <Button className="w-full" disabled>
+              <Button
+                className="w-full"
+                onClick={() => router.push(`/${locale}/checkout?plan=monthly`)}
+              >
                 <Crown className="mr-2 h-4 w-4" />
-                {t('pricing.comingSoon')}
+                {t('pricing.subscribeMonthly')}
               </Button>
-              <p className="text-center text-xs text-gray-400">
-                {t('pricing.comingSoonDescription')}
-              </p>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => router.push(`/${locale}/checkout?plan=yearly`)}
+              >
+                {t('pricing.subscribeYearly')} (28% 할인)
+              </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Premium Features Showcase */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            프리미엄 전용 기능
+          </h3>
+          {premiumFeatures.map((feature, i) => (
+            <Card
+              key={i}
+              className={cn(
+                feature.highlight && 'bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20'
+              )}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    'flex h-10 w-10 items-center justify-center rounded-full',
+                    feature.highlight ? 'bg-purple-100 dark:bg-purple-900/40' : 'bg-gray-100 dark:bg-gray-700'
+                  )}>
+                    <feature.icon className={cn('h-5 w-5', feature.color)} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold">{feature.title}</h4>
+                      {feature.highlight && (
+                        <Badge variant="info" className="bg-purple-500 text-xs text-white">
+                          NEW
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
         {/* Feature Comparison */}
         <Card>
@@ -121,40 +222,50 @@ export default function PricingPage() {
             <CardTitle>{t('pricing.comparison')}</CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Column headers */}
+            <div className="flex items-center justify-end pb-3 text-xs font-medium text-gray-500">
+              <div className="flex gap-6">
+                <span className="w-14 text-center">Free</span>
+                <span className="w-14 text-center text-primary-600">Premium</span>
+              </div>
+            </div>
             <div className="space-y-0 divide-y divide-gray-100 dark:divide-gray-700">
-              {[
-                { feature: t('pricing.feature.manualAdd'), free: true, premium: true },
-                { feature: t('pricing.feature.fridgeManage'), free: true, premium: true },
-                { feature: t('pricing.feature.expiryAlert'), free: true, premium: true },
-                { feature: t('pricing.feature.recipeView'), free: true, premium: true },
-                { feature: t('pricing.feature.menuRecommend'), free: true, premium: true },
-                { feature: t('pricing.feature.receiptScan'), free: false, premium: true },
-                { feature: t('pricing.feature.externalSearch'), free: false, premium: true },
-              ].map((row, i) => (
+              {comparisonFeatures.map((row, i) => (
                 <div key={i} className="flex items-center justify-between py-3">
-                  <span className="text-sm">{row.feature}</span>
-                  <div className="flex gap-8">
-                    <div className="w-12 text-center">
+                  <span className="flex-1 pr-4 text-sm">{row.feature}</span>
+                  <div className="flex gap-6">
+                    <div className="w-14 text-center">
                       {row.free ? (
                         <Check className="mx-auto h-4 w-4 text-green-500" />
                       ) : (
                         <X className="mx-auto h-4 w-4 text-gray-300" />
                       )}
                     </div>
-                    <div className="w-12 text-center">
+                    <div className="w-14 text-center">
                       <Check className="mx-auto h-4 w-4 text-primary-500" />
                     </div>
                   </div>
                 </div>
               ))}
-              {/* Column headers */}
-              <div className="flex items-center justify-end pb-2 pt-0 text-xs text-gray-400">
-                <div className="flex gap-8">
-                  <span className="w-12 text-center">Free</span>
-                  <span className="w-12 text-center">Premium</span>
-                </div>
-              </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* CTA */}
+        <Card className="bg-gradient-to-r from-primary-500 to-primary-600 text-white">
+          <CardContent className="p-6 text-center">
+            <Crown className="mx-auto h-10 w-10" />
+            <h3 className="mt-3 text-xl font-bold">지금 프리미엄 시작하기</h3>
+            <p className="mt-2 text-sm text-white/80">
+              AI 맞춤 레시피, 영양 분석, 스마트 장보기까지
+            </p>
+            <Button
+              variant="secondary"
+              className="mt-4 bg-white text-primary-600 hover:bg-gray-100"
+              onClick={() => router.push(`/${locale}/checkout?plan=yearly`)}
+            >
+              연간 구독으로 28% 절약
+            </Button>
           </CardContent>
         </Card>
       </div>

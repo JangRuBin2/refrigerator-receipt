@@ -1,18 +1,48 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, ExternalLink, Search, Youtube } from 'lucide-react';
+import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, ExternalLink, Search, Youtube, Crown } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useStore } from '@/store/useStore';
+import { usePremium } from '@/hooks/usePremium';
+import { PremiumModal } from '@/components/premium/PremiumModal';
 import { cn } from '@/lib/utils';
-import { sampleRecipes } from '@/data/recipes';
-import type { Recipe, RecipeIngredient, ExternalRecipe } from '@/types';
+import type { Recipe, RecipeIngredient, ExternalRecipe, Difficulty } from '@/types';
+
+// DB 레시피를 프론트엔드 Recipe 타입으로 변환
+interface DBRecipe {
+  id: string;
+  title: Record<string, string>;
+  description?: Record<string, string>;
+  image_url?: string;
+  cooking_time?: number;
+  difficulty?: string;
+  servings?: number;
+  ingredients?: { name: string; quantity?: string }[];
+  instructions?: Record<string, string[]>;
+  tags?: string[];
+}
+
+const mapDBRecipeToRecipe = (dbRecipe: DBRecipe): Recipe => ({
+  id: dbRecipe.id,
+  title: dbRecipe.title || {},
+  description: dbRecipe.description || {},
+  imageUrl: dbRecipe.image_url,
+  cookingTime: dbRecipe.cooking_time || 0,
+  difficulty: (dbRecipe.difficulty as Difficulty) || 'easy',
+  ingredients: (dbRecipe.ingredients || []).map(ing => ({
+    name: ing.name,
+    quantity: parseFloat(ing.quantity || '0') || 0,
+    unit: 'g' as const,
+  })),
+  instructions: dbRecipe.instructions || {},
+});
 
 interface RecipeWithAvailability extends Recipe {
   matchRate: number;
@@ -29,22 +59,46 @@ function RecipesContent() {
   const meal = searchParams.get('meal');
 
   const { ingredients, favoriteRecipeIds, toggleFavorite } = useStore();
+  const { isPremium } = usePremium();
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeWithAvailability | null>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'available' | 'favorites'>('all');
   const [externalRecipes, setExternalRecipes] = useState<ExternalRecipe[]>([]);
   const [externalLoading, setExternalLoading] = useState(false);
   const [externalQuery, setExternalQuery] = useState('');
   const [externalError, setExternalError] = useState('');
   const [externalFilter, setExternalFilter] = useState<'all' | 'youtube' | 'google'>('all');
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipesLoading, setRecipesLoading] = useState(true);
+
+  // Fetch recipes from DB
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const response = await fetch('/api/recipes?limit=100');
+        if (response.ok) {
+          const data = await response.json();
+          const mappedRecipes = (data.recipes || []).map(mapDBRecipeToRecipe);
+          setRecipes(mappedRecipes);
+        }
+      } catch {
+        // error silently
+      } finally {
+        setRecipesLoading(false);
+      }
+    };
+    fetchRecipes();
+  }, []);
 
   // Check ingredient availability for each recipe
-  const recipesWithAvailability = sampleRecipes.map((recipe) => {
+  const recipesWithAvailability = recipes.map((recipe) => {
     const availableIngredients = recipe.ingredients.filter((ri) =>
       ingredients.some((i) => i.name.includes(ri.name) || ri.name.includes(i.name))
     );
-    const matchRate = Math.round((availableIngredients.length / recipe.ingredients.length) * 100);
+    const totalIngredients = recipe.ingredients.length || 1;
+    const matchRate = Math.round((availableIngredients.length / totalIngredients) * 100);
 
     return {
       ...recipe,
@@ -92,6 +146,12 @@ function RecipesContent() {
   }, [meal]);
 
   const searchExternalRecipes = async () => {
+    // 프리미엄 체크
+    if (!isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
+
     setExternalLoading(true);
     setExternalError('');
     try {
@@ -222,7 +282,14 @@ function RecipesContent() {
       </div>
 
       {/* Recipe List */}
-      {filteredRecipes.length === 0 ? (
+      {recipesLoading ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary-600" />
+            <p className="mt-4 text-gray-500">{t('common.loading')}</p>
+          </CardContent>
+        </Card>
+      ) : filteredRecipes.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <ChefHat className="mx-auto h-12 w-12 text-gray-300" />
@@ -293,6 +360,12 @@ function RecipesContent() {
           <h2 className="mb-4 text-xl font-bold flex items-center gap-2">
             <Search className="h-5 w-5" />
             {t('recipe.externalRecommend')}
+            {!isPremium && (
+              <Badge variant="warning" className="ml-2 text-xs">
+                <Crown className="mr-1 h-3 w-3" />
+                Premium
+              </Badge>
+            )}
           </h2>
 
           <Button
@@ -307,7 +380,8 @@ function RecipesContent() {
               </>
             ) : (
               <>
-                <Shuffle className="mr-2 h-4 w-4" />
+                {!isPremium && <Crown className="mr-2 h-4 w-4" />}
+                {isPremium && <Shuffle className="mr-2 h-4 w-4" />}
                 {t('recipe.searchByIngredients')}
               </>
             )}
@@ -498,6 +572,13 @@ function RecipesContent() {
           </div>
         )}
       </Modal>
+
+      {/* Premium Gate Modal */}
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        feature="external_recipe_search"
+      />
     </div>
   );
 }

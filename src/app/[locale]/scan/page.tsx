@@ -3,15 +3,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Camera, Upload, Check, Loader2, RefreshCw, Crown, Lock } from 'lucide-react';
-import Link from 'next/link';
+import { Camera, Upload, Check, Loader2, RefreshCw } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Modal } from '@/components/ui/Modal';
 import { useStore } from '@/store/useStore';
+import { usePremium } from '@/hooks/usePremium';
+import { PremiumModal } from '@/components/premium/PremiumModal';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import type { ScannedItem, Category, Unit, StorageType } from '@/types';
 
@@ -27,13 +27,13 @@ export default function ScanPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const { isPremium, isLoading: isPremiumLoading } = usePremium();
 
   useEffect(() => {
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
 
   const [showPremiumModal, setShowPremiumModal] = useState(false);
-  const isPremium = false; // TODO: check subscription from DB
 
   const [step, setStep] = useState<'upload' | 'scanning' | 'confirm'>('upload');
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
@@ -363,33 +363,11 @@ export default function ScanPage() {
         )}
 
         {/* Premium Gate Modal */}
-        <Modal
+        <PremiumModal
           isOpen={showPremiumModal}
           onClose={() => setShowPremiumModal(false)}
-          title={t('pricing.premiumRequired')}
-        >
-          <div className="flex flex-col items-center py-4 text-center">
-            <div className="mb-4 rounded-full bg-yellow-100 p-4 dark:bg-yellow-900/30">
-              <Lock className="h-8 w-8 text-yellow-500" />
-            </div>
-            <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
-              {t('pricing.premiumRequiredDescription')}
-            </p>
-            <Link href={`/${locale}/pricing`} className="w-full">
-              <Button className="w-full">
-                <Crown className="mr-2 h-4 w-4" />
-                {t('pricing.viewPlans')}
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              className="mt-2 w-full"
-              onClick={() => setShowPremiumModal(false)}
-            >
-              {t('common.close')}
-            </Button>
-          </div>
-        </Modal>
+          feature="receipt_scan"
+        />
       </div>
     </div>
   );

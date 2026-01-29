@@ -1,17 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { useParams } from 'next/navigation';
-import { Shuffle, Sparkles, Clock, ChefHat, Loader2, RotateCcw, Search, ExternalLink } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { Shuffle, Sparkles, Clock, ChefHat, Loader2, RotateCcw, Search, ExternalLink, Crown, Wand2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/utils';
 import { tasteQuestions, type ScoredRecipe } from '@/lib/recommend/engine';
+import { usePremium } from '@/hooks/usePremium';
+import { PremiumModal } from '@/components/premium/PremiumModal';
+import { useStore } from '@/store/useStore';
 
-type Mode = 'select' | 'random' | 'taste';
+type Mode = 'select' | 'random' | 'taste' | 'ai';
+
+interface AIGeneratedRecipe {
+  title: string;
+  description: string;
+  cookingTime: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+  servings: number;
+  ingredients: { name: string; quantity: string }[];
+  instructions: string[];
+  tips?: string;
+}
 
 interface RandomResult {
   id: string;
@@ -26,15 +41,51 @@ interface RandomResult {
 export default function RecommendPage() {
   const t = useTranslations();
   const params = useParams();
+  const router = useRouter();
   const locale = params.locale as string;
+  const { isPremium } = usePremium();
+  const { ingredients } = useStore();
 
   const [mode, setMode] = useState<Mode>('select');
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   // Random mode state
   const [randomResult, setRandomResult] = useState<RandomResult | null>(null);
   const [randomLoading, setRandomLoading] = useState(false);
   const [randomAnimating, setRandomAnimating] = useState(false);
   const [randomDisplayName, setRandomDisplayName] = useState('');
+  const [recipeNames, setRecipeNames] = useState<string[]>([]);
+
+  // AI mode state
+  const [aiRecipe, setAiRecipe] = useState<AIGeneratedRecipe | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [aiPreferences, setAiPreferences] = useState({
+    cookingTime: '' as '' | 'quick' | 'medium' | 'long',
+    difficulty: '' as '' | 'easy' | 'medium' | 'hard',
+    cuisine: '',
+  });
+
+  // Fetch recipe names for animation on mount
+  useEffect(() => {
+    const fetchRecipeNames = async () => {
+      try {
+        const response = await fetch('/api/recipes?limit=50');
+        if (response.ok) {
+          const data = await response.json();
+          const names = data.recipes?.map((r: RandomResult) =>
+            r.title?.[locale] || r.title?.ko || r.title?.en || ''
+          ).filter(Boolean) || [];
+          if (names.length > 0) {
+            setRecipeNames(names);
+          }
+        }
+      } catch {
+        // Keep default names if fetch fails
+      }
+    };
+    fetchRecipeNames();
+  }, [locale]);
 
   // Taste mode state
   const [currentStep, setCurrentStep] = useState(0);
@@ -49,15 +100,15 @@ export default function RecommendPage() {
     setRandomAnimating(true);
     setRandomResult(null);
 
-    // 슬롯머신 애니메이션
-    const dummyNames = [
+    // 슬롯머신 애니메이션 - DB에서 가져온 레시피 이름 사용
+    const animNames = recipeNames.length > 0 ? recipeNames : [
       '김치찌개', '비빔밥', '불고기', '떡볶이', '삼겹살',
       '된장찌개', '잡채', '냉면', '칼국수', '제육볶음',
     ];
     let animCount = 0;
     const maxAnim = 15;
     const interval = setInterval(() => {
-      setRandomDisplayName(dummyNames[Math.floor(Math.random() * dummyNames.length)]);
+      setRandomDisplayName(animNames[Math.floor(Math.random() * animNames.length)]);
       animCount++;
       if (animCount >= maxAnim) {
         clearInterval(interval);
@@ -149,6 +200,75 @@ export default function RecommendPage() {
     if (d === 'medium') return 'bg-yellow-100 text-yellow-700';
     if (d === 'hard') return 'bg-red-100 text-red-700';
     return 'bg-gray-100 text-gray-700';
+  };
+
+  // === AI Mode ===
+  const handleAiModeClick = () => {
+    if (!isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
+    if (ingredients.length === 0) {
+      // 재료가 없으면 냉장고로 이동 안내
+      setMode('ai');
+      return;
+    }
+    setMode('ai');
+  };
+
+  const generateAiRecipe = async () => {
+    if (ingredients.length === 0) return;
+
+    setAiLoading(true);
+    setAiError('');
+    setAiRecipe(null);
+
+    try {
+      const ingredientNames = ingredients.map(i => i.name);
+      const preferences: Record<string, unknown> = {};
+
+      if (aiPreferences.cookingTime) {
+        preferences.cookingTime = aiPreferences.cookingTime;
+      }
+      if (aiPreferences.difficulty) {
+        preferences.difficulty = aiPreferences.difficulty;
+      }
+      if (aiPreferences.cuisine) {
+        preferences.cuisine = aiPreferences.cuisine;
+      }
+
+      const response = await fetch('/api/recipes/ai-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ingredients: ingredientNames,
+          preferences: Object.keys(preferences).length > 0 ? preferences : undefined,
+          locale,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          setShowPremiumModal(true);
+          return;
+        }
+        throw new Error(data.error || 'Failed to generate recipe');
+      }
+
+      setAiRecipe(data.recipe);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'AI 레시피 생성에 실패했습니다');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const resetAi = () => {
+    setAiRecipe(null);
+    setAiError('');
+    setAiPreferences({ cookingTime: '', difficulty: '', cuisine: '' });
   };
 
   // === Render: Recipe Card ===
@@ -253,6 +373,30 @@ export default function RecommendPage() {
                 <div>
                   <h2 className="text-lg font-bold">{t('recommend.tasteMode')}</h2>
                   <p className="mt-1 text-sm text-gray-500">{t('recommend.tasteDescription')}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Recipe Mode */}
+            <Card
+              className="relative cursor-pointer bg-gradient-to-br from-emerald-50 to-cyan-50 transition-transform hover:scale-[1.02] dark:from-emerald-900/20 dark:to-cyan-900/20"
+              onClick={handleAiModeClick}
+            >
+              {!isPremium && (
+                <div className="absolute right-3 top-3">
+                  <Badge variant="warning" className="text-xs">
+                    <Crown className="mr-1 h-3 w-3" />
+                    Premium
+                  </Badge>
+                </div>
+              )}
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                  <Wand2 className="h-7 w-7 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold">AI 맞춤 레시피</h2>
+                  <p className="mt-1 text-sm text-gray-500">내 냉장고 재료로 AI가 새로운 레시피를 만들어줘요</p>
                 </div>
               </CardContent>
             </Card>
@@ -463,6 +607,233 @@ export default function RecommendPage() {
             </Button>
           </div>
         )}
+
+        {/* AI Recipe Mode */}
+        {mode === 'ai' && (
+          <div className="space-y-4">
+            <Card className="bg-gradient-to-br from-emerald-50 to-cyan-50 dark:from-emerald-900/20 dark:to-cyan-900/20">
+              <CardContent className="p-6">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                    <Wand2 className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">AI 맞춤 레시피</h2>
+                    <p className="text-sm text-gray-500">내 냉장고 재료로 새로운 레시피 생성</p>
+                  </div>
+                </div>
+
+                {/* Ingredient Check */}
+                {ingredients.length === 0 ? (
+                  <div className="rounded-lg bg-white p-6 text-center dark:bg-gray-800">
+                    <ChefHat className="mx-auto h-12 w-12 text-gray-300" />
+                    <p className="mt-3 font-medium text-gray-600 dark:text-gray-400">
+                      냉장고에 재료가 없어요
+                    </p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      먼저 재료를 등록해주세요
+                    </p>
+                    <Button
+                      onClick={() => router.push(`/${locale}/fridge`)}
+                      className="mt-4"
+                    >
+                      냉장고로 이동
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {/* My Ingredients */}
+                    <div className="mb-4 rounded-lg bg-white p-4 dark:bg-gray-800">
+                      <p className="mb-2 text-sm font-medium text-gray-500">내 냉장고 재료 ({ingredients.length}개)</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ingredients.slice(0, 10).map((ing) => (
+                          <Badge key={ing.id} variant="default" className="text-xs">
+                            {ing.name}
+                          </Badge>
+                        ))}
+                        {ingredients.length > 10 && (
+                          <Badge variant="default" className="text-xs">
+                            +{ingredients.length - 10}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Preferences */}
+                    <div className="mb-4 space-y-3 rounded-lg bg-white p-4 dark:bg-gray-800">
+                      <p className="text-sm font-medium text-gray-500">선호도 설정 (선택)</p>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <Select
+                          value={aiPreferences.cookingTime}
+                          onChange={(e) => setAiPreferences(p => ({ ...p, cookingTime: e.target.value as typeof p.cookingTime }))}
+                          options={[
+                            { value: '', label: '조리 시간' },
+                            { value: 'quick', label: '15분 이내' },
+                            { value: 'medium', label: '30분 이내' },
+                            { value: 'long', label: '60분 이상' },
+                          ]}
+                        />
+                        <Select
+                          value={aiPreferences.difficulty}
+                          onChange={(e) => setAiPreferences(p => ({ ...p, difficulty: e.target.value as typeof p.difficulty }))}
+                          options={[
+                            { value: '', label: '난이도' },
+                            { value: 'easy', label: '쉬움' },
+                            { value: 'medium', label: '보통' },
+                            { value: 'hard', label: '어려움' },
+                          ]}
+                        />
+                      </div>
+
+                      <Select
+                        value={aiPreferences.cuisine}
+                        onChange={(e) => setAiPreferences(p => ({ ...p, cuisine: e.target.value }))}
+                        options={[
+                          { value: '', label: '요리 종류' },
+                          { value: '한식', label: '한식' },
+                          { value: '중식', label: '중식' },
+                          { value: '일식', label: '일식' },
+                          { value: '양식', label: '양식' },
+                          { value: '분식', label: '분식' },
+                          { value: '아시안', label: '아시안' },
+                        ]}
+                      />
+                    </div>
+
+                    {/* Generate Button */}
+                    <Button
+                      onClick={generateAiRecipe}
+                      disabled={aiLoading}
+                      className="w-full"
+                      size="lg"
+                    >
+                      {aiLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          AI가 레시피를 만들고 있어요...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="mr-2 h-5 w-5" />
+                          AI 레시피 생성하기
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                {aiError && (
+                  <p className="mt-3 text-center text-sm text-red-500">{aiError}</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* AI Generated Recipe */}
+            {aiRecipe && (
+              <Card className="overflow-hidden ring-2 ring-emerald-500 shadow-lg">
+                <CardContent className="p-5">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Wand2 className="h-4 w-4 text-emerald-500" />
+                    <span className="text-sm font-medium text-emerald-600">AI가 만든 레시피</span>
+                  </div>
+
+                  <h3 className="text-xl font-bold">{aiRecipe.title}</h3>
+                  <p className="mt-1 text-sm text-gray-500">{aiRecipe.description}</p>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <Clock className="h-3 w-3" />
+                      {aiRecipe.cookingTime}분
+                    </span>
+                    <Badge className={getDifficultyColor(aiRecipe.difficulty)}>
+                      {getDifficultyLabel(aiRecipe.difficulty)}
+                    </Badge>
+                    <Badge variant="default" className="text-xs">
+                      {aiRecipe.servings}인분
+                    </Badge>
+                  </div>
+
+                  {/* Ingredients */}
+                  <div className="mt-4">
+                    <h4 className="mb-2 font-semibold">재료</h4>
+                    <div className="space-y-1">
+                      {aiRecipe.ingredients.map((ing, idx) => (
+                        <div key={idx} className="flex justify-between rounded bg-gray-50 px-3 py-1.5 text-sm dark:bg-gray-700">
+                          <span>{ing.name}</span>
+                          <span className="text-gray-500">{ing.quantity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Instructions */}
+                  <div className="mt-4">
+                    <h4 className="mb-2 font-semibold">조리 방법</h4>
+                    <ol className="list-inside list-decimal space-y-2 text-sm">
+                      {aiRecipe.instructions.map((step, idx) => (
+                        <li key={idx} className="text-gray-600 dark:text-gray-400">
+                          {step}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  {/* Tips */}
+                  {aiRecipe.tips && (
+                    <div className="mt-4 rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20">
+                      <p className="text-sm">
+                        <span className="font-medium text-emerald-700 dark:text-emerald-400">💡 팁: </span>
+                        <span className="text-emerald-600 dark:text-emerald-300">{aiRecipe.tips}</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Search Button */}
+                  <a
+                    href={getSearchUrl(aiRecipe.title)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
+                  >
+                    <Search className="h-4 w-4" />
+                    유튜브에서 비슷한 레시피 찾기
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              {aiRecipe && (
+                <Button
+                  variant="outline"
+                  onClick={generateAiRecipe}
+                  disabled={aiLoading}
+                  className="flex-1"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  다른 레시피 생성
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                onClick={() => { setMode('select'); resetAi(); }}
+                className={aiRecipe ? 'flex-1' : 'w-full'}
+              >
+                처음으로
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Premium Modal */}
+        <PremiumModal
+          isOpen={showPremiumModal}
+          onClose={() => setShowPremiumModal(false)}
+          feature="ai_recipe"
+        />
       </div>
     </div>
   );

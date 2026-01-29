@@ -67,12 +67,30 @@ CREATE TABLE IF NOT EXISTS public.receipt_scans (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 6. Subscriptions 테이블 (유저 구독 정보)
+CREATE TABLE IF NOT EXISTS public.subscriptions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'premium')),
+  billing_cycle TEXT CHECK (billing_cycle IN ('monthly', 'yearly')),
+  started_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ,
+  canceled_at TIMESTAMPTZ,
+  payment_provider TEXT CHECK (payment_provider IN ('stripe', 'toss', 'google_play', 'app_store')),
+  payment_id TEXT,
+  auto_renew BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
 -- Row Level Security (RLS) 활성화
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ingredients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recipes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.receipt_scans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Profiles 정책
 CREATE POLICY "Users can view own profile" ON public.profiles
@@ -100,11 +118,19 @@ CREATE POLICY "Users can CRUD own favorites" ON public.user_favorites
 CREATE POLICY "Users can CRUD own scans" ON public.receipt_scans
   FOR ALL USING (auth.uid() = user_id);
 
+-- Subscriptions 정책
+CREATE POLICY "Users can view own subscription" ON public.subscriptions
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Service role can manage subscriptions" ON public.subscriptions
+  FOR ALL USING (auth.role() = 'service_role');
+
 -- 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_ingredients_user_id ON public.ingredients(user_id);
 CREATE INDEX IF NOT EXISTS idx_ingredients_expiry_date ON public.ingredients(expiry_date);
 CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON public.user_favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_recipes_tags ON public.recipes USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON public.subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_expires_at ON public.subscriptions(expires_at);
 
 -- 프로필 자동 생성 트리거
 CREATE OR REPLACE FUNCTION public.handle_new_user()

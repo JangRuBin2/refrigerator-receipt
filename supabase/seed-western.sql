@@ -769,7 +769,7 @@ INSERT INTO public.recipes (external_id, source, title, description, cooking_tim
  ARRAY['meat','heavy']),
 
 ('western-094', 'seed',
- '{"ko":"쉐퍼드 파이","en":"Shepherd\'s Pie","ja":"シェパーズパイ","zh":"牧羊人派"}',
+ '{"ko":"쉐퍼드 파이","en":"Shepherd''s Pie","ja":"シェパーズパイ","zh":"牧羊人派"}',
  '{"ko":"으깬 감자를 올린 영국식 고기 파이","en":"British meat pie topped with mashed potato"}',
  60, 'medium', 4,
  '[{"name":"양고기 간것","quantity":"500g"},{"name":"감자","quantity":"5개"},{"name":"양파","quantity":"2개"},{"name":"당근","quantity":"2개"},{"name":"우유","quantity":"100ml"},{"name":"버터","quantity":"50g"},{"name":"토마토 페이스트","quantity":"2큰술"}]',
