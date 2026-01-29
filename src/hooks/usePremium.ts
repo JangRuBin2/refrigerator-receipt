@@ -20,6 +20,10 @@ export type PremiumFeature =
   | 'waste_analysis'
   | 'no_ads';
 
+// TODO: 결제 기능 활성화 시 false로 변경
+// 현재는 모든 사용자에게 프리미엄 기능 개방
+const BYPASS_PREMIUM_CHECK = true;
+
 // 각 기능이 프리미엄 전용인지 정의
 const PREMIUM_FEATURES: Record<PremiumFeature, boolean> = {
   receipt_scan: true,
@@ -39,9 +43,17 @@ let cacheTimestamp: number | null = null;
 
 export function usePremium(): UsePremiumReturn {
   const [subscription, setSubscription] = useState<SubscriptionResponse | null>(cachedSubscription);
-  const [isLoading, setIsLoading] = useState(!cachedSubscription);
+  const [isLoading, setIsLoading] = useState(!cachedSubscription && !BYPASS_PREMIUM_CHECK);
 
   const fetchSubscription = useCallback(async (force = false) => {
+    // 프리미엄 체크 우회 시 API 호출 스킵
+    if (BYPASS_PREMIUM_CHECK) {
+      const premiumSub: SubscriptionResponse = { isPremium: true, plan: 'premium' };
+      setSubscription(premiumSub);
+      setIsLoading(false);
+      return;
+    }
+
     // 캐시가 유효한 경우 스킵
     if (!force && cachedSubscription && cacheTimestamp) {
       const now = Date.now();
@@ -76,6 +88,10 @@ export function usePremium(): UsePremiumReturn {
   }, [fetchSubscription]);
 
   const checkPremiumAccess = useCallback((feature: PremiumFeature): boolean => {
+    // 프리미엄 체크 우회 시 모든 기능 접근 가능
+    if (BYPASS_PREMIUM_CHECK) {
+      return true;
+    }
     // 프리미엄 기능이 아니면 항상 접근 가능
     if (!PREMIUM_FEATURES[feature]) {
       return true;
@@ -89,7 +105,8 @@ export function usePremium(): UsePremiumReturn {
   }, [fetchSubscription]);
 
   return {
-    isPremium: subscription?.isPremium ?? false,
+    // 프리미엄 체크 우회 시 항상 true
+    isPremium: BYPASS_PREMIUM_CHECK ? true : (subscription?.isPremium ?? false),
     isLoading,
     subscription,
     refetch,
