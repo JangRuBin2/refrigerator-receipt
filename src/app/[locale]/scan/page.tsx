@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Camera, Upload, Check, Loader2, RefreshCw } from 'lucide-react';
+import { Camera, Upload, Check, Loader2, RefreshCw, Sparkles, Clock, AlertCircle } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -18,6 +18,11 @@ import type { ScannedItem, Category, Unit, StorageType } from '@/types';
 const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
 const UNITS: Unit[] = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
 
+interface ExtendedScannedItem extends ScannedItem {
+  confidence?: number;
+  estimatedExpiryDays?: number;
+}
+
 export default function ScanPage() {
   const t = useTranslations();
   const params = useParams();
@@ -27,7 +32,7 @@ export default function ScanPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const { isPremium, isLoading: isPremiumLoading } = usePremium();
+  const { isPremium } = usePremium();
 
   useEffect(() => {
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
@@ -36,12 +41,13 @@ export default function ScanPage() {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const [step, setStep] = useState<'upload' | 'scanning' | 'confirm'>('upload');
-  const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
+  const [scannedItems, setScannedItems] = useState<ExtendedScannedItem[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [useAIVision, setUseAIVision] = useState(true);
 
-  const handleScanClick = (inputRef: React.RefObject<HTMLInputElement>) => {
+  const handleScanClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
     if (!isPremium) {
       setShowPremiumModal(true);
       return;
@@ -69,6 +75,7 @@ export default function ScanPage() {
     try {
       const formData = new FormData();
       formData.append('image', file);
+      formData.append('useAIVision', useAIVision.toString());
 
       const response = await fetch('/api/receipts/scan', {
         method: 'POST',
@@ -81,11 +88,13 @@ export default function ScanPage() {
         throw new Error(data.error || 'Scan failed');
       }
 
-      const items: ScannedItem[] = data.items.map((item: {
+      const items: ExtendedScannedItem[] = data.items.map((item: {
         name: string;
         quantity: number;
         unit: string;
         category: string;
+        confidence?: number;
+        estimatedExpiryDays?: number;
       }) => ({
         ...item,
         selected: true,
@@ -108,7 +117,7 @@ export default function ScanPage() {
     );
   };
 
-  const updateItem = (index: number, updates: Partial<ScannedItem>) => {
+  const updateItem = (index: number, updates: Partial<ExtendedScannedItem>) => {
     setScannedItems((items) =>
       items.map((item, i) => (i === index ? { ...item, ...updates } : item))
     );
@@ -119,6 +128,11 @@ export default function ScanPage() {
     const today = new Date().toISOString().split('T')[0];
 
     selectedItems.forEach((item) => {
+      // AI가 추정한 유통기한 사용 또는 기본값
+      const expiryDate = item.estimatedExpiryDays
+        ? new Date(Date.now() + item.estimatedExpiryDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        : calculateExpiryDate(today, item.category || 'etc', 'refrigerated');
+
       addIngredient({
         name: item.name,
         category: item.category || 'etc',
@@ -126,7 +140,7 @@ export default function ScanPage() {
         unit: item.unit || 'ea',
         storageType: 'refrigerated' as StorageType,
         purchaseDate: today,
-        expiryDate: calculateExpiryDate(today, item.category || 'etc', 'refrigerated'),
+        expiryDate,
       });
     });
 
@@ -140,6 +154,29 @@ export default function ScanPage() {
     setError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
+  };
+
+  const getConfidenceColor = (confidence?: number) => {
+    if (!confidence) return 'bg-gray-200';
+    if (confidence >= 0.8) return 'bg-green-500';
+    if (confidence >= 0.6) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const getModeLabel = (mode: string) => {
+    switch (mode) {
+      case 'ai-vision':
+        return { label: 'AI Vision', icon: Sparkles, color: 'text-purple-600 bg-purple-50' };
+      case 'ai':
+        return { label: 'AI', icon: Sparkles, color: 'text-blue-600 bg-blue-50' };
+      case 'ocr':
+        return { label: 'OCR', icon: Camera, color: 'text-green-600 bg-green-50' };
+      default:
+        return { label: 'Demo', icon: AlertCircle, color: 'text-yellow-600 bg-yellow-50' };
     }
   };
 
@@ -155,6 +192,35 @@ export default function ScanPage() {
                 {error}
               </div>
             )}
+
+            {/* AI Vision Toggle */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                    <div>
+                      <p className="font-medium">{t('scan.aiVisionMode')}</p>
+                      <p className="text-xs text-gray-500">{t('scan.aiVisionDescription')}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setUseAIVision(!useAIVision)}
+                    className={cn(
+                      'relative h-6 w-11 rounded-full transition-colors',
+                      useAIVision ? 'bg-purple-600' : 'bg-gray-300'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform',
+                        useAIVision && 'translate-x-5'
+                      )}
+                    />
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Upload Area */}
             {isMobile && (
@@ -247,17 +313,33 @@ export default function ScanPage() {
               )}
               <Loader2 className="mb-4 h-12 w-12 animate-spin text-primary-600" />
               <p className="text-lg font-medium">{t('scan.scanning')}</p>
+              {useAIVision && (
+                <p className="mt-2 flex items-center gap-1 text-sm text-purple-600">
+                  <Sparkles className="h-4 w-4" />
+                  AI Vision analyzing...
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
 
         {step === 'confirm' && (
           <>
-            {scanMode === 'simulation' && (
-              <div className="rounded-lg bg-yellow-50 p-3 text-sm text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-                Demo mode - Configure OCR API for real receipt scanning
-              </div>
-            )}
+            {/* Mode indicator */}
+            {(() => {
+              const modeInfo = getModeLabel(scanMode);
+              const ModeIcon = modeInfo.icon;
+              return (
+                <div className={cn('flex items-center gap-2 rounded-lg p-3 text-sm', modeInfo.color)}>
+                  <ModeIcon className="h-4 w-4" />
+                  <span>
+                    {scanMode === 'simulation'
+                      ? 'Demo mode - Configure OCR API for real receipt scanning'
+                      : `Analyzed with ${modeInfo.label}`}
+                  </span>
+                </div>
+              );
+            })()}
 
             <Card>
               <CardContent className="p-4">
@@ -281,11 +363,11 @@ export default function ScanPage() {
                           : 'border-gray-200 bg-gray-50 opacity-50 dark:border-gray-700 dark:bg-gray-800'
                       )}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-start gap-3">
                         <button
                           onClick={() => toggleItem(index)}
                           className={cn(
-                            'flex h-6 w-6 items-center justify-center rounded-full border-2',
+                            'mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2',
                             item.selected
                               ? 'border-primary-600 bg-primary-600 text-white'
                               : 'border-gray-300'
@@ -295,13 +377,22 @@ export default function ScanPage() {
                         </button>
 
                         <div className="flex-1">
-                          <Input
-                            value={item.name}
-                            onChange={(e) =>
-                              updateItem(index, { name: e.target.value })
-                            }
-                            className="mb-2 h-8"
-                          />
+                          <div className="mb-2 flex items-center gap-2">
+                            <Input
+                              value={item.name}
+                              onChange={(e) =>
+                                updateItem(index, { name: e.target.value })
+                              }
+                              className="h-8 flex-1"
+                            />
+                            {item.confidence && (
+                              <div className="flex items-center gap-1" title={`Confidence: ${Math.round(item.confidence * 100)}%`}>
+                                <div className={cn('h-2 w-2 rounded-full', getConfidenceColor(item.confidence))} />
+                                <span className="text-xs text-gray-500">{Math.round(item.confidence * 100)}%</span>
+                              </div>
+                            )}
+                          </div>
+
                           <div className="grid grid-cols-3 gap-2">
                             <Input
                               type="number"
@@ -338,6 +429,15 @@ export default function ScanPage() {
                               className="h-8"
                             />
                           </div>
+
+                          {item.estimatedExpiryDays && (
+                            <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+                              <Clock className="h-3 w-3" />
+                              <span>
+                                {t('scan.estimatedExpiry', { days: item.estimatedExpiryDays })}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

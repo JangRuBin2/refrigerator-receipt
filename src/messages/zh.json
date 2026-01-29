@@ -143,7 +143,10 @@
     "noItems": "未找到食材",
     "confirmItems": "确认食材",
     "addToFridge": "添加到冰箱",
-    "retry": "重新扫描"
+    "retry": "重新扫描",
+    "aiVisionMode": "AI Vision 模式",
+    "aiVisionDescription": "AI直接分析收据，识别更准确",
+    "estimatedExpiry": "预计保质期: {days}天"
   },
   "settings": {
     "title": "设置",

@@ -11,16 +11,24 @@
 ## 구현 순서
 
 ### 1. 영수증 스캔 (OCR) 개선
-**상태**: 기본 구조 있음, API 연동 필요
+**상태**: ✅ 완료
 **우선순위**: 높음 (핵심 유료 기능)
 
-- [ ] Google Cloud Vision API 연동
-- [ ] 영수증 텍스트 파싱 로직 개선
-- [ ] 식재료 자동 분류 (카테고리, 유통기한 추정)
-- [ ] 스캔 히스토리 저장 (`receipt_scans` 테이블 활용)
+- [x] Google Cloud Vision API 연동
+- [x] Google Gemini AI Vision 모드 추가 (이미지 직접 분석)
+- [x] AI 기반 텍스트 파싱 (Gemini로 식재료 추출)
+- [x] 식재료 자동 분류 (카테고리, 유통기한 추정)
+- [x] 스캔 히스토리 저장 (`receipt_scans` 테이블)
+- [x] 신뢰도 점수 표시 (confidence)
+- [x] AI Vision 토글 옵션 UI
+
+**구현 방식**:
+- OCR + AI 파싱: Vision API로 텍스트 추출 → Gemini로 식재료 파싱
+- AI Vision: Gemini가 이미지를 직접 분석하여 식재료 추출 (더 정확)
 
 **관련 파일**:
 - `src/app/api/receipts/scan/route.ts`
+- `src/lib/ocr/ai-parser.ts` (신규)
 - `src/app/[locale]/scan/page.tsx`
 
 ---

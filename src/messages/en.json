@@ -143,7 +143,10 @@
     "noItems": "No items found",
     "confirmItems": "Confirm Items",
     "addToFridge": "Add to Fridge",
-    "retry": "Scan Again"
+    "retry": "Scan Again",
+    "aiVisionMode": "AI Vision Mode",
+    "aiVisionDescription": "AI analyzes your receipt directly for more accurate recognition",
+    "estimatedExpiry": "Est. expiry: {days} days"
   },
   "settings": {
     "title": "Settings",

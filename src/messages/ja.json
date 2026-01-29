@@ -143,7 +143,10 @@
     "noItems": "食材が見つかりませんでした",
     "confirmItems": "食材を確認",
     "addToFridge": "冷蔵庫に追加",
-    "retry": "再スキャン"
+    "retry": "再スキャン",
+    "aiVisionMode": "AI Visionモード",
+    "aiVisionDescription": "AIがレシートを直接分析してより正確に認識します",
+    "estimatedExpiry": "推定賞味期限: {days}日"
   },
   "settings": {
     "title": "設定",

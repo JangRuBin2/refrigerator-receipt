@@ -143,7 +143,10 @@
     "noItems": "재료를 찾지 못했습니다",
     "confirmItems": "재료 확인",
     "addToFridge": "냉장고에 추가",
-    "retry": "다시 스캔"
+    "retry": "다시 스캔",
+    "aiVisionMode": "AI Vision 모드",
+    "aiVisionDescription": "AI가 영수증을 직접 분석하여 더 정확하게 인식합니다",
+    "estimatedExpiry": "예상 유통기한: {days}일"
   },
   "settings": {
     "title": "설정",
