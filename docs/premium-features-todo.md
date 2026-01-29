@@ -26,24 +26,25 @@
 ---
 
 ### 2. AI 맞춤 레시피 생성
-**상태**: 미구현
+**상태**: ✅ 완료
 **우선순위**: 높음 (차별화 기능)
 
-- [ ] OpenAI/Claude API 연동 설정
-- [ ] AI 레시피 생성 API (`/api/recipes/ai-generate`)
-- [ ] 프롬프트 설계 (냉장고 재료 기반)
-- [ ] AI 레시피 UI 페이지 또는 모달
+- [x] Google Gemini API 연동 설정
+- [x] AI 레시피 생성 API (`/api/recipes/ai-generate`)
+- [x] 프롬프트 설계 (냉장고 재료 기반)
+- [x] AI 레시피 UI (추천 페이지에 'AI 모드' 탭 추가)
 - [ ] 생성된 레시피 저장 기능 (즐겨찾기)
 
 **구현 내용**:
 ```
-입력: 냉장고 재료 목록 + 선호도 (매운맛, 조리시간 등)
+입력: 냉장고 재료 목록 + 선호도 (조리시간, 난이도, 요리 스타일)
 출력: 레시피 이름, 재료, 조리법, 예상 조리시간
+API: Google Gemini 1.5 Flash
 ```
 
 **관련 파일**:
-- `src/app/api/recipes/ai-generate/route.ts` (신규)
-- `src/app/[locale]/recipes/page.tsx` 또는 별도 페이지
+- `src/app/api/recipes/ai-generate/route.ts`
+- `src/app/[locale]/recommend/page.tsx` (AI 모드 탭)
 
 ---
 
@@ -146,10 +147,8 @@ CREATE TABLE waste_logs (
 # OCR
 GOOGLE_CLOUD_VISION_API_KEY=
 
-# AI 레시피
-OPENAI_API_KEY=
-# 또는
-ANTHROPIC_API_KEY=
+# AI 레시피 (✅ 구현됨)
+GOOGLE_GEMINI_API_KEY=
 
 # 외부 검색
 YOUTUBE_API_KEY=
