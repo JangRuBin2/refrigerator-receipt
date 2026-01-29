@@ -109,7 +109,10 @@
     "openExternal": "Open externally",
     "noExternalResults": "No results found",
     "searchQuery": "Keywords: {query}",
-    "apiNotConfigured": "Search API is not configured"
+    "apiNotConfigured": "Search API is not configured",
+    "searchPlaceholder": "Enter search keywords...",
+    "randomStrategy": "Random",
+    "expiringStrategy": "Expiring Soon"
   },
   "recommend": {
     "title": "Menu Recommend",

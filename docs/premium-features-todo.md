@@ -57,16 +57,33 @@ API: Google Gemini 1.5 Flash
 ---
 
 ### 3. 외부 레시피 검색 (YouTube/Google)
-**상태**: 기본 구조 있음, API 키 필요
+**상태**: ✅ 완료
 **우선순위**: 중간
 
-- [ ] YouTube Data API v3 연동
-- [ ] Google Custom Search API 연동 (선택)
-- [ ] 검색 결과 캐싱 (비용 절감)
-- [ ] 검색 UI 개선 (필터, 정렬)
+- [x] YouTube Data API v3 연동
+- [x] Google Custom Search API 연동
+- [x] 검색 결과 캐싱 (15분 TTL, 비용 절감)
+- [x] 검색 UI 개선 (소스 필터, 썸네일, 채널명)
+- [x] 수동 검색 입력 기능
+- [x] 유통기한 임박 재료 우선 검색 전략
+- [x] API 미설정 시 graceful fallback
+
+**구현 내용**:
+- 랜덤 전략: 냉장고 재료 중 랜덤 2~3개로 검색
+- 임박 전략: 유통기한 임박한 재료 우선 선택
+- 수동 검색: 직접 키워드 입력 가능
+
+**환경 변수**:
+```
+YOUTUBE_API_KEY=
+GOOGLE_SEARCH_API_KEY=
+GOOGLE_SEARCH_ENGINE_ID=
+```
 
 **관련 파일**:
 - `src/app/api/recipes/search/route.ts`
+- `src/lib/search/youtube.ts`
+- `src/lib/search/google.ts`
 - `src/app/[locale]/recipes/page.tsx`
 
 ---

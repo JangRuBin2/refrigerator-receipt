@@ -109,7 +109,10 @@
     "openExternal": "外部で見る",
     "noExternalResults": "検索結果がありません",
     "searchQuery": "検索キーワード: {query}",
-    "apiNotConfigured": "検索APIが設定されていません"
+    "apiNotConfigured": "検索APIが設定されていません",
+    "searchPlaceholder": "検索キーワードを入力...",
+    "randomStrategy": "ランダム",
+    "expiringStrategy": "期限間近"
   },
   "recommend": {
     "title": "メニュー推薦",

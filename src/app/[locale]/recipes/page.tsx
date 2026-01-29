@@ -3,12 +3,13 @@
 import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, ExternalLink, Search, Youtube, Crown } from 'lucide-react';
+import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, ExternalLink, Search, Youtube, Crown, AlertTriangle, Timer } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
 import { useStore } from '@/store/useStore';
 import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
@@ -72,6 +73,9 @@ function RecipesContent() {
   const [externalFilter, setExternalFilter] = useState<'all' | 'youtube' | 'google'>('all');
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipesLoading, setRecipesLoading] = useState(true);
+  const [searchStrategy, setSearchStrategy] = useState<'random' | 'expiring'>('random');
+  const [customSearchQuery, setCustomSearchQuery] = useState('');
+  const [apiStatus, setApiStatus] = useState<{ youtube: boolean; google: boolean } | null>(null);
 
   // Fetch recipes from DB
   useEffect(() => {
@@ -145,7 +149,7 @@ function RecipesContent() {
     }
   }, [meal]);
 
-  const searchExternalRecipes = async () => {
+  const searchExternalRecipes = async (useCustomQuery = false) => {
     // 프리미엄 체크
     if (!isPremium) {
       setShowPremiumModal(true);
@@ -154,33 +158,49 @@ function RecipesContent() {
 
     setExternalLoading(true);
     setExternalError('');
-    try {
-      // Zustand의 재료 목록에서 랜덤 2~3개 선택
-      const names = ingredients.map(i => i.name);
-      if (names.length === 0) {
-        setExternalError(t('fridge.empty'));
-        setExternalLoading(false);
-        return;
-      }
-      const shuffled = [...names].sort(() => Math.random() - 0.5);
-      const count = Math.min(shuffled.length, Math.floor(Math.random() * 2) + 2);
-      const selected = shuffled.slice(0, count);
-      const ingredientsParam = selected.join(',');
+    setExternalRecipes([]);
 
-      const response = await fetch(`/api/recipes/search?ingredients=${encodeURIComponent(ingredientsParam)}&type=all`);
+    try {
+      let url = '/api/recipes/search?type=all';
+
+      if (useCustomQuery && customSearchQuery.trim()) {
+        // 수동 검색
+        url += `&q=${encodeURIComponent(customSearchQuery.trim())}`;
+      } else {
+        // 재료 기반 검색
+        url += `&strategy=${searchStrategy}`;
+      }
+
+      const response = await fetch(url);
       const data = await response.json();
 
+      // API 상태 저장
+      if (data.apiStatus) {
+        setApiStatus(data.apiStatus);
+      }
+
       if (!response.ok) {
-        setExternalError(data.error || t('common.error'));
+        if (response.status === 503) {
+          setExternalError(t('recipe.apiNotConfigured'));
+        } else {
+          setExternalError(data.error || t('common.error'));
+        }
         return;
       }
 
       setExternalRecipes(data.results || []);
-      setExternalQuery(data.query || ingredientsParam);
+      setExternalQuery(data.query || '');
     } catch {
       setExternalError(t('common.error'));
     } finally {
       setExternalLoading(false);
+    }
+  };
+
+  const handleCustomSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (customSearchQuery.trim()) {
+      searchExternalRecipes(true);
     }
   };
 
@@ -201,6 +221,12 @@ function RecipesContent() {
         return 'bg-gray-100 text-gray-700';
     }
   };
+
+  // 유통기한 임박 재료 개수
+  const expiringCount = ingredients.filter(i => {
+    const daysLeft = Math.ceil((new Date(i.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return daysLeft <= 3 && daysLeft >= 0;
+  }).length;
 
   return (
     <div className="space-y-4 p-4">
@@ -368,8 +394,59 @@ function RecipesContent() {
             )}
           </h2>
 
+          {/* 수동 검색 입력 */}
+          <form onSubmit={handleCustomSearch} className="mb-4">
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                value={customSearchQuery}
+                onChange={(e) => setCustomSearchQuery(e.target.value)}
+                placeholder={t('recipe.searchPlaceholder')}
+                className="flex-1"
+              />
+              <Button
+                type="submit"
+                disabled={externalLoading || !customSearchQuery.trim()}
+                variant="secondary"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+
+          {/* 전략 선택 */}
+          <div className="mb-4 flex gap-2">
+            <button
+              onClick={() => setSearchStrategy('random')}
+              className={cn(
+                'flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2',
+                searchStrategy === 'random'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300'
+              )}
+            >
+              <Shuffle className="h-4 w-4" />
+              {t('recipe.randomStrategy')}
+            </button>
+            <button
+              onClick={() => setSearchStrategy('expiring')}
+              className={cn(
+                'flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2',
+                searchStrategy === 'expiring'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300'
+              )}
+            >
+              <Timer className="h-4 w-4" />
+              {t('recipe.expiringStrategy')}
+              {expiringCount > 0 && (
+                <Badge variant="danger" className="ml-1 text-xs">{expiringCount}</Badge>
+              )}
+            </button>
+          </div>
+
           <Button
-            onClick={searchExternalRecipes}
+            onClick={() => searchExternalRecipes(false)}
             disabled={externalLoading || ingredients.length === 0}
             className="w-full"
           >
@@ -381,7 +458,7 @@ function RecipesContent() {
             ) : (
               <>
                 {!isPremium && <Crown className="mr-2 h-4 w-4" />}
-                {isPremium && <Shuffle className="mr-2 h-4 w-4" />}
+                {isPremium && (searchStrategy === 'expiring' ? <Timer className="mr-2 h-4 w-4" /> : <Shuffle className="mr-2 h-4 w-4" />)}
                 {t('recipe.searchByIngredients')}
               </>
             )}
@@ -392,7 +469,10 @@ function RecipesContent() {
           )}
 
           {externalError && (
-            <p className="mt-3 text-center text-sm text-red-500">{externalError}</p>
+            <div className="mt-3 flex items-center justify-center gap-2 text-sm text-red-500">
+              <AlertTriangle className="h-4 w-4" />
+              {externalError}
+            </div>
           )}
 
           {externalQuery && externalRecipes.length > 0 && (
@@ -409,11 +489,13 @@ function RecipesContent() {
                   <button
                     key={f}
                     onClick={() => setExternalFilter(f)}
+                    disabled={f !== 'all' && apiStatus && !apiStatus[f as 'youtube' | 'google']}
                     className={cn(
                       'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
                       externalFilter === f
                         ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300',
+                      f !== 'all' && apiStatus && !apiStatus[f as 'youtube' | 'google'] && 'opacity-50 cursor-not-allowed'
                     )}
                   >
                     {f === 'all' ? t('fridge.all') : t(`recipe.${f}`)}

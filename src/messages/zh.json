@@ -109,7 +109,10 @@
     "openExternal": "外部查看",
     "noExternalResults": "没有搜索结果",
     "searchQuery": "搜索关键词: {query}",
-    "apiNotConfigured": "搜索API未配置"
+    "apiNotConfigured": "搜索API未配置",
+    "searchPlaceholder": "输入搜索关键词...",
+    "randomStrategy": "随机食材",
+    "expiringStrategy": "即将过期"
   },
   "recommend": {
     "title": "菜单推荐",
