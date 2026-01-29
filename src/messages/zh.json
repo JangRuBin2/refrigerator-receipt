@@ -19,7 +19,8 @@
     "fridge": "冰箱",
     "scan": "扫描",
     "recipes": "食谱",
-    "settings": "设置"
+    "settings": "设置",
+    "shopping": "购物"
   },
   "home": {
     "welcome": "你好！",
@@ -32,7 +33,8 @@
     "lunch": "午餐推荐",
     "dinner": "晚餐推荐",
     "quickActions": "快捷菜单",
-    "viewAll": "查看全部"
+    "viewAll": "查看全部",
+    "shoppingDescription": "AI推荐的智能购物清单"
   },
   "fridge": {
     "title": "我的冰箱",
@@ -253,5 +255,19 @@
     "scan": "收据扫描",
     "expiry": "过期提醒",
     "recipe": "食谱推荐"
+  },
+  "shopping": {
+    "title": "购物清单",
+    "progress": "进度",
+    "empty": "购物清单为空",
+    "addItem": "添加项目",
+    "itemNamePlaceholder": "输入食材名...",
+    "aiRecommend": "AI推荐",
+    "completeList": "完成购物",
+    "filter": {
+      "all": "全部",
+      "unchecked": "待购",
+      "checked": "已购"
+    }
   }
 }

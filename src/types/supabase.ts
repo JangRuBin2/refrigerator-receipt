@@ -278,6 +278,46 @@ export type Database = {
           }
         ];
       };
+      shopping_lists: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          items: Json;
+          is_active: boolean;
+          created_at: string;
+          completed_at: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name?: string;
+          items?: Json;
+          is_active?: boolean;
+          created_at?: string;
+          completed_at?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          items?: Json;
+          is_active?: boolean;
+          created_at?: string;
+          completed_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'shopping_lists_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
     };
     Views: Record<string, unknown>;
     Functions: Record<string, unknown>;
@@ -310,3 +350,15 @@ export type Recipe = Tables<'recipes'>;
 export type UserFavorite = Tables<'user_favorites'>;
 export type ReceiptScan = Tables<'receipt_scans'>;
 export type Subscription = Tables<'subscriptions'>;
+export type ShoppingList = Tables<'shopping_lists'>;
+
+// Shopping list item type
+export interface ShoppingItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: Unit;
+  category: Category;
+  checked: boolean;
+  addedAt: string;
+}

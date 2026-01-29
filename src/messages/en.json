@@ -19,7 +19,8 @@
     "fridge": "Fridge",
     "scan": "Scan",
     "recipes": "Recipes",
-    "settings": "Settings"
+    "settings": "Settings",
+    "shopping": "Shopping"
   },
   "home": {
     "welcome": "Hello!",
@@ -32,7 +33,8 @@
     "lunch": "Lunch Ideas",
     "dinner": "Dinner Ideas",
     "quickActions": "Quick Actions",
-    "viewAll": "View All"
+    "viewAll": "View All",
+    "shoppingDescription": "AI-powered smart shopping list"
   },
   "fridge": {
     "title": "My Fridge",
@@ -253,5 +255,19 @@
     "scan": "Receipt Scan",
     "expiry": "Expiry Alerts",
     "recipe": "Recipe Suggestions"
+  },
+  "shopping": {
+    "title": "Shopping List",
+    "progress": "Progress",
+    "empty": "Your shopping list is empty",
+    "addItem": "Add Item",
+    "itemNamePlaceholder": "Enter item name...",
+    "aiRecommend": "AI Recommendations",
+    "completeList": "Complete Shopping",
+    "filter": {
+      "all": "All",
+      "unchecked": "To Buy",
+      "checked": "Done"
+    }
   }
 }

@@ -67,7 +67,19 @@ CREATE TABLE IF NOT EXISTS public.receipt_scans (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Subscriptions 테이블 (유저 구독 정보)
+-- 6. Shopping Lists 테이블 (장보기 목록)
+CREATE TABLE IF NOT EXISTS public.shopping_lists (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL DEFAULT '장보기 목록',
+  items JSONB NOT NULL DEFAULT '[]', -- [{name, quantity, unit, category, checked, addedAt}]
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. Subscriptions 테이블 (유저 구독 정보)
 CREATE TABLE IF NOT EXISTS public.subscriptions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -90,6 +102,7 @@ ALTER TABLE public.ingredients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recipes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.receipt_scans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shopping_lists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Profiles 정책
@@ -118,6 +131,10 @@ CREATE POLICY "Users can CRUD own favorites" ON public.user_favorites
 CREATE POLICY "Users can CRUD own scans" ON public.receipt_scans
   FOR ALL USING (auth.uid() = user_id);
 
+-- Shopping Lists 정책
+CREATE POLICY "Users can CRUD own shopping lists" ON public.shopping_lists
+  FOR ALL USING (auth.uid() = user_id);
+
 -- Subscriptions 정책
 CREATE POLICY "Users can view own subscription" ON public.subscriptions
   FOR SELECT USING (auth.uid() = user_id);
@@ -131,6 +148,8 @@ CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON public.user_favorites(u
 CREATE INDEX IF NOT EXISTS idx_recipes_tags ON public.recipes USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON public.subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_expires_at ON public.subscriptions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_shopping_lists_user_id ON public.shopping_lists(user_id);
+CREATE INDEX IF NOT EXISTS idx_shopping_lists_is_active ON public.shopping_lists(is_active);
 
 -- 프로필 자동 생성 트리거
 CREATE OR REPLACE FUNCTION public.handle_new_user()

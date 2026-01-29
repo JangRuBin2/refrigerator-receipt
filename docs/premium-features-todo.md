@@ -89,15 +89,25 @@ GOOGLE_SEARCH_ENGINE_ID=
 ---
 
 ### 4. 스마트 장보기 목록
-**상태**: 미구현
+**상태**: ✅ 완료
 **우선순위**: 중간 (실용적 기능)
 
-- [ ] 장보기 목록 DB 테이블 (`shopping_lists`)
-- [ ] 장보기 API (`/api/shopping`)
-- [ ] 소진 예측 알고리즘 (사용 패턴 분석)
-- [ ] 자주 사는 재료 추천
-- [ ] 장보기 목록 UI 페이지 (`/shopping`)
-- [ ] 체크리스트 기능
+- [x] 장보기 목록 DB 테이블 (`shopping_lists`)
+- [x] 장보기 API (`/api/shopping`)
+- [x] AI 기반 추천 알고리즘 (Gemini)
+  - 유통기한 임박 재료 대체 추천
+  - 자주 구매하는 재료 분석 (스캔 기록)
+  - 균형 잡힌 식단 기본 재료 추천
+- [x] 장보기 목록 UI 페이지 (`/shopping`)
+- [x] 체크리스트 기능 (카테고리별 그룹핑)
+- [x] 진행 상황 표시 (프로그레스 바)
+- [x] 목록 완료 시 새 목록 자동 생성
+
+**관련 파일**:
+- `src/app/api/shopping/route.ts`
+- `src/app/api/shopping/recommend/route.ts`
+- `src/app/[locale]/shopping/page.tsx`
+- `supabase/schema.sql` (shopping_lists 테이블)
 
 **DB 스키마**:
 ```sql

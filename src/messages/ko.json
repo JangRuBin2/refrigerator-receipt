@@ -19,7 +19,8 @@
     "fridge": "냉장고",
     "scan": "스캔",
     "recipes": "레시피",
-    "settings": "설정"
+    "settings": "설정",
+    "shopping": "장보기"
   },
   "home": {
     "welcome": "안녕하세요!",
@@ -32,7 +33,8 @@
     "lunch": "점심 추천",
     "dinner": "저녁 추천",
     "quickActions": "빠른 메뉴",
-    "viewAll": "모두 보기"
+    "viewAll": "모두 보기",
+    "shoppingDescription": "AI가 추천하는 스마트 장보기 목록"
   },
   "fridge": {
     "title": "내 냉장고",
@@ -253,5 +255,19 @@
     "scan": "영수증 스캔",
     "expiry": "유통기한 알림",
     "recipe": "레시피 추천"
+  },
+  "shopping": {
+    "title": "장보기 목록",
+    "progress": "진행 상황",
+    "empty": "장보기 목록이 비어있습니다",
+    "addItem": "항목 추가",
+    "itemNamePlaceholder": "재료명 입력...",
+    "aiRecommend": "AI 추천",
+    "completeList": "장보기 완료",
+    "filter": {
+      "all": "전체",
+      "unchecked": "미완료",
+      "checked": "완료"
+    }
   }
 }

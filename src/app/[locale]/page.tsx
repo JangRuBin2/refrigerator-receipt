@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Camera, AlertTriangle, Sparkles } from 'lucide-react';
+import { Camera, AlertTriangle, Sparkles, ShoppingCart } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -126,6 +126,21 @@ export default function HomePage() {
             </Link>
           </CardContent>
         </Card>
+
+        {/* Shopping List */}
+        <Link href={`/${locale}/shopping`}>
+          <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white transition-transform hover:scale-[1.02]">
+            <CardContent className="flex items-center gap-4 p-6">
+              <div className="rounded-full bg-white/20 p-3">
+                <ShoppingCart className="h-8 w-8" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">{t('shopping.title')}</h3>
+                <p className="text-sm text-white/80">{t('home.shoppingDescription')}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
         {/* Quick Actions */}
         <Card>
