@@ -12,7 +12,8 @@
     "loading": "加载中...",
     "error": "发生错误",
     "success": "成功",
-    "noData": "暂无数据"
+    "noData": "暂无数据",
+    "retry": "重试"
   },
   "nav": {
     "home": "首页",
@@ -34,7 +35,8 @@
     "dinner": "晚餐推荐",
     "quickActions": "快捷菜单",
     "viewAll": "查看全部",
-    "shoppingDescription": "AI推荐的智能购物清单"
+    "shoppingDescription": "AI推荐的智能购物清单",
+    "nutritionDescription": "基于冰箱食材的营养均衡分析"
   },
   "fridge": {
     "title": "我的冰箱",
@@ -269,5 +271,24 @@
       "unchecked": "待购",
       "checked": "已购"
     }
+  },
+  "nutrition": {
+    "title": "营养分析",
+    "balanceScore": "营养均衡评分",
+    "refresh": "刷新",
+    "macroNutrients": "营养素构成",
+    "calories": "热量",
+    "protein": "蛋白质",
+    "carbs": "碳水化合物",
+    "fat": "脂肪",
+    "fiber": "膳食纤维",
+    "sugar": "糖",
+    "categoryBalance": "类别均衡",
+    "aiRecommendations": "AI推荐",
+    "ingredientDetails": "食材营养详情",
+    "statusGood": "适宜",
+    "statusLow": "不足",
+    "statusHigh": "过量",
+    "noData": "没有可分析的食材"
   }
 }

@@ -12,7 +12,8 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "success": "Success",
-    "noData": "No data available"
+    "noData": "No data available",
+    "retry": "Retry"
   },
   "nav": {
     "home": "Home",
@@ -34,7 +35,8 @@
     "dinner": "Dinner Ideas",
     "quickActions": "Quick Actions",
     "viewAll": "View All",
-    "shoppingDescription": "AI-powered smart shopping list"
+    "shoppingDescription": "AI-powered smart shopping list",
+    "nutritionDescription": "Nutrition balance analysis based on your fridge"
   },
   "fridge": {
     "title": "My Fridge",
@@ -269,5 +271,24 @@
       "unchecked": "To Buy",
       "checked": "Done"
     }
+  },
+  "nutrition": {
+    "title": "Nutrition Analysis",
+    "balanceScore": "Balance Score",
+    "refresh": "Refresh",
+    "macroNutrients": "Macro Nutrients",
+    "calories": "Calories",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "fiber": "Fiber",
+    "sugar": "Sugar",
+    "categoryBalance": "Category Balance",
+    "aiRecommendations": "AI Recommendations",
+    "ingredientDetails": "Ingredient Details",
+    "statusGood": "Good",
+    "statusLow": "Low",
+    "statusHigh": "High",
+    "noData": "No ingredients to analyze"
   }
 }
