@@ -1,6 +1,6 @@
-# Fridge Mate - Claude Code Configuration
+# 밀키퍼 (MealKeeper) - Claude Code Configuration
 
-Receipt OCR 기반 식재료 관리 서비스
+영수증 스캔 기반 스마트 냉장고 관리 서비스
 
 ## Tech Stack
 

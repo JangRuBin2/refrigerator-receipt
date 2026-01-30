@@ -1,11 +1,11 @@
 {
-  "name": "Fridge Mate",
-  "short_name": "FridgeMate",
-  "description": "Smart fridge management - scan receipts, track expiry dates, get recipe recommendations",
+  "name": "밀키퍼 - MealKeeper",
+  "short_name": "밀키퍼",
+  "description": "스마트 냉장고 관리 - 영수증 스캔, 유통기한 관리, 레시피 추천",
   "start_url": "/ko",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#22c55e",
+  "theme_color": "#f97316",
   "icons": [
     {
       "src": "/icon-192.png",

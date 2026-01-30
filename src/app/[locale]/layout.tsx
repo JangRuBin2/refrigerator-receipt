@@ -6,13 +6,13 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { Metadata } from 'next';
 import '../globals.css';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://fridgemate.app';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mealkeeper.app';
 
 const titles: Record<string, string> = {
-  ko: 'Fridge Mate - 스마트 냉장고 관리',
-  en: 'Fridge Mate - Smart Fridge Management',
-  ja: 'Fridge Mate - スマート冷蔵庫管理',
-  zh: 'Fridge Mate - 智能冰箱管理',
+  ko: '밀키퍼 - 스마트 냉장고 관리',
+  en: 'MealKeeper - Smart Fridge Management',
+  ja: 'ミールキーパー - スマート冷蔵庫管理',
+  zh: 'MealKeeper - 智能冰箱管理',
 };
 
 const descriptions: Record<string, string> = {
@@ -37,7 +37,7 @@ export async function generateMetadata({
   return {
     title: {
       default: title,
-      template: `%s | Fridge Mate`,
+      template: `%s | 밀키퍼`,
     },
     description,
     metadataBase: new URL(baseUrl),
@@ -54,7 +54,7 @@ export async function generateMetadata({
       title,
       description,
       url: `${baseUrl}/${locale}`,
-      siteName: 'Fridge Mate',
+      siteName: '밀키퍼',
       locale: locale === 'zh' ? 'zh_CN' : locale,
       type: 'website',
     },
@@ -77,7 +77,7 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.includes(locale as never)) {
     notFound();
   }
 
@@ -89,9 +89,18 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#22c55e" />
+        <meta name="theme-color" content="#f97316" />
+        <link
+          rel="preload"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+          as="style"
+        />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
       </head>
-      <body className="bg-gray-50 dark:bg-gray-900">
+      <body className="bg-gray-50 font-sans antialiased dark:bg-gray-900">
         <NextIntlClientProvider messages={messages}>
           <div className="mx-auto min-h-screen max-w-lg bg-white shadow-lg dark:bg-gray-800">
             <main className="pb-20">{children}</main>
