@@ -41,7 +41,7 @@
 - [x] AI 레시피 생성 API (`/api/recipes/ai-generate`)
 - [x] 프롬프트 설계 (냉장고 재료 기반)
 - [x] AI 레시피 UI (추천 페이지에 'AI 모드' 탭 추가)
-- [ ] 생성된 레시피 저장 기능 (즐겨찾기)
+- [x] 생성된 레시피 저장 기능 (즐겨찾기)
 
 **구현 내용**:
 ```
@@ -52,7 +52,8 @@ API: Google Gemini 1.5 Flash
 
 **관련 파일**:
 - `src/app/api/recipes/ai-generate/route.ts`
-- `src/app/[locale]/recommend/page.tsx` (AI 모드 탭)
+- `src/app/api/recipes/ai-save/route.ts` (저장 API)
+- `src/app/[locale]/recommend/page.tsx` (AI 모드 탭, 저장 버튼)
 
 ---
 

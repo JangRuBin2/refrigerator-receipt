@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Shuffle, Sparkles, Clock, ChefHat, Loader2, RotateCcw, Search, ExternalLink, Crown, Wand2 } from 'lucide-react';
+import { Shuffle, Sparkles, Clock, ChefHat, Loader2, RotateCcw, Search, ExternalLink, Crown, Wand2, Heart, Check } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -65,6 +65,8 @@ export default function RecommendPage() {
     difficulty: '' as '' | 'easy' | 'medium' | 'hard',
     cuisine: '',
   });
+  const [aiSaving, setAiSaving] = useState(false);
+  const [aiSaved, setAiSaved] = useState(false);
 
   // Fetch recipe names for animation on mount
   useEffect(() => {
@@ -222,6 +224,7 @@ export default function RecommendPage() {
     setAiLoading(true);
     setAiError('');
     setAiRecipe(null);
+    setAiSaved(false);
 
     try {
       const ingredientNames = ingredients.map(i => i.name);
@@ -269,6 +272,34 @@ export default function RecommendPage() {
     setAiRecipe(null);
     setAiError('');
     setAiPreferences({ cookingTime: '', difficulty: '', cuisine: '' });
+    setAiSaved(false);
+  };
+
+  const saveAiRecipe = async () => {
+    if (!aiRecipe || aiSaving || aiSaved) return;
+
+    setAiSaving(true);
+    try {
+      const response = await fetch('/api/recipes/ai-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...aiRecipe,
+          locale,
+        }),
+      });
+
+      if (response.ok || response.status === 409) {
+        setAiSaved(true);
+      } else {
+        const data = await response.json();
+        setAiError(data.error || '저장에 실패했습니다');
+      }
+    } catch {
+      setAiError('저장에 실패했습니다');
+    } finally {
+      setAiSaving(false);
+    }
   };
 
   // === Render: Recipe Card ===
@@ -789,17 +820,37 @@ export default function RecommendPage() {
                     </div>
                   )}
 
-                  {/* Search Button */}
-                  <a
-                    href={getSearchUrl(aiRecipe.title)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
-                  >
-                    <Search className="h-4 w-4" />
-                    유튜브에서 비슷한 레시피 찾기
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                  {/* Action Buttons */}
+                  <div className="mt-4 flex items-center gap-3">
+                    <Button
+                      onClick={saveAiRecipe}
+                      disabled={aiSaving || aiSaved}
+                      variant={aiSaved ? 'default' : 'outline'}
+                      size="sm"
+                      className={cn(
+                        aiSaved && 'bg-red-500 hover:bg-red-500 text-white'
+                      )}
+                    >
+                      {aiSaving ? (
+                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                      ) : aiSaved ? (
+                        <Check className="mr-1.5 h-4 w-4" />
+                      ) : (
+                        <Heart className="mr-1.5 h-4 w-4" />
+                      )}
+                      {aiSaved ? '저장됨' : '즐겨찾기에 저장'}
+                    </Button>
+                    <a
+                      href={getSearchUrl(aiRecipe.title)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
+                    >
+                      <Search className="h-4 w-4" />
+                      유튜브 검색
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
                 </CardContent>
               </Card>
             )}
