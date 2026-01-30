@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, ExternalLink, Search, Youtube, Crown, AlertTriangle, Timer } from 'lucide-react';
@@ -15,6 +15,8 @@ import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import { cn } from '@/lib/utils';
 import type { Recipe, RecipeIngredient, ExternalRecipe, Difficulty } from '@/types';
+
+const RECIPES_PER_PAGE = 10;
 
 // DB 레시피를 프론트엔드 Recipe 타입으로 변환
 interface DBRecipe {
@@ -77,24 +79,74 @@ function RecipesContent() {
   const [customSearchQuery, setCustomSearchQuery] = useState('');
   const [apiStatus, setApiStatus] = useState<{ youtube: boolean; google: boolean } | null>(null);
 
-  // Fetch recipes from DB
-  useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const response = await fetch('/api/recipes?limit=100');
-        if (response.ok) {
-          const data = await response.json();
-          const mappedRecipes = (data.recipes || []).map(mapDBRecipeToRecipe);
+  // Infinite scroll state
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Fetch recipes from DB with pagination
+  const fetchRecipes = useCallback(async (currentOffset: number, append = false) => {
+    try {
+      if (!append) {
+        setRecipesLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const response = await fetch(`/api/recipes?limit=${RECIPES_PER_PAGE}&offset=${currentOffset}`);
+      if (response.ok) {
+        const data = await response.json();
+        const mappedRecipes = (data.recipes || []).map(mapDBRecipeToRecipe);
+
+        if (append) {
+          setRecipes(prev => [...prev, ...mappedRecipes]);
+        } else {
           setRecipes(mappedRecipes);
         }
-      } catch {
-        // error silently
-      } finally {
-        setRecipesLoading(false);
+
+        // Check if there are more recipes to load
+        const total = data.total || 0;
+        setHasMore(currentOffset + mappedRecipes.length < total);
+      }
+    } catch {
+      // error silently
+    } finally {
+      setRecipesLoading(false);
+      setLoadingMore(false);
+    }
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchRecipes(0);
+  }, [fetchRecipes]);
+
+  // Infinite scroll with IntersectionObserver
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !loadingMore && !recipesLoading) {
+          const newOffset = offset + RECIPES_PER_PAGE;
+          setOffset(newOffset);
+          fetchRecipes(newOffset, true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
       }
     };
-    fetchRecipes();
-  }, []);
+  }, [hasMore, loadingMore, recipesLoading, offset, fetchRecipes]);
 
   // Check ingredient availability for each recipe
   const recipesWithAvailability = recipes.map((recipe) => {
@@ -377,6 +429,21 @@ function RecipesContent() {
               </CardContent>
             </Card>
           ))}
+
+          {/* Infinite scroll trigger */}
+          <div ref={loadMoreRef} className="py-4">
+            {loadingMore && (
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
+                <span className="text-sm text-gray-500">{t('common.loading')}</span>
+              </div>
+            )}
+            {!hasMore && filteredRecipes.length > 0 && (
+              <p className="text-center text-sm text-gray-400">
+                {t('common.noData')}
+              </p>
+            )}
+          </div>
         </div>
       )}
 
