@@ -125,20 +125,27 @@ CREATE TABLE shopping_lists (
 ---
 
 ### 5. 영양 분석 리포트
-**상태**: 미구현
+**상태**: ✅ 완료
 **우선순위**: 중간
 
-- [ ] 식재료별 영양 정보 DB (또는 외부 API)
-- [ ] 섭취 기록 테이블 (`consumption_logs`)
-- [ ] 영양 분석 API (`/api/nutrition/analyze`)
-- [ ] 주간/월간 리포트 생성
-- [ ] 영양 분석 UI 페이지 (`/nutrition`)
-- [ ] 차트/그래프 시각화
+- [x] 식재료별 영양 정보 DB (카테고리별 평균 영양 정보)
+- [x] 영양 분석 API (`/api/nutrition/analyze`)
+- [x] 주간/월간 리포트 API (`/api/nutrition/report`)
+- [x] 영양 분석 UI 페이지 (`/nutrition`)
+- [x] 차트/그래프 시각화 (매크로 바, 카테고리 바)
+- [x] 기간 선택 탭 (현재 상태 / 주간 / 월간)
+- [x] AI 기반 영양 추천
 
 **분석 항목**:
-- 칼로리, 단백질, 탄수화물, 지방
-- 비타민, 미네랄 (선택)
-- 영양 균형 점수
+- 칼로리, 단백질, 탄수화물, 지방, 식이섬유, 당류
+- 카테고리별 균형 분석
+- 영양 균형 점수 (A~F 등급)
+- 구매 패턴 기반 주간/월간 트렌드
+
+**관련 파일**:
+- `src/app/api/nutrition/analyze/route.ts`
+- `src/app/api/nutrition/report/route.ts`
+- `src/app/[locale]/nutrition/page.tsx`
 
 ---
 
