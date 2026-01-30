@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useStore } from '@/store/useStore';
-import { getDaysUntilExpiry, getExpiryColor } from '@/lib/utils';
+import { getDaysUntilExpiry } from '@/lib/utils';
 import { useParams } from 'next/navigation';
 
 export default function HomePage() {
@@ -37,14 +37,14 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             {t('home.welcome')}
           </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-primary-600 dark:text-primary-400 font-medium">
             {t('common.appName')}
           </p>
         </div>
 
         {/* Scan Receipt Card */}
         <Link href={`/${locale}/scan`}>
-          <Card className="bg-gradient-to-r from-primary-500 to-primary-600 text-white transition-transform hover:scale-[1.02]">
+          <Card className="bg-gradient-to-r from-primary-500 to-primary-600 text-white transition-all hover:scale-[1.02] hover:shadow-lg">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-full bg-white/20 p-3">
                 <Camera className="h-8 w-8" />
@@ -61,13 +61,13 @@ export default function HomePage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
               {t('home.expiringItems')}
             </CardTitle>
             {expiringItems.length > 0 && (
               <Link
                 href={`/${locale}/fridge`}
-                className="text-sm text-primary-600 hover:underline"
+                className="text-sm text-primary-600 hover:underline dark:text-primary-400"
               >
                 {t('home.viewAll')}
               </Link>
@@ -110,14 +110,14 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-yellow-500" />
+              <Sparkles className="h-5 w-5 text-amber-500" />
               {t('home.whatToEat')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Link href={`/${locale}/recommend`}>
               <Button
-                className="h-20 w-full flex-col gap-2 bg-gradient-to-r from-orange-500 to-purple-500 text-white hover:from-orange-600 hover:to-purple-600"
+                className="h-20 w-full flex-col gap-2 bg-gradient-to-r from-primary-500 to-amber-500 text-white hover:from-primary-600 hover:to-amber-600"
                 size="lg"
               >
                 <Sparkles className="h-6 w-6" />
@@ -129,7 +129,7 @@ export default function HomePage() {
 
         {/* Shopping List */}
         <Link href={`/${locale}/shopping`}>
-          <Card className="bg-gradient-to-r from-green-500 to-emerald-600 text-white transition-transform hover:scale-[1.02]">
+          <Card className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white transition-all hover:scale-[1.02] hover:shadow-lg">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-full bg-white/20 p-3">
                 <ShoppingCart className="h-8 w-8" />
@@ -144,7 +144,7 @@ export default function HomePage() {
 
         {/* Nutrition Analysis */}
         <Link href={`/${locale}/nutrition`}>
-          <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white transition-transform hover:scale-[1.02]">
+          <Card className="bg-gradient-to-r from-violet-500 to-purple-600 text-white transition-all hover:scale-[1.02] hover:shadow-lg">
             <CardContent className="flex items-center gap-4 p-6">
               <div className="rounded-full bg-white/20 p-3">
                 <Activity className="h-8 w-8" />
