@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { ingredientUpdateSchema } from '@/lib/validations';
+import { ZodError } from 'zod';
 
 export async function PUT(
   request: NextRequest,
@@ -15,10 +17,11 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
+    const validated = ingredientUpdateSchema.parse(body);
 
     const { data, error } = await supabase
       .from('ingredients')
-      .update(body as never)
+      .update(validated)
       .eq('id', id)
       .eq('user_id', user.id)
       .select()
@@ -34,6 +37,12 @@ export async function PUT(
 
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -63,7 +72,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

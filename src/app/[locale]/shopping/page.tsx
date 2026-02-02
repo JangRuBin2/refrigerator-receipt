@@ -71,8 +71,8 @@ export default function ShoppingPage() {
         const data = await response.json();
         setList(data.list);
       }
-    } catch (error) {
-      console.error('Failed to fetch list:', error);
+    } catch {
+      // Error fetching list - fail silently
     } finally {
       setLoading(false);
     }
@@ -87,8 +87,8 @@ export default function ShoppingPage() {
         const data = await response.json();
         setRecommendations(data.recommendations || []);
       }
-    } catch (error) {
-      console.error('Failed to fetch recommendations:', error);
+    } catch {
+      // Error fetching recommendations - fail silently
     } finally {
       setRecommendLoading(false);
     }
@@ -119,8 +119,8 @@ export default function ShoppingPage() {
         setShowAddModal(false);
         setNewItem({ name: '', quantity: 1, unit: 'ea', category: 'etc' });
       }
-    } catch (error) {
-      console.error('Failed to add item:', error);
+    } catch {
+      // Error adding item - fail silently
     }
   };
 
@@ -161,8 +161,7 @@ export default function ShoppingPage() {
           updates: { checked },
         }),
       });
-    } catch (error) {
-      console.error('Failed to toggle check:', error);
+    } catch {
       // 실패 시 롤백
       fetchList();
     }
@@ -185,8 +184,8 @@ export default function ShoppingPage() {
       await fetch(`/api/shopping?listId=${list.id}&itemId=${itemId}`, {
         method: 'DELETE',
       });
-    } catch (error) {
-      console.error('Failed to delete item:', error);
+    } catch {
+      // 실패 시 롤백
       fetchList();
     }
   };
@@ -201,8 +200,8 @@ export default function ShoppingPage() {
       });
       // 새 목록 생성됨
       fetchList();
-    } catch (error) {
-      console.error('Failed to complete list:', error);
+    } catch {
+      // Error completing list - fail silently
     }
   };
 

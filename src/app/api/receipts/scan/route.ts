@@ -55,8 +55,7 @@ export async function POST(request: NextRequest) {
           rawText,
           mode: 'ai-vision',
         };
-      } catch (error) {
-        console.error('AI Vision error:', error);
+      } catch {
         // AI Vision 실패 시 기존 OCR로 폴백
         result = await processWithOCR(base64Image);
       }
@@ -86,7 +85,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('OCR Error:', errorMessage);
 
     return NextResponse.json({
       items: getSimulatedItems(),
@@ -100,7 +98,6 @@ export async function POST(request: NextRequest) {
 async function processWithOCR(base64Image: string): Promise<ScanResult> {
   // Google Cloud Vision 설정 확인
   if (!process.env.GOOGLE_CLOUD_CREDENTIALS_JSON) {
-    console.log('OCR credentials not configured, using simulation mode');
     return {
       items: getSimulatedItems(),
       rawText: '[Simulation Mode - Configure GOOGLE_CLOUD_CREDENTIALS_JSON for real OCR]',
@@ -128,8 +125,8 @@ async function processWithOCR(base64Image: string): Promise<ScanResult> {
           mode: 'ai',
         };
       }
-    } catch (error) {
-      console.error('AI parsing failed, falling back to rule-based:', error);
+    } catch {
+      // AI parsing failed, falling back to rule-based
     }
   }
 
@@ -188,8 +185,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ scans });
-  } catch (error) {
-    console.error('Error fetching scan history:', error);
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch scan history' }, { status: 500 });
   }
 }

@@ -20,9 +20,9 @@ export type PremiumFeature =
   | 'waste_analysis'
   | 'no_ads';
 
-// TODO: 결제 기능 활성화 시 false로 변경
-// 현재는 모든 사용자에게 프리미엄 기능 개방
-const BYPASS_PREMIUM_CHECK = true;
+// 환경변수로 프리미엄 체크 우회 설정
+// 개발 환경에서만 NEXT_PUBLIC_BYPASS_PREMIUM=true 설정
+const BYPASS_PREMIUM_CHECK = process.env.NEXT_PUBLIC_BYPASS_PREMIUM === 'true';
 
 // 각 기능이 프리미엄 전용인지 정의
 const PREMIUM_FEATURES: Record<PremiumFeature, boolean> = {
@@ -73,8 +73,7 @@ export function usePremium(): UsePremiumReturn {
         cacheTimestamp = Date.now();
         setSubscription(data);
       }
-    } catch (error) {
-      console.error('Failed to fetch subscription:', error);
+    } catch {
       // 실패 시 기본값
       const defaultSub: SubscriptionResponse = { isPremium: false, plan: 'free' };
       setSubscription(defaultSub);

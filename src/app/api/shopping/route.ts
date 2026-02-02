@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { shoppingAddSchema, shoppingUpdateSchema } from '@/lib/validations';
+import { ZodError } from 'zod';
 import type { ShoppingItem, Category, Unit } from '@/types/supabase';
 
 // GET: 활성 장보기 목록 조회
@@ -45,8 +47,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ list });
-  } catch (error) {
-    console.error('Shopping list error:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch shopping list' },
       { status: 500 }
@@ -65,14 +66,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { items, listId } = body as { items: Partial<ShoppingItem>[]; listId?: string };
-
-    if (!items || !Array.isArray(items)) {
-      return NextResponse.json({ error: 'Items array is required' }, { status: 400 });
-    }
+    const validated = shoppingAddSchema.parse(body);
 
     // 활성 목록 조회 또는 생성
-    let targetListId = listId;
+    let targetListId = validated.listId;
     if (!targetListId) {
       const { data: existingList } = await supabase
         .from('shopping_lists')
@@ -113,12 +110,12 @@ export async function POST(request: NextRequest) {
 
     // 새 아이템 추가
     const existingItems = (currentList.items as ShoppingItem[]) || [];
-    const newItems: ShoppingItem[] = items.map(item => ({
+    const newItems: ShoppingItem[] = validated.items.map(item => ({
       id: crypto.randomUUID(),
-      name: item.name || '',
-      quantity: item.quantity || 1,
-      unit: (item.unit as Unit) || 'ea',
-      category: (item.category as Category) || 'etc',
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit as Unit,
+      category: item.category as Category,
       checked: false,
       addedAt: new Date().toISOString(),
     }));
@@ -137,7 +134,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ list: updatedList, addedItems: newItems });
   } catch (error) {
-    console.error('Add item error:', error);
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { error: 'Failed to add items' },
       { status: 500 }
@@ -156,21 +158,13 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { listId, itemId, updates } = body as {
-      listId: string;
-      itemId: string;
-      updates: Partial<ShoppingItem>;
-    };
-
-    if (!listId || !itemId) {
-      return NextResponse.json({ error: 'listId and itemId are required' }, { status: 400 });
-    }
+    const validated = shoppingUpdateSchema.parse(body);
 
     // 현재 목록 조회
     const { data: currentList, error: fetchError } = await supabase
       .from('shopping_lists')
       .select('items')
-      .eq('id', listId)
+      .eq('id', validated.listId)
       .eq('user_id', user.id)
       .single();
 
@@ -179,14 +173,14 @@ export async function PATCH(request: NextRequest) {
     // 아이템 업데이트
     const items = (currentList.items as ShoppingItem[]) || [];
     const updatedItems = items.map(item =>
-      item.id === itemId ? { ...item, ...updates } : item
+      item.id === validated.itemId ? { ...item, ...validated.updates } : item
     );
 
     // 목록 업데이트
     const { data: updatedList, error: updateError } = await supabase
       .from('shopping_lists')
       .update({ items: updatedItems })
-      .eq('id', listId)
+      .eq('id', validated.listId)
       .select()
       .single();
 
@@ -194,7 +188,12 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ list: updatedList });
   } catch (error) {
-    console.error('Update item error:', error);
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { error: 'Failed to update item' },
       { status: 500 }
@@ -264,8 +263,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'itemId or complete flag is required' }, { status: 400 });
-  } catch (error) {
-    console.error('Delete error:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to delete' },
       { status: 500 }
