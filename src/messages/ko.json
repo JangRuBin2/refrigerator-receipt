@@ -153,7 +153,11 @@
     "retry": "다시 스캔",
     "aiVisionMode": "AI Vision 모드",
     "aiVisionDescription": "AI가 영수증을 직접 분석하여 더 정확하게 인식합니다",
-    "estimatedExpiry": "예상 유통기한: {days}일"
+    "estimatedExpiry": "예상 유통기한: {days}일",
+    "fileTooLarge": "이미지 용량이 너무 큽니다. 10MB 이하의 이미지를 업로드해주세요.",
+    "dailyUsage": "오늘 {used}/{limit}회 사용",
+    "dailyLimitReached": "일일 업로드 제한에 도달했습니다",
+    "upgradeForMore": "프리미엄으로 업그레이드하면 더 많이 스캔할 수 있습니다"
   },
   "settings": {
     "title": "설정",

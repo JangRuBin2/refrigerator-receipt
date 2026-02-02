@@ -153,7 +153,11 @@
     "retry": "再スキャン",
     "aiVisionMode": "AI Visionモード",
     "aiVisionDescription": "AIがレシートを直接分析してより正確に認識します",
-    "estimatedExpiry": "推定賞味期限: {days}日"
+    "estimatedExpiry": "推定賞味期限: {days}日",
+    "fileTooLarge": "画像のサイズが大きすぎます。10MB以下の画像をアップロードしてください。",
+    "dailyUsage": "本日: {used}/{limit}回使用",
+    "dailyLimitReached": "1日のアップロード制限に達しました",
+    "upgradeForMore": "プレミアムにアップグレードでより多くスキャン可能"
   },
   "settings": {
     "title": "設定",

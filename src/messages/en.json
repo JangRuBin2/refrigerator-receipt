@@ -153,7 +153,11 @@
     "retry": "Scan Again",
     "aiVisionMode": "AI Vision Mode",
     "aiVisionDescription": "AI analyzes your receipt directly for more accurate recognition",
-    "estimatedExpiry": "Est. expiry: {days} days"
+    "estimatedExpiry": "Est. expiry: {days} days",
+    "fileTooLarge": "The image is too large. Please upload an image under 10MB.",
+    "dailyUsage": "Today: {used}/{limit} scans",
+    "dailyLimitReached": "Daily upload limit reached",
+    "upgradeForMore": "Upgrade to Premium for more scans"
   },
   "settings": {
     "title": "Settings",

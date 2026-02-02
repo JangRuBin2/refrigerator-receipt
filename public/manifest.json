@@ -1,21 +1,81 @@
 {
   "name": "밀키퍼 - MealKeeper",
   "short_name": "밀키퍼",
-  "description": "스마트 냉장고 관리 - 영수증 스캔, 유통기한 관리, 레시피 추천",
+  "description": "스마트 냉장고 관리 - 영수증 스캔, 유통기한 관리, AI 레시피 추천",
   "start_url": "/ko",
+  "id": "mealkeeper-app",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#f97316",
+  "scope": "/",
+  "lang": "ko",
+  "dir": "ltr",
+  "categories": ["food", "lifestyle", "utilities"],
   "icons": [
+    {
+      "src": "/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-384.png",
+      "sizes": "384x384",
       "type": "image/png"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "냉장고",
+      "short_name": "냉장고",
+      "url": "/ko/fridge",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "스캔",
+      "short_name": "스캔",
+      "url": "/ko/scan",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "레시피",
+      "short_name": "레시피",
+      "url": "/ko/recipes",
+      "icons": [{ "src": "/icon-96.png", "sizes": "96x96", "type": "image/png" }]
     }
   ]
 }

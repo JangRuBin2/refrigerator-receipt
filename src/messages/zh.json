@@ -153,7 +153,11 @@
     "retry": "重新扫描",
     "aiVisionMode": "AI Vision 模式",
     "aiVisionDescription": "AI直接分析收据，识别更准确",
-    "estimatedExpiry": "预计保质期: {days}天"
+    "estimatedExpiry": "预计保质期: {days}天",
+    "fileTooLarge": "图片太大了。请上传10MB以下的图片。",
+    "dailyUsage": "今日: {used}/{limit}次",
+    "dailyLimitReached": "已达到每日上传限制",
+    "upgradeForMore": "升级高级版可扫描更多"
   },
   "settings": {
     "title": "设置",

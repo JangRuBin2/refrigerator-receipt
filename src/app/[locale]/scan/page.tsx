@@ -3,13 +3,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Camera, Upload, Check, Loader2, RefreshCw, Sparkles, Clock, AlertCircle } from 'lucide-react';
+import { Camera, Upload, Check, Loader2, RefreshCw, Sparkles, Clock, AlertCircle, Crown } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useStore } from '@/store/useStore';
+import { toast } from '@/store/useToastStore';
 import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import { calculateExpiryDate, cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ import type { ScannedItem, Category, Unit, StorageType } from '@/types';
 
 const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
 const UNITS: Unit[] = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 interface ExtendedScannedItem extends ScannedItem {
   confidence?: number;
@@ -38,14 +40,32 @@ export default function ScanPage() {
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
 
+  // 페이지 로드 시 사용량 조회
+  useEffect(() => {
+    const fetchUsage = async () => {
+      try {
+        const response = await fetch('/api/receipts/scan');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.usage) {
+            setUsage(data.usage);
+          }
+        }
+      } catch {
+        // 조회 실패 시 무시
+      }
+    };
+    fetchUsage();
+  }, []);
+
   const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const [step, setStep] = useState<'upload' | 'scanning' | 'confirm'>('upload');
   const [scannedItems, setScannedItems] = useState<ExtendedScannedItem[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
   const [useAIVision, setUseAIVision] = useState(true);
+  const [usage, setUsage] = useState<{ dailyLimit: number; used: number; remaining: number } | null>(null);
 
   const handleScanClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
     if (!isPremium) {
@@ -58,6 +78,13 @@ export default function ScanPage() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // 파일 용량 검증
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(t('scan.fileTooLarge'));
+        e.target.value = '';
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreviewImage(e.target?.result as string);
@@ -70,7 +97,6 @@ export default function ScanPage() {
 
   const startScanning = async (file: File) => {
     setStep('scanning');
-    setError(null);
 
     try {
       const formData = new FormData();
@@ -85,7 +111,19 @@ export default function ScanPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // 일일 제한 도달
+        if (response.status === 429 && data.limitReached) {
+          setUsage({ dailyLimit: data.dailyLimit, used: data.currentCount, remaining: 0 });
+          if (!data.isPremium) {
+            setShowPremiumModal(true);
+          }
+        }
         throw new Error(data.error || 'Scan failed');
+      }
+
+      // 사용량 정보 업데이트
+      if (data.usage) {
+        setUsage(data.usage);
       }
 
       const items: ExtendedScannedItem[] = data.items.map((item: {
@@ -104,7 +142,7 @@ export default function ScanPage() {
       setScanMode(data.mode);
       setStep('confirm');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Scan failed');
+      toast.error(err instanceof Error ? err.message : 'Scan failed');
       setStep('upload');
     }
   };
@@ -144,6 +182,7 @@ export default function ScanPage() {
       });
     });
 
+    toast.success(t('scan.foundItems', { count: selectedItems.length }));
     router.push(`/${locale}/fridge`);
   };
 
@@ -151,7 +190,6 @@ export default function ScanPage() {
     setStep('upload');
     setScannedItems([]);
     setPreviewImage(null);
-    setError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -187,9 +225,27 @@ export default function ScanPage() {
       <div className="space-y-4 p-4">
         {step === 'upload' && (
           <>
-            {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                {error}
+            {/* Daily Usage Info */}
+            {usage && (
+              <div className={cn(
+                'flex items-center justify-between rounded-lg p-3 text-sm',
+                usage.remaining > 0
+                  ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                  : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
+              )}>
+                <span className="flex items-center gap-2">
+                  <Camera className="h-4 w-4" />
+                  {t('scan.dailyUsage', { used: usage.used, limit: usage.dailyLimit })}
+                </span>
+                {usage.remaining === 0 && !isPremium && (
+                  <button
+                    onClick={() => setShowPremiumModal(true)}
+                    className="flex items-center gap-1 rounded-full bg-primary-600 px-3 py-1 text-xs font-medium text-white hover:bg-primary-700"
+                  >
+                    <Crown className="h-3 w-3" />
+                    업그레이드
+                  </button>
+                )}
               </div>
             )}
 

@@ -4,6 +4,10 @@ import { extractTextFromImage } from '@/lib/ocr/vision';
 import { parseReceiptText, isReceiptText } from '@/lib/ocr/parser';
 import { parseReceiptWithAI, analyzeReceiptImage } from '@/lib/ocr/ai-parser';
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const DAILY_LIMIT_FREE = 5; // 무료 사용자 일일 제한
+const DAILY_LIMIT_PREMIUM = 50; // 프리미엄 사용자 일일 제한
+
 interface ScanResult {
   items: Array<{
     name: string;
@@ -14,7 +18,7 @@ interface ScanResult {
     estimatedExpiryDays?: number;
   }>;
   rawText: string;
-  mode: 'ai' | 'ocr' | 'ai-vision' | 'simulation';
+  mode: 'ai' | 'ocr' | 'ai-vision';
   scanId?: string;
 }
 
@@ -23,12 +27,62 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    // 로그인 필수
+    if (!user) {
+      return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    // 프리미엄 상태 확인
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_premium, subscription_end_date')
+      .eq('id', user.id)
+      .single();
+
+    const isPremium = profile?.is_premium &&
+      (!profile.subscription_end_date || new Date(profile.subscription_end_date) > new Date());
+    const dailyLimit = isPremium ? DAILY_LIMIT_PREMIUM : DAILY_LIMIT_FREE;
+
+    // 오늘 업로드 횟수 확인
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString();
+
+    const { count: todayCount } = await supabase
+      .from('receipt_scans')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', todayISO);
+
+    const currentCount = todayCount || 0;
+
+    if (currentCount >= dailyLimit) {
+      return NextResponse.json(
+        {
+          error: `일일 업로드 제한(${dailyLimit}회)에 도달했습니다. ${isPremium ? '내일 다시 시도해주세요.' : '프리미엄으로 업그레이드하면 더 많이 스캔할 수 있습니다.'}`,
+          limitReached: true,
+          dailyLimit,
+          currentCount,
+          isPremium,
+        },
+        { status: 429 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('image') as File;
     const useAIVision = formData.get('useAIVision') === 'true';
 
     if (!file) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
+    }
+
+    // 파일 용량 검증
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: '이미지 용량이 너무 큽니다. 10MB 이하의 이미지를 업로드해주세요.' },
+        { status: 400 }
+      );
     }
 
     // 파일을 Base64로 변환
@@ -64,45 +118,46 @@ export async function POST(request: NextRequest) {
       result = await processWithOCR(base64Image);
     }
 
-    // 로그인 사용자의 경우 스캔 기록 저장
-    if (user) {
-      const { data: scanRecord } = await supabase
-        .from('receipt_scans')
-        .insert({
-          user_id: user.id,
-          raw_text: result.rawText,
-          parsed_items: result.items,
-          status: 'completed',
-        })
-        .select('id')
-        .single();
+    // 스캔 기록 저장
+    const { data: scanRecord } = await supabase
+      .from('receipt_scans')
+      .insert({
+        user_id: user.id,
+        raw_text: result.rawText,
+        parsed_items: result.items,
+        status: 'completed',
+      })
+      .select('id')
+      .single();
 
-      if (scanRecord) {
-        result.scanId = scanRecord.id;
-      }
+    if (scanRecord) {
+      result.scanId = scanRecord.id;
     }
 
-    return NextResponse.json(result);
+    // 남은 횟수 정보 포함하여 응답
+    return NextResponse.json({
+      ...result,
+      usage: {
+        dailyLimit,
+        used: currentCount + 1,
+        remaining: dailyLimit - currentCount - 1,
+        isPremium,
+      },
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-    return NextResponse.json({
-      items: getSimulatedItems(),
-      rawText: `[OCR Error: ${errorMessage}]`,
-      mode: 'simulation' as const,
-      error: errorMessage,
-    });
+    return NextResponse.json(
+      { error: errorMessage || '스캔 중 오류가 발생했습니다. 다시 시도해주세요.' },
+      { status: 500 }
+    );
   }
 }
 
 async function processWithOCR(base64Image: string): Promise<ScanResult> {
   // Google Cloud Vision 설정 확인
   if (!process.env.GOOGLE_CLOUD_CREDENTIALS_JSON) {
-    return {
-      items: getSimulatedItems(),
-      rawText: '[Simulation Mode - Configure GOOGLE_CLOUD_CREDENTIALS_JSON for real OCR]',
-      mode: 'simulation',
-    };
+    throw new Error('OCR 서비스가 설정되지 않았습니다. 관리자에게 문의해주세요.');
   }
 
   // OCR 실행
@@ -140,30 +195,7 @@ async function processWithOCR(base64Image: string): Promise<ScanResult> {
   };
 }
 
-function getSimulatedItems() {
-  const possibleItems = [
-    { name: '양파', quantity: 1, unit: 'kg', category: 'vegetables', confidence: 0.9, estimatedExpiryDays: 14 },
-    { name: '당근', quantity: 500, unit: 'g', category: 'vegetables', confidence: 0.85, estimatedExpiryDays: 14 },
-    { name: '감자', quantity: 1, unit: 'kg', category: 'vegetables', confidence: 0.9, estimatedExpiryDays: 21 },
-    { name: '계란', quantity: 30, unit: 'ea', category: 'dairy', confidence: 0.95, estimatedExpiryDays: 21 },
-    { name: '우유', quantity: 1, unit: 'L', category: 'dairy', confidence: 0.9, estimatedExpiryDays: 7 },
-    { name: '삼겹살', quantity: 500, unit: 'g', category: 'meat', confidence: 0.85, estimatedExpiryDays: 3 },
-    { name: '닭가슴살', quantity: 400, unit: 'g', category: 'meat', confidence: 0.8, estimatedExpiryDays: 3 },
-    { name: '고등어', quantity: 2, unit: 'ea', category: 'seafood', confidence: 0.75, estimatedExpiryDays: 2 },
-    { name: '두부', quantity: 1, unit: 'pack', category: 'dairy', confidence: 0.85, estimatedExpiryDays: 7 },
-    { name: '간장', quantity: 500, unit: 'ml', category: 'condiments', confidence: 0.9, estimatedExpiryDays: 365 },
-    { name: '쌀', quantity: 5, unit: 'kg', category: 'grains', confidence: 0.95, estimatedExpiryDays: 180 },
-    { name: '사과', quantity: 4, unit: 'ea', category: 'fruits', confidence: 0.85, estimatedExpiryDays: 14 },
-    { name: '바나나', quantity: 1, unit: 'bunch', category: 'fruits', confidence: 0.8, estimatedExpiryDays: 5 },
-  ];
-
-  // 랜덤하게 3-6개 선택
-  const count = Math.floor(Math.random() * 4) + 3;
-  const shuffled = possibleItems.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
-
-// 스캔 히스토리 조회 API
+// 스캔 히스토리 및 사용량 조회 API
 export async function GET() {
   try {
     const supabase = await createClient();
@@ -173,6 +205,31 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // 프리미엄 상태 확인
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_premium, subscription_end_date')
+      .eq('id', user.id)
+      .single();
+
+    const isPremium = profile?.is_premium &&
+      (!profile.subscription_end_date || new Date(profile.subscription_end_date) > new Date());
+    const dailyLimit = isPremium ? DAILY_LIMIT_PREMIUM : DAILY_LIMIT_FREE;
+
+    // 오늘 업로드 횟수 확인
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayISO = today.toISOString();
+
+    const { count: todayCount } = await supabase
+      .from('receipt_scans')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', todayISO);
+
+    const used = todayCount || 0;
+
+    // 스캔 기록
     const { data: scans, error } = await supabase
       .from('receipt_scans')
       .select('*')
@@ -184,7 +241,15 @@ export async function GET() {
       throw error;
     }
 
-    return NextResponse.json({ scans });
+    return NextResponse.json({
+      scans,
+      usage: {
+        dailyLimit,
+        used,
+        remaining: Math.max(0, dailyLimit - used),
+        isPremium,
+      },
+    });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch scan history' }, { status: 500 });
   }

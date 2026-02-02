@@ -283,9 +283,9 @@ function RecipesContent() {
   return (
     <div className="space-y-4 p-4">
       {/* Random Recipe Section */}
-      <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20">
-        <CardContent className="p-6 text-center">
-          <h2 className="mb-4 text-xl font-bold">{t('home.whatToEat')}</h2>
+      <Card className="overflow-hidden">
+        <div className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 p-6 text-center">
+          <h2 className="mb-4 text-xl font-bold text-gray-800 dark:text-gray-100">{t('home.whatToEat')}</h2>
 
           {selectedRecipe ? (
             <div
@@ -313,8 +313,8 @@ function RecipesContent() {
               </div>
             </div>
           ) : (
-            <div className="mb-4 flex h-24 items-center justify-center rounded-xl bg-white/50 dark:bg-gray-800/50">
-              <ChefHat className="h-12 w-12 text-gray-300" />
+            <div className="mb-4 flex h-24 items-center justify-center rounded-xl bg-white/70 dark:bg-gray-800/50">
+              <ChefHat className="h-12 w-12 text-primary-300" />
             </div>
           )}
 
@@ -329,14 +329,15 @@ function RecipesContent() {
             </Button>
             {selectedRecipe && !isSpinning && (
               <Button
-                variant="secondary"
+                variant="outline"
                 onClick={() => setShowRecipeModal(true)}
+                className="bg-white dark:bg-gray-800"
               >
                 {t('recipe.viewRecipe')}
               </Button>
             )}
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Filter Tabs */}
@@ -448,48 +449,50 @@ function RecipesContent() {
       )}
 
       {/* External Recipe Search Section */}
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
-        <CardContent className="p-6">
-          <h2 className="mb-4 text-xl font-bold flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            {t('recipe.externalRecommend')}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Search className="h-5 w-5 text-primary-600" />
+              {t('recipe.externalRecommend')}
+            </h2>
             {!isPremium && (
-              <Badge variant="warning" className="ml-2 text-xs">
+              <Badge variant="warning" className="text-xs">
                 <Crown className="mr-1 h-3 w-3" />
                 Premium
               </Badge>
             )}
-          </h2>
+          </div>
 
           {/* 수동 검색 입력 */}
           <form onSubmit={handleCustomSearch} className="mb-4">
-            <div className="flex gap-2">
+            <div className="relative">
               <Input
                 type="text"
                 value={customSearchQuery}
                 onChange={(e) => setCustomSearchQuery(e.target.value)}
                 placeholder={t('recipe.searchPlaceholder')}
-                className="flex-1"
+                className="pr-12"
               />
-              <Button
+              <button
                 type="submit"
                 disabled={externalLoading || !customSearchQuery.trim()}
-                variant="secondary"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-400 transition-colors"
               >
-                <Search className="h-4 w-4" />
-              </Button>
+                <Search className="h-5 w-5" />
+              </button>
             </div>
           </form>
 
           {/* 전략 선택 */}
-          <div className="mb-4 flex gap-2">
+          <div className="mb-4 grid grid-cols-2 gap-2">
             <button
               onClick={() => setSearchStrategy('random')}
               className={cn(
-                'flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2',
+                'rounded-lg px-3 py-2.5 text-sm font-medium transition-all flex items-center justify-center gap-2 border',
                 searchStrategy === 'random'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300'
+                  ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:bg-primary-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:border-primary-600'
               )}
             >
               <Shuffle className="h-4 w-4" />
@@ -498,16 +501,16 @@ function RecipesContent() {
             <button
               onClick={() => setSearchStrategy('expiring')}
               className={cn(
-                'flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-2',
+                'rounded-lg px-3 py-2.5 text-sm font-medium transition-all flex items-center justify-center gap-2 border',
                 searchStrategy === 'expiring'
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300'
+                  ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:bg-primary-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:border-primary-600'
               )}
             >
               <Timer className="h-4 w-4" />
               {t('recipe.expiringStrategy')}
               {expiringCount > 0 && (
-                <Badge variant="danger" className="ml-1 text-xs">{expiringCount}</Badge>
+                <span className="ml-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{expiringCount}</span>
               )}
             </button>
           </div>
@@ -532,13 +535,13 @@ function RecipesContent() {
           </Button>
 
           {ingredients.length === 0 && (
-            <p className="mt-2 text-center text-sm text-gray-500">{t('fridge.empty')}</p>
+            <p className="mt-3 text-center text-sm text-gray-500">{t('fridge.empty')}</p>
           )}
 
           {externalError && (
-            <div className="mt-3 flex items-center justify-center gap-2 text-sm text-red-500">
-              <AlertTriangle className="h-4 w-4" />
-              {externalError}
+            <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              <span>{externalError}</span>
             </div>
           )}
 
@@ -556,7 +559,7 @@ function RecipesContent() {
                   <button
                     key={f}
                     onClick={() => setExternalFilter(f)}
-                    disabled={f !== 'all' && apiStatus && !apiStatus[f as 'youtube' | 'google']}
+                    disabled={f !== 'all' && !!apiStatus && !apiStatus[f as 'youtube' | 'google']}
                     className={cn(
                       'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
                       externalFilter === f

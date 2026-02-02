@@ -11,7 +11,9 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useStore } from '@/store/useStore';
+import { toast } from '@/store/useToastStore';
 import { getDaysUntilExpiry, getExpiryColor, calculateExpiryDate, cn } from '@/lib/utils';
 import type { Ingredient, StorageType, Category, Unit } from '@/types';
 
@@ -29,6 +31,7 @@ export default function FridgePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Ingredient | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -113,8 +116,14 @@ export default function FridgePage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm(t('common.delete') + '?')) {
-      deleteIngredient(id);
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteTarget) {
+      deleteIngredient(deleteTarget);
+      toast.success(t('common.delete') + ' ' + t('common.success'));
+      setDeleteTarget(null);
     }
   };
 
@@ -329,6 +338,18 @@ export default function FridgePage() {
             </div>
           </div>
         </Modal>
+
+        {/* Delete Confirm Dialog */}
+        <ConfirmDialog
+          isOpen={deleteTarget !== null}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={confirmDelete}
+          title={t('common.delete') + '?'}
+          message={t('settings.deleteWarning')}
+          confirmText={t('common.delete')}
+          cancelText={t('common.cancel')}
+          variant="danger"
+        />
       </div>
     </div>
   );

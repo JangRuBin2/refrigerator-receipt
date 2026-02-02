@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="#FFF7ED"/>
+  <circle cx="256" cy="256" r="240" stroke="#F97316" stroke-width="16"/>
+
+  <!-- Refrigerator Body -->
+  <rect x="156" y="96" width="200" height="320" rx="20" fill="#F97316"/>
+  <rect x="166" y="106" width="180" height="300" rx="14" fill="#FDBA74"/>
+
+  <!-- Freezer Section -->
+  <rect x="176" y="116" width="160" height="80" rx="8" fill="#FFF7ED"/>
+  <rect x="186" y="126" width="140" height="60" rx="4" fill="#FFEDD5"/>
+
+  <!-- Fridge Section -->
+  <rect x="176" y="206" width="160" height="190" rx="8" fill="#FFF7ED"/>
+
+  <!-- Shelves -->
+  <rect x="186" y="256" width="140" height="4" rx="2" fill="#FDBA74"/>
+  <rect x="186" y="316" width="140" height="4" rx="2" fill="#FDBA74"/>
+
+  <!-- Food Items -->
+  <!-- Apple -->
+  <circle cx="220" cy="236" r="16" fill="#EF4444"/>
+  <path d="M220 220 Q225 210 230 218" stroke="#22C55E" stroke-width="3" fill="none"/>
+
+  <!-- Carrot -->
+  <path d="M270 230 L290 250 L280 260 L260 240 Z" fill="#F97316"/>
+  <path d="M265 225 Q270 220 275 225" stroke="#22C55E" stroke-width="2" fill="none"/>
+
+  <!-- Milk -->
+  <rect x="210" y="270" width="24" height="36" rx="3" fill="#FAFAFA" stroke="#E5E7EB" stroke-width="2"/>
+  <rect x="214" y="278" width="16" height="8" fill="#3B82F6"/>
+
+  <!-- Egg -->
+  <ellipse cx="270" cy="288" rx="12" cy="16" fill="#FEF3C7"/>
+
+  <!-- Cheese -->
+  <path d="M250 340 L280 340 L265 370 Z" fill="#FACC15"/>
+  <circle cx="260" cy="350" r="3" fill="#FEF9C3"/>
+  <circle cx="270" cy="355" r="2" fill="#FEF9C3"/>
+
+  <!-- Broccoli -->
+  <circle cx="220" cy="350" r="12" fill="#22C55E"/>
+  <circle cx="212" cy="345" r="8" fill="#16A34A"/>
+  <circle cx="228" cy="345" r="8" fill="#16A34A"/>
+  <rect x="217" y="358" width="6" height="12" fill="#15803D"/>
+
+  <!-- Door Handle -->
+  <rect x="320" y="180" width="8" height="40" rx="4" fill="#EA580C"/>
+  <rect x="320" y="280" width="8" height="40" rx="4" fill="#EA580C"/>
+
+  <!-- Sparkle (freshness indicator) -->
+  <path d="M380 140 L385 155 L400 160 L385 165 L380 180 L375 165 L360 160 L375 155 Z" fill="#FBBF24"/>
+  <path d="M140 180 L143 190 L153 193 L143 196 L140 206 L137 196 L127 193 L137 190 Z" fill="#FBBF24"/>
+</svg>
