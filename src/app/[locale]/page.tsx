@@ -1,15 +1,21 @@
-'use client';
+"use client";
 
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { Camera, AlertTriangle, Sparkles, ShoppingCart, Activity } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { useStore } from '@/store/useStore';
-import { getDaysUntilExpiry } from '@/lib/utils';
-import { useParams } from 'next/navigation';
+import { Header } from "@/components/layout/Header";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { getDaysUntilExpiry } from "@/lib/utils";
+import { useStore } from "@/store/useStore";
+import {
+  Activity,
+  AlertTriangle,
+  Camera,
+  ShoppingCart,
+  Sparkles,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export default function HomePage() {
   const t = useTranslations();
@@ -35,10 +41,10 @@ export default function HomePage() {
         {/* Welcome Section */}
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t('home.welcome')}
+            {t("home.welcome")}
           </h2>
           <p className="mt-1 text-sm text-primary-600 dark:text-primary-400 font-medium">
-            {t('common.appName')}
+            {t("common.appName")}
           </p>
         </div>
 
@@ -50,8 +56,12 @@ export default function HomePage() {
                 <Camera className="h-8 w-8" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">{t('home.scanReceipt')}</h3>
-                <p className="text-sm text-white/80">{t('home.scanDescription')}</p>
+                <h3 className="text-lg font-semibold">
+                  {t("home.scanReceipt")}
+                </h3>
+                <p className="text-sm text-white/80">
+                  {t("home.scanDescription")}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -62,20 +72,22 @@ export default function HomePage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
-              {t('home.expiringItems')}
+              {t("home.expiringItems")}
             </CardTitle>
             {expiringItems.length > 0 && (
               <Link
                 href={`/${locale}/fridge`}
                 className="text-sm text-primary-600 hover:underline dark:text-primary-400"
               >
-                {t('home.viewAll')}
+                {t("home.viewAll")}
               </Link>
             )}
           </CardHeader>
           <CardContent>
             {expiringItems.length === 0 ? (
-              <p className="py-4 text-center text-gray-500">{t('home.noExpiring')}</p>
+              <p className="py-4 text-center text-gray-500">
+                {t("home.noExpiring")}
+              </p>
             ) : (
               <div className="space-y-2">
                 {expiringItems.map((item) => (
@@ -87,17 +99,17 @@ export default function HomePage() {
                     <Badge
                       variant={
                         item.daysLeft < 0
-                          ? 'danger'
+                          ? "danger"
                           : item.daysLeft === 0
-                          ? 'danger'
-                          : 'warning'
+                            ? "danger"
+                            : "warning"
                       }
                     >
                       {item.daysLeft < 0
-                        ? t('fridge.expired')
+                        ? t("fridge.expired")
                         : item.daysLeft === 0
-                        ? t('fridge.today')
-                        : t('fridge.dDay', { days: item.daysLeft })}
+                          ? t("fridge.today")
+                          : t("fridge.dDay", { days: item.daysLeft })}
                     </Badge>
                   </div>
                 ))}
@@ -111,7 +123,7 @@ export default function HomePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-amber-500" />
-              {t('home.whatToEat')}
+              {t("home.whatToEat")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -121,7 +133,7 @@ export default function HomePage() {
                 size="lg"
               >
                 <Sparkles className="h-6 w-6" />
-                <span>{t('recommend.title')}</span>
+                <span>{t("recommend.title")}</span>
               </Button>
             </Link>
           </CardContent>
@@ -134,9 +146,11 @@ export default function HomePage() {
               <div className="rounded-full bg-white/20 p-3">
                 <ShoppingCart className="h-8 w-8" />
               </div>
-              <div>
-                <h3 className="text-lg font-semibold">{t('shopping.title')}</h3>
-                <p className="text-sm text-white/80">{t('home.shoppingDescription')}</p>
+              <div className="rounded-full bg-white/20 p-3">
+                <h3 className="text-lg font-semibold">{t("shopping.title")}</h3>
+                <p className="text-sm text-white/80">
+                  {t("home.shoppingDescription")}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -150,8 +164,12 @@ export default function HomePage() {
                 <Activity className="h-8 w-8" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">{t('nutrition.title')}</h3>
-                <p className="text-sm text-white/80">{t('home.nutritionDescription')}</p>
+                <h3 className="text-lg font-semibold">
+                  {t("nutrition.title")}
+                </h3>
+                <p className="text-sm text-white/80">
+                  {t("home.nutritionDescription")}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -160,18 +178,18 @@ export default function HomePage() {
         {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('home.quickActions')}</CardTitle>
+            <CardTitle>{t("home.quickActions")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
               <Link href={`/${locale}/fridge`}>
                 <Button variant="secondary" className="w-full">
-                  {t('nav.fridge')}
+                  {t("nav.fridge")}
                 </Button>
               </Link>
               <Link href={`/${locale}/recipes`}>
                 <Button variant="secondary" className="w-full">
-                  {t('nav.recipes')}
+                  {t("nav.recipes")}
                 </Button>
               </Link>
             </div>
