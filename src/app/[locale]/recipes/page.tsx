@@ -82,12 +82,20 @@ function RecipesContent() {
   // Infinite scroll state
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [offset, setOffset] = useState(0);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Use refs to avoid re-creating IntersectionObserver on every state change
+  const offsetRef = useRef(0);
+  const hasMoreRef = useRef(true);
+  const loadingRef = useRef(false);
 
   // Fetch recipes from DB with pagination
   const fetchRecipes = useCallback(async (currentOffset: number, append = false) => {
+    // Prevent duplicate fetches
+    if (loadingRef.current) return;
+
     try {
+      loadingRef.current = true;
       if (!append) {
         setRecipesLoading(true);
       } else {
@@ -107,29 +115,36 @@ function RecipesContent() {
 
         // Check if there are more recipes to load
         const total = data.total || 0;
-        setHasMore(currentOffset + mappedRecipes.length < total);
+        const newHasMore = currentOffset + mappedRecipes.length < total;
+        setHasMore(newHasMore);
+        hasMoreRef.current = newHasMore;
       }
     } catch {
       // error silently
     } finally {
       setRecipesLoading(false);
       setLoadingMore(false);
+      loadingRef.current = false;
     }
   }, []);
 
   // Initial fetch
   useEffect(() => {
+    offsetRef.current = 0;
+    hasMoreRef.current = true;
+    loadingRef.current = false;
     fetchRecipes(0);
   }, [fetchRecipes]);
 
   // Infinite scroll with IntersectionObserver
+  // Use refs to prevent observer re-creation and avoid fetching all data at once
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
-        if (first.isIntersecting && hasMore && !loadingMore && !recipesLoading) {
-          const newOffset = offset + RECIPES_PER_PAGE;
-          setOffset(newOffset);
+        if (first.isIntersecting && hasMoreRef.current && !loadingRef.current) {
+          const newOffset = offsetRef.current + RECIPES_PER_PAGE;
+          offsetRef.current = newOffset;
           fetchRecipes(newOffset, true);
         }
       },
@@ -146,7 +161,7 @@ function RecipesContent() {
         observer.unobserve(currentRef);
       }
     };
-  }, [hasMore, loadingMore, recipesLoading, offset, fetchRecipes]);
+  }, [fetchRecipes]);
 
   // Check ingredient availability for each recipe
   const recipesWithAvailability = recipes.map((recipe) => {
