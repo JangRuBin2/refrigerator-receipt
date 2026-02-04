@@ -3,6 +3,8 @@ import { crawlRecipes, crawlPopularRecipes } from '@/lib/crawler/mangae';
 import { crawlSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 // 레시피 크롤링 API (관리자용)
 export async function POST(request: NextRequest) {
   try {

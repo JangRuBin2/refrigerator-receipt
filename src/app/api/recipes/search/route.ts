@@ -4,6 +4,8 @@ import { searchYouTubeRecipes, isYouTubeConfigured } from '@/lib/search/youtube'
 import { searchGoogleRecipes, isGoogleConfigured } from '@/lib/search/google';
 import type { ExternalRecipe } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
