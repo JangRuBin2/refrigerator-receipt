@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { Category, Unit } from '@/types/supabase';
 
+export const dynamic = 'force-dynamic';
+
 interface RecommendedItem {
   name: string;
   quantity: number;

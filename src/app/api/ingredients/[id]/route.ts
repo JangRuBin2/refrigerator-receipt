@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { ingredientUpdateSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

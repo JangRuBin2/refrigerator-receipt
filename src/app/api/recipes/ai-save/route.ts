@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { aiRecipeSaveSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

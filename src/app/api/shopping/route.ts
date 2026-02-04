@@ -4,6 +4,8 @@ import { shoppingAddSchema, shoppingUpdateSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
 import type { ShoppingItem, Category, Unit } from '@/types/supabase';
 
+export const dynamic = 'force-dynamic';
+
 // GET: 활성 장보기 목록 조회
 export async function GET() {
   try {
