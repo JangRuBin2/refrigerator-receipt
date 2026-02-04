@@ -26,6 +26,8 @@ export type Database = {
           name: string | null;
           avatar_url: string | null;
           locale: string;
+          is_premium: boolean;
+          subscription_end_date: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -35,6 +37,8 @@ export type Database = {
           name?: string | null;
           avatar_url?: string | null;
           locale?: string;
+          is_premium?: boolean;
+          subscription_end_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -44,6 +48,8 @@ export type Database = {
           name?: string | null;
           avatar_url?: string | null;
           locale?: string;
+          is_premium?: boolean;
+          subscription_end_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };

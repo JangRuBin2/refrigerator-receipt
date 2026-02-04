@@ -146,7 +146,7 @@ export default function HomePage() {
               <div className="rounded-full bg-white/20 p-3">
                 <ShoppingCart className="h-8 w-8" />
               </div>
-              <div className="rounded-full bg-white/20 p-3">
+              <div>
                 <h3 className="text-lg font-semibold">{t("shopping.title")}</h3>
                 <p className="text-sm text-white/80">
                   {t("home.shoppingDescription")}

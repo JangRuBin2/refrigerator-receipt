@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   name TEXT,
   avatar_url TEXT,
   locale TEXT DEFAULT 'ko',
+  is_premium BOOLEAN DEFAULT false,
+  subscription_end_date TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

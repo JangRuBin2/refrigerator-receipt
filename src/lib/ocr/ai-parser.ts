@@ -164,21 +164,55 @@ function parseJsonResponse(text: string): AIParsedItem[] {
   }
 }
 
-// 이미지를 직접 분석하는 함수 (Vision + Gemini 결합)
-export async function analyzeReceiptImage(imageBase64: string): Promise<{
+// 이미지 분석 결과 타입
+export interface ImageAnalysisResult {
   items: AIParsedItem[];
   rawText: string;
-}> {
+  isValid: boolean;
+  invalidReason?: 'not_receipt' | 'no_food_items' | 'unreadable';
+}
+
+// 이미지를 직접 분석하는 함수 (Vision + Gemini 결합)
+export async function analyzeReceiptImage(imageBase64: string): Promise<ImageAnalysisResult> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error('GOOGLE_GEMINI_API_KEY not configured');
   }
 
-  const prompt = `이 영수증 이미지를 분석하여 식재료/식품 항목만 추출해주세요.
+  const prompt = `이 이미지를 분석해주세요.
 
-각 항목에 대해 다음 JSON 형식으로 응답해주세요:
+**먼저 이미지가 다음 중 하나인지 판단하세요:**
+1. 영수증 (마트, 편의점, 식당 등의 구매 영수증)
+2. 식재료/식품 사진 (냉장고 내부, 장본 식재료 등)
+
+**이미지가 영수증이나 식재료 사진이 아닌 경우** (예: 풍경, 사람, 동물, 문서 등):
 {
+  "isValid": false,
+  "invalidReason": "not_receipt",
+  "rawText": "",
+  "items": []
+}
+
+**이미지가 너무 흐리거나 인식이 불가능한 경우:**
+{
+  "isValid": false,
+  "invalidReason": "unreadable",
+  "rawText": "",
+  "items": []
+}
+
+**영수증이나 식재료 사진이지만 식품 항목이 없는 경우:**
+{
+  "isValid": false,
+  "invalidReason": "no_food_items",
+  "rawText": "인식된 텍스트",
+  "items": []
+}
+
+**영수증이나 식재료 사진이고 식품 항목이 있는 경우:**
+{
+  "isValid": true,
   "rawText": "인식된 전체 텍스트",
   "items": [
     {
@@ -192,9 +226,10 @@ export async function analyzeReceiptImage(imageBase64: string): Promise<{
 }
 
 규칙:
-1. 식재료/식품만 추출 (생활용품 제외)
-2. 브랜드명 제거, 실제 식재료명만
-3. JSON만 응답`;
+1. 식재료/식품만 추출 (생활용품, 화장품, 문구류 등 제외)
+2. 브랜드명 제거, 실제 식재료명만 (예: "풀무원 순두부" → "순두부")
+3. 수량 정보가 없으면 quantity: 1, unit: "ea"
+4. JSON만 응답, 다른 텍스트 없이`;
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -235,7 +270,7 @@ export async function analyzeReceiptImage(imageBase64: string): Promise<{
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!text) {
-    return { items: [], rawText: '' };
+    return { items: [], rawText: '', isValid: false, invalidReason: 'unreadable' };
   }
 
   try {
@@ -245,7 +280,24 @@ export async function analyzeReceiptImage(imageBase64: string): Promise<{
       jsonStr = jsonMatch[1].trim();
     }
 
+    // JSON 객체 시작점 찾기
+    const objStart = jsonStr.indexOf('{');
+    const objEnd = jsonStr.lastIndexOf('}');
+    if (objStart !== -1 && objEnd !== -1) {
+      jsonStr = jsonStr.slice(objStart, objEnd + 1);
+    }
+
     const parsed = JSON.parse(jsonStr);
+
+    // 유효하지 않은 이미지인 경우
+    if (parsed.isValid === false) {
+      return {
+        items: [],
+        rawText: parsed.rawText || '',
+        isValid: false,
+        invalidReason: parsed.invalidReason || 'not_receipt',
+      };
+    }
 
     const items = (parsed.items || []).map((item: AIParsedItem) => ({
       ...item,
@@ -258,9 +310,10 @@ export async function analyzeReceiptImage(imageBase64: string): Promise<{
     return {
       items,
       rawText: parsed.rawText || '',
+      isValid: true,
     };
   } catch (error) {
     console.error('JSON parsing error:', error);
-    return { items: [], rawText: text };
+    return { items: [], rawText: text, isValid: false, invalidReason: 'unreadable' };
   }
 }

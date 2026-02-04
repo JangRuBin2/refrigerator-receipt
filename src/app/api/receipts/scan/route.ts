@@ -4,6 +4,16 @@ import { extractTextFromImage } from '@/lib/ocr/vision';
 import { parseReceiptText, isReceiptText } from '@/lib/ocr/parser';
 import { parseReceiptWithAI, analyzeReceiptImage } from '@/lib/ocr/ai-parser';
 
+// Profile 타입 (Supabase 타입 추론 문제 해결용)
+interface ProfileRow {
+  is_premium: boolean | null;
+  subscription_end_date: string | null;
+}
+
+interface ScanRecord {
+  id: string;
+}
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const DAILY_LIMIT_FREE = 5; // 무료 사용자 일일 제한
 const DAILY_LIMIT_PREMIUM = 50; // 프리미엄 사용자 일일 제한
@@ -37,7 +47,7 @@ export async function POST(request: NextRequest) {
       .from('profiles')
       .select('is_premium, subscription_end_date')
       .eq('id', user.id)
-      .single();
+      .single() as { data: ProfileRow | null };
 
     const isPremium = profile?.is_premium &&
       (!profile.subscription_end_date || new Date(profile.subscription_end_date) > new Date());
@@ -95,9 +105,22 @@ export async function POST(request: NextRequest) {
     // AI Vision 모드: Gemini가 이미지를 직접 분석
     if (useAIVision && process.env.GOOGLE_GEMINI_API_KEY) {
       try {
-        const { items, rawText } = await analyzeReceiptImage(base64Image);
+        const analysisResult = await analyzeReceiptImage(base64Image);
 
-        if (items.length === 0) {
+        // 이미지 유효성 검증
+        if (!analysisResult.isValid) {
+          const errorMessages: Record<string, string> = {
+            not_receipt: '영수증이나 식재료 사진이 아닙니다. 영수증 또는 구매한 식재료 사진을 업로드해주세요.',
+            no_food_items: '이미지에서 식재료를 찾을 수 없습니다. 식품이 포함된 영수증인지 확인해주세요.',
+            unreadable: '이미지를 인식할 수 없습니다. 더 선명한 사진을 촬영해주세요.',
+          };
+          return NextResponse.json(
+            { error: errorMessages[analysisResult.invalidReason || 'not_receipt'] },
+            { status: 400 }
+          );
+        }
+
+        if (analysisResult.items.length === 0) {
           return NextResponse.json(
             { error: '영수증에서 식재료를 찾을 수 없습니다. 영수증 사진을 다시 촬영해주세요.' },
             { status: 400 }
@@ -105,22 +128,29 @@ export async function POST(request: NextRequest) {
         }
 
         result = {
-          items,
-          rawText,
+          items: analysisResult.items,
+          rawText: analysisResult.rawText,
           mode: 'ai-vision',
         };
       } catch {
         // AI Vision 실패 시 기존 OCR로 폴백
         result = await processWithOCR(base64Image);
       }
-    } else {
-      // 기존 OCR + AI 파싱 또는 규칙 기반 파싱
+    } else if (!useAIVision && process.env.GOOGLE_CLOUD_CREDENTIALS_JSON) {
+      // OCR 모드
       result = await processWithOCR(base64Image);
+    } else {
+      // API 키 미설정
+      return NextResponse.json(
+        { error: 'OCR 서비스가 설정되지 않았습니다. 관리자에게 문의해주세요.' },
+        { status: 503 }
+      );
     }
 
     // 스캔 기록 저장
-    const { data: scanRecord } = await supabase
-      .from('receipt_scans')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: scanRecord } = await (supabase
+      .from('receipt_scans') as any)
       .insert({
         user_id: user.id,
         raw_text: result.rawText,
@@ -128,7 +158,7 @@ export async function POST(request: NextRequest) {
         status: 'completed',
       })
       .select('id')
-      .single();
+      .single() as { data: ScanRecord | null };
 
     if (scanRecord) {
       result.scanId = scanRecord.id;
@@ -210,7 +240,7 @@ export async function GET() {
       .from('profiles')
       .select('is_premium, subscription_end_date')
       .eq('id', user.id)
-      .single();
+      .single() as { data: ProfileRow | null };
 
     const isPremium = profile?.is_premium &&
       (!profile.subscription_end_date || new Date(profile.subscription_end_date) > new Date());
