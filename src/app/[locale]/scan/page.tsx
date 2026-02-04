@@ -208,13 +208,13 @@ export default function ScanPage() {
   const getModeLabel = (mode: string) => {
     switch (mode) {
       case 'ai-vision':
-        return { label: 'AI Vision', icon: Sparkles, color: 'text-purple-600 bg-purple-50' };
+        return { label: 'AI Vision', icon: Sparkles, color: 'text-purple-600 bg-purple-50', isDemo: false };
       case 'ai':
-        return { label: 'AI', icon: Sparkles, color: 'text-blue-600 bg-blue-50' };
+        return { label: 'AI', icon: Sparkles, color: 'text-blue-600 bg-blue-50', isDemo: false };
       case 'ocr':
-        return { label: 'OCR', icon: Camera, color: 'text-green-600 bg-green-50' };
+        return { label: 'OCR', icon: Camera, color: 'text-green-600 bg-green-50', isDemo: false };
       default:
-        return { label: 'Demo', icon: AlertCircle, color: 'text-yellow-600 bg-yellow-50' };
+        return { label: 'Demo', icon: AlertCircle, color: 'text-yellow-600 bg-yellow-50', isDemo: true };
     }
   };
 
@@ -389,7 +389,7 @@ export default function ScanPage() {
                 <div className={cn('flex items-center gap-2 rounded-lg p-3 text-sm', modeInfo.color)}>
                   <ModeIcon className="h-4 w-4" />
                   <span>
-                    {scanMode === 'simulation'
+                    {modeInfo.isDemo
                       ? 'Demo mode - Configure OCR API for real receipt scanning'
                       : `Analyzed with ${modeInfo.label}`}
                   </span>
