@@ -5,6 +5,7 @@ import { searchGoogleRecipes, isGoogleConfigured } from '@/lib/search/google';
 import type { ExternalRecipe } from '@/types';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {

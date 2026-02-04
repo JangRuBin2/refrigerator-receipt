@@ -5,6 +5,7 @@ import { parseReceiptText, isReceiptText } from '@/lib/ocr/parser';
 import { parseReceiptWithAI, analyzeReceiptImage } from '@/lib/ocr/ai-parser';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Profile 타입 (Supabase 타입 추론 문제 해결용)
 interface ProfileRow {

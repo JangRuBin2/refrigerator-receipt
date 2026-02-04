@@ -4,6 +4,7 @@ import { crawlSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // 레시피 크롤링 API (관리자용)
 export async function POST(request: NextRequest) {

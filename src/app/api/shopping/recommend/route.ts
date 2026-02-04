@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { Category, Unit } from '@/types/supabase';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 interface RecommendedItem {
   name: string;

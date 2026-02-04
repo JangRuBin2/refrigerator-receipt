@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { SubscriptionResponse } from '@/types/subscription';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function GET() {
   try {

@@ -4,6 +4,7 @@ import { ingredientUpdateSchema } from '@/lib/validations';
 import { ZodError } from 'zod';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function PUT(
   request: NextRequest,
