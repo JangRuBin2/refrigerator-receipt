@@ -1,27 +1,38 @@
-"use client";
+'use client';
 
-import { Header } from "@/components/layout/Header";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { getDaysUntilExpiry } from "@/lib/utils";
-import { useStore } from "@/store/useStore";
+import { motion } from 'framer-motion';
+import { Header } from '@/components/layout/Header';
+import { Badge } from '@/components/ui/Badge';
+import { getDaysUntilExpiry } from '@/lib/utils';
+import { useStore } from '@/store/useStore';
+import { listContainer, listItem, spring } from '@/lib/animations';
 import {
-  Activity,
   AlertTriangle,
   Camera,
+  ChefHat,
+  ChevronRight,
+  Refrigerator,
   ShoppingCart,
   Sparkles,
-} from "lucide-react";
-import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+  Activity,
+} from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
 export default function HomePage() {
   const t = useTranslations();
   const params = useParams();
   const locale = params.locale as string;
   const { ingredients } = useStore();
+
+  // Get current date
+  const today = new Date();
+  const dateString = today.toLocaleDateString(locale, {
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  });
 
   // Get expiring items (within 3 days)
   const expiringItems = ingredients
@@ -33,168 +44,227 @@ export default function HomePage() {
     .sort((a, b) => a.daysLeft - b.daysLeft)
     .slice(0, 5);
 
+  // Get recent items (last 10 added)
+  const recentItems = [...ingredients]
+    .sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime())
+    .slice(0, 10);
+
+  const quickActions = [
+    { icon: Camera, label: t('home.scanReceipt'), href: `/${locale}/scan`, color: 'bg-primary-500' },
+    { icon: Refrigerator, label: t('nav.fridge'), href: `/${locale}/fridge`, color: 'bg-blue-500' },
+    { icon: ChefHat, label: t('nav.recipes'), href: `/${locale}/recipes`, color: 'bg-amber-500' },
+    { icon: ShoppingCart, label: t('shopping.title'), href: `/${locale}/shopping`, color: 'bg-teal-500' },
+  ];
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header locale={locale} />
 
-      <div className="space-y-6 p-4">
-        {/* Welcome Section */}
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t("home.welcome")}
-          </h2>
-          <p className="mt-1 text-sm text-primary-600 dark:text-primary-400 font-medium">
-            {t("common.appName")}
+      <div className="space-y-toss-lg p-toss-md pb-24">
+        {/* Hero Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={spring.gentle}
+          className="pt-toss-sm"
+        >
+          <p className="toss-caption">{dateString}</p>
+          <h1 className="toss-h1 mt-toss-xs">{t('home.welcome')}</h1>
+          <p className="toss-body2 mt-toss-xs text-primary-600 dark:text-primary-400">
+            {t('common.appName')}
           </p>
-        </div>
+        </motion.section>
 
-        {/* Scan Receipt Card */}
-        <Link href={`/${locale}/scan`}>
-          <Card className="bg-gradient-to-r from-primary-500 to-primary-600 text-white transition-all hover:scale-[1.02] hover:shadow-lg">
-            <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-full bg-white/20 p-3">
-                <Camera className="h-8 w-8" />
+        {/* Expiring Alert Card - Single Focus */}
+        {expiringItems.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...spring.gentle, delay: 0.1 }}
+          >
+            <Link href={`/${locale}/fridge`}>
+              <div className="toss-card border-l-4 border-amber-500">
+                <div className="flex items-start gap-toss-sm">
+                  <div className="rounded-full bg-amber-100 p-2 dark:bg-amber-900/30">
+                    <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="toss-h3 text-amber-700 dark:text-amber-300">
+                      {t('home.expiringItems')}
+                    </h2>
+                    <p className="toss-body2 mt-toss-xs">
+                      {expiringItems.length}{t('home.itemsExpiringSoon', { count: expiringItems.length })}
+                    </p>
+
+                    {/* Horizontal scroll items */}
+                    <div className="mt-toss-sm flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                      {expiringItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex-shrink-0 rounded-full bg-gray-100 px-3 py-1.5 dark:bg-gray-700"
+                        >
+                          <span className="toss-body2 font-medium">{item.name}</span>
+                          <Badge
+                            variant={item.daysLeft <= 0 ? 'danger' : 'warning'}
+                            className="ml-2 text-xs"
+                          >
+                            {item.daysLeft < 0
+                              ? t('fridge.expired')
+                              : item.daysLeft === 0
+                                ? t('fridge.today')
+                                : `D-${item.daysLeft}`}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold">
-                  {t("home.scanReceipt")}
-                </h3>
-                <p className="text-sm text-white/80">
-                  {t("home.scanDescription")}
+            </Link>
+          </motion.section>
+        )}
+
+        {/* Quick Actions - Icon Buttons */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...spring.gentle, delay: 0.2 }}
+        >
+          <h2 className="toss-h3 mb-toss-sm">{t('home.quickActions')}</h2>
+          <div className="grid grid-cols-4 gap-toss-sm">
+            {quickActions.map((action, index) => (
+              <motion.div
+                key={action.href}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ ...spring.snappy, delay: 0.2 + index * 0.05 }}
+              >
+                <Link href={action.href}>
+                  <motion.div
+                    whileTap={{ scale: 0.95 }}
+                    className="flex flex-col items-center gap-toss-xs"
+                  >
+                    <div className={`${action.color} rounded-2xl p-3 text-white shadow-sm`}>
+                      <action.icon className="h-6 w-6" />
+                    </div>
+                    <span className="toss-caption text-center line-clamp-1">{action.label}</span>
+                  </motion.div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
+
+        {/* AI Recipe Recommendation Banner */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...spring.gentle, delay: 0.3 }}
+        >
+          <Link href={`/${locale}/recommend`}>
+            <motion.div
+              whileTap={{ scale: 0.98 }}
+              className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-500 to-amber-500 p-toss-md text-white"
+            >
+              <div className="relative z-10">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  <span className="font-bold">{t('home.whatToEat')}</span>
+                </div>
+                <p className="mt-toss-xs text-sm text-white/80">
+                  {t('recommend.description')}
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        </Link>
+              <div className="absolute -right-4 -top-4 opacity-20">
+                <ChefHat className="h-24 w-24" />
+              </div>
+            </motion.div>
+          </Link>
+        </motion.section>
 
-        {/* Expiring Items */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              {t("home.expiringItems")}
-            </CardTitle>
-            {expiringItems.length > 0 && (
+        {/* Recent Items - Horizontal Scroll */}
+        {recentItems.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...spring.gentle, delay: 0.4 }}
+          >
+            <div className="flex items-center justify-between mb-toss-sm">
+              <h2 className="toss-h3">{t('home.recentItems')}</h2>
               <Link
                 href={`/${locale}/fridge`}
-                className="text-sm text-primary-600 hover:underline dark:text-primary-400"
+                className="toss-caption text-primary-600 dark:text-primary-400"
               >
-                {t("home.viewAll")}
-              </Link>
-            )}
-          </CardHeader>
-          <CardContent>
-            {expiringItems.length === 0 ? (
-              <p className="py-4 text-center text-gray-500">
-                {t("home.noExpiring")}
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {expiringItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700"
-                  >
-                    <span className="font-medium">{item.name}</span>
-                    <Badge
-                      variant={
-                        item.daysLeft < 0
-                          ? "danger"
-                          : item.daysLeft === 0
-                            ? "danger"
-                            : "warning"
-                      }
-                    >
-                      {item.daysLeft < 0
-                        ? t("fridge.expired")
-                        : item.daysLeft === 0
-                          ? t("fridge.today")
-                          : t("fridge.dDay", { days: item.daysLeft })}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* What to Eat Today */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-amber-500" />
-              {t("home.whatToEat")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Link href={`/${locale}/recommend`}>
-              <Button
-                className="h-20 w-full flex-col gap-2 bg-gradient-to-r from-primary-500 to-amber-500 text-white hover:from-primary-600 hover:to-amber-600"
-                size="lg"
-              >
-                <Sparkles className="h-6 w-6" />
-                <span>{t("recommend.title")}</span>
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* Shopping List */}
-        <Link href={`/${locale}/shopping`}>
-          <Card className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white transition-all hover:scale-[1.02] hover:shadow-lg">
-            <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-full bg-white/20 p-3">
-                <ShoppingCart className="h-8 w-8" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">{t("shopping.title")}</h3>
-                <p className="text-sm text-white/80">
-                  {t("home.shoppingDescription")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        {/* Nutrition Analysis */}
-        <Link href={`/${locale}/nutrition`}>
-          <Card className="bg-gradient-to-r from-violet-500 to-purple-600 text-white transition-all hover:scale-[1.02] hover:shadow-lg">
-            <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-full bg-white/20 p-3">
-                <Activity className="h-8 w-8" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">
-                  {t("nutrition.title")}
-                </h3>
-                <p className="text-sm text-white/80">
-                  {t("home.nutritionDescription")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("home.quickActions")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              <Link href={`/${locale}/fridge`}>
-                <Button variant="secondary" className="w-full">
-                  {t("nav.fridge")}
-                </Button>
-              </Link>
-              <Link href={`/${locale}/recipes`}>
-                <Button variant="secondary" className="w-full">
-                  {t("nav.recipes")}
-                </Button>
+                {t('home.viewAll')}
               </Link>
             </div>
-          </CardContent>
-        </Card>
+            <motion.div
+              variants={listContainer}
+              initial="hidden"
+              animate="visible"
+              className="flex gap-toss-sm overflow-x-auto pb-2 scrollbar-hide"
+            >
+              {recentItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  variants={listItem}
+                  className="flex-shrink-0"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="toss-card w-32 text-center">
+                    <p className="toss-body2 font-medium truncate">{item.name}</p>
+                    <p className="toss-caption mt-1">
+                      {item.quantity} {t(`units.${item.unit}`)}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.section>
+        )}
+
+        {/* Feature Cards */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ ...spring.gentle, delay: 0.5 }}
+          className="space-y-toss-sm"
+        >
+          {/* Nutrition Analysis */}
+          <Link href={`/${locale}/nutrition`}>
+            <motion.div
+              whileTap={{ scale: 0.98 }}
+              className="toss-card flex items-center gap-toss-md"
+            >
+              <div className="rounded-2xl bg-violet-100 p-3 dark:bg-violet-900/30">
+                <Activity className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="toss-body1 font-semibold">{t('nutrition.title')}</h3>
+                <p className="toss-caption">{t('home.nutritionDescription')}</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-gray-400" />
+            </motion.div>
+          </Link>
+
+          {/* Shopping List */}
+          <Link href={`/${locale}/shopping`}>
+            <motion.div
+              whileTap={{ scale: 0.98 }}
+              className="toss-card flex items-center gap-toss-md"
+            >
+              <div className="rounded-2xl bg-teal-100 p-3 dark:bg-teal-900/30">
+                <ShoppingCart className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="toss-body1 font-semibold">{t('shopping.title')}</h3>
+                <p className="toss-caption">{t('home.shoppingDescription')}</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-gray-400" />
+            </motion.div>
+          </Link>
+        </motion.section>
       </div>
     </div>
   );

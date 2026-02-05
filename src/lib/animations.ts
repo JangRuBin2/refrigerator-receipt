@@ -64,3 +64,50 @@ export const stagger = {
   normal: { staggerChildren: 0.05 },
   slow: { staggerChildren: 0.1 },
 } as const;
+
+/** Page transition variants */
+export const pageTransition = {
+  /** Slide from right (push navigation) */
+  slideFromRight: {
+    initial: { x: '100%', opacity: 0 },
+    animate: { x: 0, opacity: 1 },
+    exit: { x: '-30%', opacity: 0 },
+  },
+  /** Slide to right (pop navigation) */
+  slideToRight: {
+    initial: { x: '-30%', opacity: 0 },
+    animate: { x: 0, opacity: 1 },
+    exit: { x: '100%', opacity: 0 },
+  },
+  /** Fade transition for modals */
+  fade: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+  },
+  /** Scale fade for dialogs */
+  scaleFade: {
+    initial: { opacity: 0, scale: 0.95 },
+    animate: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.95 },
+  },
+} as const;
+
+/** List item animation variants */
+export const listItem = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 },
+  exit: { opacity: 0, x: -20 },
+} as const;
+
+/** Container variants for staggered children */
+export const listContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.1,
+    },
+  },
+} as const;

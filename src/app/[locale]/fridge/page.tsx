@@ -1,23 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { Plus, Search, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, Package, Snowflake, Sun, X } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
-import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
-import { Modal } from '@/components/ui/Modal';
+import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { getDaysUntilExpiry, getExpiryColor, calculateExpiryDate, cn } from '@/lib/utils';
+import { spring, listItem } from '@/lib/animations';
 import type { Ingredient, StorageType, Category, Unit } from '@/types';
 
-const STORAGE_TYPES: StorageType[] = ['refrigerated', 'frozen', 'room_temp'];
+const STORAGE_TYPES: { type: StorageType | 'all'; icon: typeof Package }[] = [
+  { type: 'all', icon: Package },
+  { type: 'refrigerated', icon: Snowflake },
+  { type: 'frozen', icon: Snowflake },
+  { type: 'room_temp', icon: Sun },
+];
+
 const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
 const UNITS: Unit[] = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
 
@@ -29,7 +36,7 @@ export default function FridgePage() {
 
   const [filter, setFilter] = useState<StorageType | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Ingredient | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
@@ -65,7 +72,7 @@ export default function FridgePage() {
     return acc;
   }, {} as Record<Category, typeof filteredIngredients>);
 
-  const handleOpenModal = (item?: Ingredient) => {
+  const handleOpenSheet = (item?: Ingredient) => {
     if (item) {
       setEditingItem(item);
       setFormData({
@@ -90,7 +97,7 @@ export default function FridgePage() {
         expiryDate: calculateExpiryDate(today, 'vegetables', 'refrigerated'),
       });
     }
-    setIsModalOpen(true);
+    setIsSheetOpen(true);
   };
 
   const handleSubmit = () => {
@@ -108,11 +115,13 @@ export default function FridgePage() {
 
     if (editingItem) {
       updateIngredient(editingItem.id, ingredientData);
+      toast.success(t('common.success'));
     } else {
       addIngredient(ingredientData);
+      toast.success(t('common.success'));
     }
 
-    setIsModalOpen(false);
+    setIsSheetOpen(false);
   };
 
   const handleDelete = (id: string) => {
@@ -127,7 +136,6 @@ export default function FridgePage() {
     }
   };
 
-  // Auto-calculate expiry date when category or storage type changes
   const handleCategoryChange = (category: Category) => {
     setFormData((prev) => ({
       ...prev,
@@ -145,212 +153,250 @@ export default function FridgePage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header locale={locale} title={t('fridge.title')} />
 
-      <div className="space-y-4 p-4">
-        {/* Search */}
+      {/* Search - Fixed at top */}
+      <div className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm dark:bg-gray-900/95 p-toss-md pb-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder={t('common.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 bg-white dark:bg-gray-800 border-0 shadow-sm"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <X className="h-4 w-4 text-gray-400" />
+            </button>
+          )}
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={cn(
-              'rounded-full px-4 py-2 text-sm font-medium transition-colors',
-              filter === 'all'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
-            )}
-          >
-            {t('fridge.all')}
-          </button>
-          {STORAGE_TYPES.map((type) => (
-            <button
+        {/* Filter Tabs - Horizontal scroll */}
+        <div className="flex gap-2 overflow-x-auto py-toss-sm scrollbar-hide">
+          {STORAGE_TYPES.map(({ type, icon: Icon }) => (
+            <motion.button
               key={type}
               onClick={() => setFilter(type)}
+              whileTap={{ scale: 0.95 }}
               className={cn(
-                'whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors',
                 filter === type
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               )}
             >
-              {t(`fridge.${type === 'room_temp' ? 'roomTemp' : type}`)}
-            </button>
+              <Icon className="h-4 w-4" />
+              {type === 'all'
+                ? t('fridge.all')
+                : t(`fridge.${type === 'room_temp' ? 'roomTemp' : type}`)}
+            </motion.button>
           ))}
         </div>
+      </div>
 
+      <div className="p-toss-md pt-0 pb-24 space-y-toss-md">
         {/* Ingredients List */}
         {filteredIngredients.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-gray-500">{t('fridge.empty')}</p>
-              <p className="mt-1 text-sm text-gray-400">{t('fridge.addFirst')}</p>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-16"
+          >
+            <div className="rounded-full bg-gray-100 p-6 dark:bg-gray-800">
+              <Package className="h-12 w-12 text-gray-400" />
+            </div>
+            <p className="toss-body1 mt-toss-md text-gray-500">{t('fridge.empty')}</p>
+            <p className="toss-caption mt-toss-xs">{t('fridge.addFirst')}</p>
+            <Button
+              onClick={() => handleOpenSheet()}
+              className="mt-toss-md"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {t('fridge.addIngredient')}
+            </Button>
+          </motion.div>
         ) : (
-          <div className="space-y-4">
-            {Object.entries(groupedIngredients).map(([category, items]) => (
-              <Card key={category}>
-                <CardContent className="p-4">
-                  <h3 className="mb-3 font-semibold text-gray-700 dark:text-gray-300">
-                    {t(`categories.${category}`)} ({items.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-gray-500">
+          <AnimatePresence>
+            {Object.entries(groupedIngredients).map(([category, items], categoryIndex) => (
+              <motion.div
+                key={category}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ ...spring.gentle, delay: categoryIndex * 0.05 }}
+              >
+                <h3 className="toss-body2 font-semibold text-gray-500 mb-toss-sm px-1">
+                  {t(`categories.${category}`)} ({items.length})
+                </h3>
+                <div className="space-y-2">
+                  {items.map((item, itemIndex) => (
+                    <motion.div
+                      key={item.id}
+                      variants={listItem}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      transition={{ delay: itemIndex * 0.03 }}
+                      className="toss-card"
+                    >
+                      <div className="flex items-center gap-toss-sm">
+                        <div className="flex-1 min-w-0">
+                          <p className="toss-body1 font-medium truncate">{item.name}</p>
+                          <p className="toss-caption">
                             {item.quantity} {t(`units.${item.unit}`)}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            className={getExpiryColor(item.daysLeft)}
-                          >
-                            {item.daysLeft < 0
-                              ? t('fridge.expired')
-                              : item.daysLeft === 0
+                        <Badge className={getExpiryColor(item.daysLeft)}>
+                          {item.daysLeft < 0
+                            ? t('fridge.expired')
+                            : item.daysLeft === 0
                               ? t('fridge.today')
                               : t('fridge.dDay', { days: item.daysLeft })}
-                          </Badge>
-                          <button
-                            onClick={() => handleOpenModal(item)}
-                            className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-600"
+                        </Badge>
+                        <div className="flex gap-1">
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleOpenSheet(item)}
+                            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
                           >
                             <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button
+                          </motion.button>
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => handleDelete(item.id)}
-                            className="rounded p-1 text-gray-400 hover:bg-red-100 hover:text-red-600"
+                            className="rounded-full p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </button>
+                          </motion.button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
             ))}
-          </div>
+          </AnimatePresence>
         )}
+      </div>
 
-        {/* Add Button */}
-        <Button
-          onClick={() => handleOpenModal()}
-          className="fixed bottom-24 right-4 h-14 w-14 rounded-full shadow-lg"
+      {/* Animated FAB */}
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={spring.bouncy}
+        className="fixed bottom-24 right-4 z-20"
+      >
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => handleOpenSheet()}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700"
         >
           <Plus className="h-6 w-6" />
-        </Button>
+        </motion.button>
+      </motion.div>
 
-        {/* Add/Edit Modal */}
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title={editingItem ? t('fridge.editIngredient') : t('fridge.addIngredient')}
-        >
-          <div className="space-y-4">
+      {/* Add/Edit BottomSheet */}
+      <BottomSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        title={editingItem ? t('fridge.editIngredient') : t('fridge.addIngredient')}
+        snapPoints={[75]}
+      >
+        <div className="space-y-toss-md">
+          <Input
+            label={t('fridge.ingredientName')}
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder={t('fridge.ingredientName')}
+          />
+
+          <Select
+            label={t('fridge.category')}
+            value={formData.category}
+            onChange={(e) => handleCategoryChange(e.target.value as Category)}
+            options={CATEGORIES.map((cat) => ({
+              value: cat,
+              label: t(`categories.${cat}`),
+            }))}
+          />
+
+          <div className="grid grid-cols-2 gap-toss-sm">
             <Input
-              label={t('fridge.ingredientName')}
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder={t('fridge.ingredientName')}
+              label={t('fridge.quantity')}
+              type="number"
+              value={formData.quantity}
+              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              placeholder="1"
             />
-
             <Select
-              label={t('fridge.category')}
-              value={formData.category}
-              onChange={(e) => handleCategoryChange(e.target.value as Category)}
-              options={CATEGORIES.map((cat) => ({
-                value: cat,
-                label: t(`categories.${cat}`),
+              label={t('fridge.unit')}
+              value={formData.unit}
+              onChange={(e) => setFormData({ ...formData, unit: e.target.value as Unit })}
+              options={UNITS.map((unit) => ({
+                value: unit,
+                label: t(`units.${unit}`),
               }))}
             />
+          </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label={t('fridge.quantity')}
-                type="number"
-                value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                placeholder="1"
-              />
-              <Select
-                label={t('fridge.unit')}
-                value={formData.unit}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value as Unit })}
-                options={UNITS.map((unit) => ({
-                  value: unit,
-                  label: t(`units.${unit}`),
-                }))}
-              />
-            </div>
+          <Select
+            label={t('fridge.storageType')}
+            value={formData.storageType}
+            onChange={(e) => handleStorageChange(e.target.value as StorageType)}
+            options={[
+              { value: 'refrigerated', label: t('fridge.refrigerated') },
+              { value: 'frozen', label: t('fridge.frozen') },
+              { value: 'room_temp', label: t('fridge.roomTemp') },
+            ]}
+          />
 
-            <Select
-              label={t('fridge.storageType')}
-              value={formData.storageType}
-              onChange={(e) => handleStorageChange(e.target.value as StorageType)}
-              options={STORAGE_TYPES.map((type) => ({
-                value: type,
-                label: t(`fridge.${type === 'room_temp' ? 'roomTemp' : type}`),
-              }))}
-            />
-
+          <div className="grid grid-cols-2 gap-toss-sm">
             <Input
               label={t('fridge.purchaseDate')}
               type="date"
               value={formData.purchaseDate}
               onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
             />
-
             <Input
               label={t('fridge.expiryDate')}
               type="date"
               value={formData.expiryDate}
               onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
             />
-
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsModalOpen(false)}
-                className="flex-1"
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button onClick={handleSubmit} className="flex-1">
-                {t('common.save')}
-              </Button>
-            </div>
           </div>
-        </Modal>
 
-        {/* Delete Confirm Dialog */}
-        <ConfirmDialog
-          isOpen={deleteTarget !== null}
-          onClose={() => setDeleteTarget(null)}
-          onConfirm={confirmDelete}
-          title={t('common.delete') + '?'}
-          message={t('settings.deleteWarning')}
-          confirmText={t('common.delete')}
-          cancelText={t('common.cancel')}
-          variant="danger"
-        />
-      </div>
+          <BottomSheetActions>
+            <Button onClick={handleSubmit} className="w-full">
+              {t('common.save')}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsSheetOpen(false)}
+              className="w-full"
+            >
+              {t('common.cancel')}
+            </Button>
+          </BottomSheetActions>
+        </div>
+      </BottomSheet>
+
+      {/* Delete Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title={t('common.delete') + '?'}
+        message={t('settings.deleteWarning')}
+        confirmText={t('common.delete')}
+        cancelText={t('common.cancel')}
+        variant="danger"
+      />
     </div>
   );
 }

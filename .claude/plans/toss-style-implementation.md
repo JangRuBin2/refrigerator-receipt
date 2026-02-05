@@ -81,184 +81,159 @@ Changes:
 
 ---
 
-### MVP-2: Animation System
+### MVP-2: Animation System ✅ COMPLETED
 
-#### 2.1 Animation Tokens
+#### 2.1 Animation Tokens ✅
 ```
 Location: src/lib/animations.ts
 Priority: HIGH
+Status: COMPLETED
 ```
 
-```typescript
-export const spring = {
-  gentle: { damping: 20, stiffness: 100 },
-  snappy: { damping: 25, stiffness: 300 },
-  bouncy: { damping: 10, stiffness: 200 },
-}
+Implemented:
+- [x] spring tokens (gentle, snappy, bouncy, stiff)
+- [x] duration tokens (instant, fast, normal, slow)
+- [x] easing tokens (toss, easeOut, easeIn)
+- [x] variants (fadeIn, slideUp, slideDown, scale, press)
+- [x] stagger configuration
+- [x] pageTransition variants (slideFromRight, slideToRight, fade, scaleFade)
+- [x] listItem and listContainer variants
 
-export const duration = {
-  instant: 100,
-  fast: 200,
-  normal: 300,
-  slow: 500,
-}
-
-export const easing = {
-  toss: [0.25, 0.1, 0.25, 1], // Toss custom easing
-}
-```
-
-#### 2.2 Page Transitions
+#### 2.2 Page Transitions ✅
 ```
 Location: src/components/PageTransition.tsx
 Priority: MEDIUM
+Status: COMPLETED
 ```
 
 Features:
-- [ ] Slide from right (push)
-- [ ] Slide to right (pop)
-- [ ] Fade for modals
+- [x] Slide from right (push)
+- [x] Slide to right (pop)
+- [x] Fade for modals
+- [x] FadeTransition component
+- [x] SlideTransition component with direction control
 - [ ] Shared element transition (future)
 
-#### 2.3 List Animations
+#### 2.3 List Animations ✅
 ```
 Location: tailwind.config.ts (extend)
 Priority: MEDIUM
+Status: COMPLETED
 ```
 
 Features:
-- [ ] Staggered fade-in for lists
-- [ ] Slide-up on scroll reveal
-- [ ] Exit animations
+- [x] Staggered fade-in for lists (stagger-1 to stagger-5)
+- [x] Slide-up on scroll reveal (fade-in-up, fade-in-down)
+- [x] Exit animations (slide-out-left, slide-out-right)
+- [x] Additional animations: slide-in-right, slide-in-left, scale-in, shimmer
 
 ---
 
-### MVP-3: Typography & Spacing
+### MVP-3: Typography & Spacing ✅ COMPLETED
 
-#### 3.1 Typography Scale
+#### 3.1 Typography Scale ✅
+```
+Location: tailwind.config.ts, src/app/globals.css
+Priority: HIGH
+Status: COMPLETED
+```
+
+Implemented in tailwind.config.ts fontSize:
+- [x] `text-toss-h1` - 28px, bold, line-height 1.3
+- [x] `text-toss-h2` - 22px, bold, line-height 1.4
+- [x] `text-toss-h3` - 18px, semi-bold, line-height 1.4
+- [x] `text-toss-body1` - 16px, regular, line-height 1.5
+- [x] `text-toss-body2` - 14px, regular, line-height 1.5
+- [x] `text-toss-caption` - 12px, regular, line-height 1.4
+
+Component classes in globals.css:
+- [x] `.toss-h1`, `.toss-h2`, `.toss-h3` with dark mode colors
+- [x] `.toss-body1`, `.toss-body2`, `.toss-caption`
+- [x] `.toss-section`, `.toss-section-title`
+- [x] `.toss-card`, `.toss-list-item`
+
+#### 3.2 Spacing System ✅
 ```
 Location: tailwind.config.ts
-Priority: HIGH
+Status: COMPLETED
 ```
 
-토스 스타일 타이포그래피:
-```css
-/* Headlines - Bold, Large */
-.toss-h1 { font-size: 28px; font-weight: 700; line-height: 1.3; }
-.toss-h2 { font-size: 22px; font-weight: 700; line-height: 1.4; }
-.toss-h3 { font-size: 18px; font-weight: 600; line-height: 1.4; }
+Implemented 8px grid spacing:
+- [x] `toss-xs`: 4px (0.25rem)
+- [x] `toss-sm`: 8px (0.5rem)
+- [x] `toss-md`: 16px (1rem)
+- [x] `toss-lg`: 24px (1.5rem)
+- [x] `toss-xl`: 32px (2rem)
+- [x] `toss-2xl`: 48px (3rem)
+- [x] `toss-3xl`: 64px (4rem)
 
-/* Body - Regular */
-.toss-body1 { font-size: 16px; font-weight: 400; line-height: 1.5; }
-.toss-body2 { font-size: 14px; font-weight: 400; line-height: 1.5; }
+Usage: `p-toss-md`, `gap-toss-sm`, `mb-toss-lg`, etc.
 
-/* Caption - Light */
-.toss-caption { font-size: 12px; font-weight: 400; color: #8B95A1; }
-```
-
-#### 3.2 Spacing System
-```
-Toss uses 8px grid system
-```
-
-- `space-xs`: 4px
-- `space-sm`: 8px
-- `space-md`: 16px
-- `space-lg`: 24px
-- `space-xl`: 32px
-- `space-2xl`: 48px
-
-#### 3.3 Color Refinement
+#### 3.3 Color Refinement ✅
 ```
 Location: tailwind.config.ts
 Priority: MEDIUM
+Status: COMPLETED
 ```
 
-```typescript
-colors: {
-  // Toss-inspired neutrals
-  gray: {
-    50: '#F9FAFB',
-    100: '#F2F4F6',
-    200: '#E5E8EB',
-    300: '#D1D6DB',
-    400: '#B0B8C1',
-    500: '#8B95A1',
-    600: '#6B7684',
-    700: '#4E5968',
-    800: '#333D4B',
-    900: '#191F28',
-  },
-  // Keep primary orange but refine
-  primary: {
-    // ... existing with slight adjustments
-  }
-}
-```
+Implemented Toss-inspired neutral gray scale:
+- [x] gray-50 to gray-900 with Toss color values
+- [x] Proper dark mode color mappings in typography classes
 
 ---
 
-### MVP-4: Key Screen Redesigns
+### MVP-4: Key Screen Redesigns ✅ COMPLETED
 
-#### 4.1 Home Dashboard
+#### 4.1 Home Dashboard ✅
 ```
 Location: src/app/[locale]/page.tsx
 Priority: HIGH
+Status: COMPLETED
 ```
 
-Changes:
-- [ ] Hero section with greeting + date
-- [ ] Single focus card (expiring items alert)
-- [ ] Quick actions as icon buttons (not cards)
-- [ ] Horizontal scroll for recent items
-- [ ] Pull to refresh
+Implemented:
+- [x] Hero section with greeting + formatted date
+- [x] Single focus card (expiring items alert with horizontal scroll)
+- [x] Quick actions as icon buttons (4 grid layout)
+- [x] Horizontal scroll for recent items
+- [x] AI Recipe recommendation banner
+- [x] Feature cards with chevron navigation
+- [x] Toss typography and spacing applied
+- [x] Motion animations (staggered, spring)
 
-Layout:
-```
-+---------------------------+
-|  안녕하세요, 사용자님       |
-|  오늘도 신선하게           |
-+---------------------------+
-|  [!] 3일 내 소비 필요      |
-|  +------------------------+|
-|  | 우유 | 계란 | 두부 ... ||
-|  +------------------------+|
-+---------------------------+
-|  빠른 메뉴                 |
-|  [스캔] [냉장고] [레시피]   |
-+---------------------------+
-|  최근 추가                 |
-|  [item] [item] [item] ->   |
-+---------------------------+
-```
-
-#### 4.2 Fridge Page
+#### 4.2 Fridge Page ✅
 ```
 Location: src/app/[locale]/fridge/page.tsx
 Priority: HIGH
+Status: COMPLETED
 ```
 
-Changes:
-- [ ] Search bar fixed at top
-- [ ] Category tabs (horizontal scroll)
-- [ ] Card-based item display
-- [ ] Swipe to delete/edit
-- [ ] FAB for add (keep but animate)
-- [ ] Empty state illustration
+Implemented:
+- [x] Search bar fixed at top with clear button
+- [x] Storage type tabs with icons (horizontal scroll)
+- [x] Card-based item display with toss-card styling
+- [x] Edit/delete buttons with tap animations
+- [x] Animated FAB (bouncy spring entry)
+- [x] Empty state with icon illustration
+- [x] BottomSheet for add/edit forms (replaces Modal)
+- [x] AnimatePresence for list transitions
 
-#### 4.3 Scan Flow
+#### 4.3 Scan Flow ✅
 ```
 Location: src/app/[locale]/scan/page.tsx
 Priority: MEDIUM
+Status: COMPLETED
 ```
 
-Changes:
-- [ ] Step indicator at top
-- [ ] Large centered upload area
-- [ ] Camera permission flow
-- [ ] Scanning animation (pulse)
-- [ ] Results in BottomSheet
-- [ ] Item edit inline
+Implemented:
+- [x] Step indicator at top (dots with progress line)
+- [x] Large centered upload area with breathing animation
+- [x] AI Vision toggle with animated switch
+- [x] Scanning animation (pulse rings)
+- [x] Results in BottomSheet (80vh snap point)
+- [x] Item edit inline with confidence indicators
+- [x] Daily usage display with upgrade CTA
+- [x] AnimatePresence for step transitions
 
 ---
 
