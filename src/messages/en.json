@@ -252,7 +252,13 @@
     "processing": "Processing payment...",
     "success": "Subscription complete!",
     "successDescription": "Enjoy all premium features",
-    "error": "Payment failed",
+    "error": {
+      "default": "Payment failed",
+      "network": "Network error. Please try again.",
+      "grantFailed": "Subscription processing failed. Please contact support.",
+      "unknown": "An unknown error occurred.",
+      "openInToss": "Please open in Toss app. In-app purchases are only available within the Toss app."
+    },
     "errorDescription": "Please try again",
     "currentSubscription": "Current Subscription",
     "expiresAt": "Expires: {date}",

@@ -252,7 +252,13 @@
     "processing": "결제 처리 중...",
     "success": "구독이 완료되었습니다!",
     "successDescription": "프리미엄 기능을 자유롭게 이용하세요",
-    "error": "결제에 실패했습니다",
+    "error": {
+      "default": "결제에 실패했습니다",
+      "network": "네트워크 오류가 발생했습니다. 다시 시도해주세요.",
+      "grantFailed": "구독 처리 중 오류가 발생했습니다. 고객센터에 문의해주세요.",
+      "unknown": "알 수 없는 오류가 발생했습니다.",
+      "openInToss": "토스 앱에서 열어주세요. 인앱결제는 토스 앱 내에서만 가능합니다."
+    },
     "errorDescription": "다시 시도해주세요",
     "currentSubscription": "현재 구독",
     "expiresAt": "만료일: {date}",

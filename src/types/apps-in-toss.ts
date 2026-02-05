@@ -1,0 +1,71 @@
+// 앱인토스 인앱결제 타입 정의
+// https://developers-apps-in-toss.toss.im/iap/develop.html
+
+export interface IapProductItem {
+  sku: string;
+  displayAmount: string;
+  displayName: string;
+  iconUrl?: string;
+  description?: string;
+}
+
+export interface IapProductListResponse {
+  products: IapProductItem[];
+}
+
+export interface IapPurchaseResult {
+  type: 'success' | 'error';
+  orderId?: string;
+  sku?: string;
+  errorCode?: IapErrorCode;
+  errorMessage?: string;
+}
+
+export type IapErrorCode =
+  | 'USER_CANCELED'
+  | 'NETWORK_ERROR'
+  | 'PRODUCT_NOT_FOUND'
+  | 'ALREADY_PURCHASED'
+  | 'PAYMENT_FAILED'
+  | 'PRODUCT_NOT_GRANTED_BY_PARTNER'
+  | 'UNKNOWN_ERROR';
+
+export interface IapPendingOrder {
+  orderId: string;
+  sku: string;
+  purchasedAt: string;
+}
+
+export interface IapCompletedOrder {
+  orderId: string;
+  sku: string;
+  status: 'COMPLETED' | 'REFUNDED';
+  purchasedAt: string;
+  completedAt?: string;
+  refundedAt?: string;
+}
+
+// 서버 API 응답 타입
+export type IapOrderStatus =
+  | 'PURCHASED'
+  | 'PAYMENT_COMPLETED'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'ORDER_IN_PROGRESS'
+  | 'NOT_FOUND';
+
+export interface IapOrderStatusResponse {
+  orderId: string;
+  status: IapOrderStatus;
+  sku?: string;
+  amount?: number;
+  purchasedAt?: string;
+}
+
+// 상품 SKU 상수
+export const IAP_PRODUCTS = {
+  PREMIUM_MONTHLY: 'premium_monthly',
+  PREMIUM_YEARLY: 'premium_yearly',
+} as const;
+
+export type IapProductSku = typeof IAP_PRODUCTS[keyof typeof IAP_PRODUCTS];

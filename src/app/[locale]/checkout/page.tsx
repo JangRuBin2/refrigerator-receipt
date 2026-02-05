@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { Crown, CreditCard, Shield, Check, Loader2, ArrowLeft, Sparkles } from 'lucide-react';
+import { Crown, CreditCard, Shield, Check, Loader2, ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
+import { useAppsInToss } from '@/hooks/useAppsInToss';
+import { IAP_PRODUCTS } from '@/types/apps-in-toss';
 
 type Plan = 'monthly' | 'yearly';
 
@@ -23,6 +25,24 @@ function CheckoutContent() {
   const [selectedPlan, setSelectedPlan] = useState<Plan>(initialPlan);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // 앱인토스 SDK
+  const {
+    isAvailable: isAppsInToss,
+    isLoading: isAppsInTossLoading,
+    products: iapProducts,
+    pendingOrders,
+    purchase,
+    restorePendingOrders,
+  } = useAppsInToss();
+
+  // 미결 주문 복원 시도
+  useEffect(() => {
+    if (isAppsInToss && pendingOrders.length > 0) {
+      restorePendingOrders();
+    }
+  }, [isAppsInToss, pendingOrders.length, restorePendingOrders]);
 
   const plans = {
     monthly: {
@@ -52,13 +72,43 @@ function CheckoutContent() {
 
   const handleSubscribe = async () => {
     setIsProcessing(true);
+    setError(null);
 
-    // TODO: 실제 결제 연동 (Stripe/토스페이먼츠)
-    // 현재는 데모용 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // 앱인토스 환경에서는 인앱결제 사용
+    if (isAppsInToss) {
+      const sku = selectedPlan === 'yearly'
+        ? IAP_PRODUCTS.PREMIUM_YEARLY
+        : IAP_PRODUCTS.PREMIUM_MONTHLY;
 
+      const result = await purchase(sku);
+
+      if (result.type === 'success') {
+        setIsComplete(true);
+      } else {
+        // 에러 처리
+        switch (result.errorCode) {
+          case 'USER_CANCELED':
+            // 사용자 취소는 에러 메시지 표시 안함
+            break;
+          case 'NETWORK_ERROR':
+            setError(t('pricing.error.network'));
+            break;
+          case 'PRODUCT_NOT_GRANTED_BY_PARTNER':
+            setError(t('pricing.error.grantFailed'));
+            break;
+          default:
+            setError(result.errorMessage || t('pricing.error.unknown'));
+        }
+      }
+
+      setIsProcessing(false);
+      return;
+    }
+
+    // 앱인토스 환경이 아닌 경우 (웹 브라우저)
+    // 토스 앱에서 열도록 안내
+    setError(t('pricing.error.openInToss'));
     setIsProcessing(false);
-    setIsComplete(true);
   };
 
   if (isComplete) {
@@ -227,11 +277,27 @@ function CheckoutContent() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-red-600 dark:bg-red-900/20 dark:text-red-400">
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* AppsInToss Loading */}
+        {isAppsInTossLoading && (
+          <div className="flex items-center justify-center gap-2 py-4">
+            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            <span className="text-sm text-gray-500">결제 환경 확인 중...</span>
+          </div>
+        )}
+
         {/* Subscribe Button */}
         <div className="space-y-3">
           <Button
             onClick={handleSubscribe}
-            disabled={isProcessing}
+            disabled={isProcessing || isAppsInTossLoading}
             className="w-full py-6 text-lg"
             size="lg"
           >
@@ -247,6 +313,17 @@ function CheckoutContent() {
               </>
             )}
           </Button>
+
+          {/* 앱인토스 환경 표시 */}
+          {isAppsInToss && (
+            <div className="flex items-center justify-center gap-1 text-xs text-blue-600">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+              </svg>
+              토스페이로 결제됩니다
+            </div>
+          )}
+
           <p className="text-center text-xs text-gray-500">
             {t('pricing.cancelDescription')}
           </p>
