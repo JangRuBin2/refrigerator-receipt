@@ -265,7 +265,20 @@
     "currentSubscription": "当前订阅",
     "expiresAt": "到期日: {date}",
     "autoRenew": "自动续费",
-    "manageSubscription": "管理订阅"
+    "manageSubscription": "管理订阅",
+    "value": {
+      "title": "为什么这个价格很划算？",
+      "wasteReduction": "减少30%食物浪费",
+      "wasteDetail": "平均家庭每月浪费¥350 →",
+      "wasteSaving": "每月节省¥105",
+      "coffeePrice": "一杯咖啡的价格",
+      "coffeeDetail": "整月享用AI食谱、营养分析、智能购物",
+      "expectedSaving": "预计节省",
+      "premiumCost": "高级版费用",
+      "netBenefit": "净收益",
+      "monthlySaving": "约¥105/月",
+      "monthlyNet": "+¥94/月"
+    }
   },
   "features": {
     "scan": "收据扫描",

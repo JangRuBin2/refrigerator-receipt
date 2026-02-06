@@ -273,7 +273,20 @@
     "currentSubscription": "Current Subscription",
     "expiresAt": "Expires: {date}",
     "autoRenew": "Auto-renewal",
-    "manageSubscription": "Manage Subscription"
+    "manageSubscription": "Manage Subscription",
+    "value": {
+      "title": "Why is this price reasonable?",
+      "wasteReduction": "With 30% less food waste",
+      "wasteDetail": "Avg. household wastes $42/mo →",
+      "wasteSaving": "Save $12/mo",
+      "coffeePrice": "For the price of one coffee",
+      "coffeeDetail": "Get AI recipes, nutrition analysis, smart shopping all month",
+      "expectedSaving": "Expected savings",
+      "premiumCost": "Premium cost",
+      "netBenefit": "Net benefit",
+      "monthlySaving": "~$12/mo",
+      "monthlyNet": "+$10.5/mo"
+    }
   },
   "features": {
     "scan": "Receipt Scan",

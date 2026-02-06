@@ -265,7 +265,20 @@
     "currentSubscription": "現在の購読",
     "expiresAt": "有効期限: {date}",
     "autoRenew": "自動更新",
-    "manageSubscription": "購読管理"
+    "manageSubscription": "購読管理",
+    "value": {
+      "title": "この価格、なぜお得なの？",
+      "wasteReduction": "食品ロス30%削減で",
+      "wasteDetail": "平均世帯 月5,500円の無駄 →",
+      "wasteSaving": "月1,600円節約",
+      "coffeePrice": "コーヒー1杯の価格で",
+      "coffeeDetail": "1ヶ月間AIレシピ、栄養分析、スマート買い物を利用",
+      "expectedSaving": "予想節約額",
+      "premiumCost": "プレミアム費用",
+      "netBenefit": "純利益",
+      "monthlySaving": "月 約1,600円",
+      "monthlyNet": "月 +1,390円"
+    }
   },
   "features": {
     "scan": "レシートスキャン",

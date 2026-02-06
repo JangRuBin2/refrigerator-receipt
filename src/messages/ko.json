@@ -273,7 +273,20 @@
     "currentSubscription": "현재 구독",
     "expiresAt": "만료일: {date}",
     "autoRenew": "자동 갱신",
-    "manageSubscription": "구독 관리"
+    "manageSubscription": "구독 관리",
+    "value": {
+      "title": "이 가격, 왜 합리적일까요?",
+      "wasteReduction": "음식물 낭비 30% 감소 시",
+      "wasteDetail": "평균 가구 월 5.5만원 낭비 →",
+      "wasteSaving": "월 1.6만원 절약",
+      "coffeePrice": "커피 한 잔 가격으로",
+      "coffeeDetail": "한 달 내내 AI 레시피, 영양 분석, 스마트 장보기 이용",
+      "expectedSaving": "예상 절약 금액",
+      "premiumCost": "프리미엄 비용",
+      "netBenefit": "순 이익",
+      "monthlySaving": "월 ~16,000원",
+      "monthlyNet": "월 +14,100원"
+    }
   },
   "features": {
     "scan": "영수증 스캔",
