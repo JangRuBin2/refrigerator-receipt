@@ -59,8 +59,8 @@ MealKeeper는 영수증 OCR 스캔을 통해 식재료를 자동 등록하고, �
 ### IAP 상품 SKU
 | SKU | 상품명 | 가격 |
 |-----|--------|------|
-| `premium_monthly` | Premium 월간 | ₩3,900 |
-| `premium_yearly` | Premium 연간 | ₩33,900 |
+| `premium_monthly` | Premium 월간 | ₩1,900 |
+| `premium_yearly` | Premium 연간 | ₩15,900 (30% 할인) |
 
 > Toss Partner Center에서 SKU 등록 필요
 
@@ -260,7 +260,7 @@ npm run lint
 
 ## Subscription Plans
 
-| Feature | Free | Premium (월 ₩3,900) |
+| Feature | Free | Premium (월 ₩1,900) |
 |---------|------|---------------------|
 | 식재료 수동 등록 | O | O |
 | 유통기한 알림 | O | O |

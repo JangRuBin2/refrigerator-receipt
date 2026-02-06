@@ -157,7 +157,7 @@ export default function PricingPage() {
                 className="w-full"
                 onClick={() => router.push(`/${locale}/checkout?plan=yearly`)}
               >
-                {t('pricing.subscribeYearly')} (28% 할인)
+                {t('pricing.subscribeYearly')} (30% 할인)
               </Button>
             </div>
           </CardContent>
@@ -250,7 +250,7 @@ export default function PricingPage() {
               className="mt-4 bg-white text-primary-600 hover:bg-gray-100"
               onClick={() => router.push(`/${locale}/checkout?plan=yearly`)}
             >
-              연간 구독으로 28% 절약
+              연간 구독으로 30% 절약
             </Button>
           </CardContent>
         </Card>

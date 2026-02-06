@@ -46,17 +46,17 @@ function CheckoutContent() {
 
   const plans = {
     monthly: {
-      price: '₩3,900',
+      price: '₩1,900',
       period: t('pricing.month'),
-      total: '₩3,900',
+      total: '₩1,900',
       badge: t('pricing.mostPopular'),
     },
     yearly: {
-      price: '₩2,825',
+      price: '₩1,325',
       period: t('pricing.month'),
-      total: '₩33,900',
+      total: '₩15,900',
       badge: t('pricing.bestValue'),
-      discount: '28%',
+      discount: '30%',
     },
   };
 
@@ -228,7 +228,7 @@ function CheckoutContent() {
             {selectedPlan === 'yearly' && (
               <div className="flex justify-between text-sm text-green-600">
                 <span>할인</span>
-                <span>-₩12,900</span>
+                <span>-₩6,900</span>
               </div>
             )}
             <div className="border-t pt-3">
