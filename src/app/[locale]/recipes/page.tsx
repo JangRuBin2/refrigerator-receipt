@@ -63,6 +63,7 @@ function RecipesContent() {
 
   const { ingredients, favoriteRecipeIds, toggleFavorite } = useStore();
   const { isPremium } = usePremium();
+  const [freeTrialInfo, setFreeTrialInfo] = useState<{ remainingCount: number; limit: number } | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeWithAvailability | null>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
@@ -217,12 +218,6 @@ function RecipesContent() {
   }, [meal]);
 
   const searchExternalRecipes = async (useCustomQuery = false) => {
-    // 프리미엄 체크
-    if (!isPremium) {
-      setShowPremiumModal(true);
-      return;
-    }
-
     setExternalLoading(true);
     setExternalError('');
     setExternalRecipes([]);
@@ -247,6 +242,14 @@ function RecipesContent() {
       }
 
       if (!response.ok) {
+        if (response.status === 403) {
+          // 무료 체험 소진 또는 프리미엄 필요
+          setShowPremiumModal(true);
+          if (data.freeTrial) {
+            setFreeTrialInfo(data.freeTrial);
+          }
+          return;
+        }
         if (response.status === 503) {
           setExternalError(t('recipe.apiNotConfigured'));
         } else {
@@ -257,6 +260,11 @@ function RecipesContent() {
 
       setExternalRecipes(data.results || []);
       setExternalQuery(data.query || '');
+
+      // 무료 체험 정보 업데이트
+      if (data.freeTrial) {
+        setFreeTrialInfo(data.freeTrial);
+      }
     } catch {
       setExternalError(t('common.error'));
     } finally {
@@ -474,7 +482,9 @@ function RecipesContent() {
             {!isPremium && (
               <Badge variant="warning" className="text-xs">
                 <Crown className="mr-1 h-3 w-3" />
-                Premium
+                {freeTrialInfo && freeTrialInfo.remainingCount > 0
+                  ? `${freeTrialInfo.remainingCount}회 무료`
+                  : 'Premium'}
               </Badge>
             )}
           </div>

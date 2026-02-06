@@ -42,16 +42,22 @@ export async function GET() {
 
     if (ingredientsError) throw ingredientsError;
 
-    // 과거 스캔 기록에서 자주 구매한 재료 분석
-    const { data: scans, error: scansError } = await supabase
-      .from('receipt_scans')
-      .select('parsed_items, created_at')
+    // 과거 스캔 기록에서 자주 구매한 재료 분석 (event_logs에서)
+    const { data: scanEvents, error: scansError } = await supabase
+      .from('event_logs')
+      .select('metadata, created_at')
       .eq('user_id', user.id)
-      .eq('status', 'completed')
+      .eq('event_type', 'receipt_scan')
       .order('created_at', { ascending: false })
       .limit(10);
 
     if (scansError) throw scansError;
+
+    // event_logs를 기존 형식으로 변환
+    const scans = scanEvents?.map(e => ({
+      parsed_items: (e.metadata as Record<string, unknown>)?.parsed_items,
+      created_at: e.created_at,
+    })) || [];
 
     // Gemini API 키 확인
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY;

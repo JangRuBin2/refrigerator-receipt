@@ -66,18 +66,25 @@ export async function GET(request: NextRequest) {
       startDate.setMonth(now.getMonth() - 1);
     }
 
-    // 영수증 스캔 기록 조회
-    const { data: scans, error: scanError } = await supabase
-      .from('receipt_scans')
-      .select('created_at, parsed_items')
+    // 영수증 스캔 기록 조회 (event_logs에서)
+    const { data: scanEvents, error: scanError } = await supabase
+      .from('event_logs')
+      .select('created_at, metadata')
       .eq('user_id', user.id)
-      .eq('status', 'completed')
+      .eq('event_type', 'receipt_scan')
       .gte('created_at', startDate.toISOString())
       .order('created_at', { ascending: false });
 
     if (scanError) {
       console.error('Scan fetch error:', scanError);
     }
+
+    // event_logs를 기존 형식으로 변환
+    const scans = scanEvents?.map(e => ({
+      created_at: e.created_at,
+      parsed_items: (e.metadata as Record<string, unknown>)?.parsed_items,
+      status: (e.metadata as Record<string, unknown>)?.status || 'completed',
+    })).filter(s => s.status === 'completed') || [];
 
     // 재료 추가 기록 조회 (ingredients 테이블에서 기간 내 추가된 것)
     const { data: ingredients, error: ingError } = await supabase

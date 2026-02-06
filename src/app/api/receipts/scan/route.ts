@@ -62,9 +62,10 @@ export async function POST(request: NextRequest) {
     const todayISO = today.toISOString();
 
     const { count: todayCount } = await supabase
-      .from('receipt_scans')
+      .from('event_logs')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
+      .eq('event_type', 'receipt_scan')
       .gte('created_at', todayISO);
 
     const currentCount = todayCount || 0;
@@ -150,21 +151,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 스캔 기록 저장
+    // 이벤트 로그 저장
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: scanRecord } = await (supabase
-      .from('receipt_scans') as any)
+    const { data: eventRecord } = await (supabase
+      .from('event_logs') as any)
       .insert({
         user_id: user.id,
-        raw_text: result.rawText,
-        parsed_items: result.items,
-        status: 'completed',
+        event_type: 'receipt_scan',
+        metadata: {
+          raw_text: result.rawText,
+          parsed_items: result.items,
+          status: 'completed',
+          mode: result.mode,
+        },
       })
       .select('id')
       .single() as { data: ScanRecord | null };
 
-    if (scanRecord) {
-      result.scanId = scanRecord.id;
+    if (eventRecord) {
+      result.scanId = eventRecord.id;
     }
 
     // 남은 횟수 정보 포함하여 응답
@@ -255,24 +260,36 @@ export async function GET() {
     const todayISO = today.toISOString();
 
     const { count: todayCount } = await supabase
-      .from('receipt_scans')
+      .from('event_logs')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
+      .eq('event_type', 'receipt_scan')
       .gte('created_at', todayISO);
 
     const used = todayCount || 0;
 
-    // 스캔 기록
-    const { data: scans, error } = await supabase
-      .from('receipt_scans')
+    // 스캔 기록 (event_logs에서 receipt_scan 타입만 조회)
+    const { data: events, error } = await supabase
+      .from('event_logs')
       .select('*')
       .eq('user_id', user.id)
+      .eq('event_type', 'receipt_scan')
       .order('created_at', { ascending: false })
       .limit(20);
 
     if (error) {
       throw error;
     }
+
+    // 기존 형식과 호환되도록 변환
+    const scans = events?.map(e => ({
+      id: e.id,
+      user_id: e.user_id,
+      raw_text: (e.metadata as Record<string, unknown>)?.raw_text,
+      parsed_items: (e.metadata as Record<string, unknown>)?.parsed_items,
+      status: (e.metadata as Record<string, unknown>)?.status || 'completed',
+      created_at: e.created_at,
+    })) || [];
 
     return NextResponse.json({
       scans,

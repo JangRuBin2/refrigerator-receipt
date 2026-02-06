@@ -12,6 +12,14 @@ export type Unit = 'g' | 'kg' | 'ml' | 'L' | 'ea' | 'pack' | 'bottle' | 'box' | 
 export type StorageType = 'refrigerated' | 'frozen' | 'room_temp';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export type ScanStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type EventType =
+  | 'receipt_scan'
+  | 'external_recipe_search'
+  | 'ai_recipe_generate'
+  | 'random_recipe'
+  | 'taste_recipe'
+  | 'nutrition_analyze'
+  | 'shopping_recommend';
 export type Plan = 'free' | 'premium';
 export type BillingCycle = 'monthly' | 'yearly';
 export type PaymentProvider = 'stripe' | 'toss' | 'google_play' | 'app_store';
@@ -195,37 +203,31 @@ export type Database = {
           }
         ];
       };
-      receipt_scans: {
+      event_logs: {
         Row: {
           id: string;
           user_id: string;
-          image_url: string | null;
-          raw_text: string | null;
-          parsed_items: Json | null;
-          status: ScanStatus;
+          event_type: EventType;
+          metadata: Json;
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
-          image_url?: string | null;
-          raw_text?: string | null;
-          parsed_items?: Json | null;
-          status?: ScanStatus;
+          event_type: EventType;
+          metadata?: Json;
           created_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
-          image_url?: string | null;
-          raw_text?: string | null;
-          parsed_items?: Json | null;
-          status?: ScanStatus;
+          event_type?: EventType;
+          metadata?: Json;
           created_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: 'receipt_scans_user_id_fkey';
+            foreignKeyName: 'event_logs_user_id_fkey';
             columns: ['user_id'];
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
@@ -333,6 +335,7 @@ export type Database = {
       storage_type: StorageType;
       difficulty: Difficulty;
       scan_status: ScanStatus;
+      event_type: EventType;
       plan: Plan;
       billing_cycle: BillingCycle;
       payment_provider: PaymentProvider;
@@ -354,7 +357,7 @@ export type Profile = Tables<'profiles'>;
 export type Ingredient = Tables<'ingredients'>;
 export type Recipe = Tables<'recipes'>;
 export type UserFavorite = Tables<'user_favorites'>;
-export type ReceiptScan = Tables<'receipt_scans'>;
+export type EventLog = Tables<'event_logs'>;
 export type Subscription = Tables<'subscriptions'>;
 export type ShoppingList = Tables<'shopping_lists'>;
 

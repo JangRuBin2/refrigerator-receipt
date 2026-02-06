@@ -44,6 +44,7 @@ export default function RecommendPage() {
   const router = useRouter();
   const locale = params.locale as string;
   const { isPremium } = usePremium();
+  const [freeTrialInfo, setFreeTrialInfo] = useState<{ remainingCount: number; limit: number } | null>(null);
   const { ingredients } = useStore();
 
   const [mode, setMode] = useState<Mode>('select');
@@ -206,15 +207,7 @@ export default function RecommendPage() {
 
   // === AI Mode ===
   const handleAiModeClick = () => {
-    if (!isPremium) {
-      setShowPremiumModal(true);
-      return;
-    }
-    if (ingredients.length === 0) {
-      // 재료가 없으면 냉장고로 이동 안내
-      setMode('ai');
-      return;
-    }
+    // 재료가 없으면 냉장고로 이동 안내
     setMode('ai');
   };
 
@@ -254,13 +247,22 @@ export default function RecommendPage() {
 
       if (!response.ok) {
         if (response.status === 403) {
+          // 무료 체험 소진 또는 프리미엄 필요
           setShowPremiumModal(true);
+          if (data.freeTrial) {
+            setFreeTrialInfo(data.freeTrial);
+          }
           return;
         }
         throw new Error(data.error || 'Failed to generate recipe');
       }
 
       setAiRecipe(data.recipe);
+
+      // 무료 체험 정보 업데이트
+      if (data.freeTrial) {
+        setFreeTrialInfo(data.freeTrial);
+      }
     } catch (err) {
       setAiError(err instanceof Error ? err.message : 'AI 레시피 생성에 실패했습니다');
     } finally {
@@ -417,7 +419,9 @@ export default function RecommendPage() {
                 <div className="absolute right-3 top-3">
                   <Badge variant="warning" className="text-xs">
                     <Crown className="mr-1 h-3 w-3" />
-                    Premium
+                    {freeTrialInfo && freeTrialInfo.remainingCount > 0
+                      ? `${freeTrialInfo.remainingCount}회 무료`
+                      : 'Premium'}
                   </Badge>
                 </div>
               )}

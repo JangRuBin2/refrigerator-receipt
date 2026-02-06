@@ -58,14 +58,14 @@ CREATE TABLE IF NOT EXISTS public.user_favorites (
   UNIQUE(user_id, recipe_id)
 );
 
--- 5. Receipt Scans 테이블 (영수증 스캔 기록)
-CREATE TABLE IF NOT EXISTS public.receipt_scans (
+-- 5. Event Logs 테이블 (통합 이벤트 로그)
+CREATE TABLE IF NOT EXISTS public.event_logs (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  image_url TEXT,
-  raw_text TEXT,
-  parsed_items JSONB,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  event_type TEXT NOT NULL,
+  -- event_type: receipt_scan, external_recipe_search, ai_recipe_generate,
+  --             random_recipe, taste_recipe, nutrition_analyze, shopping_recommend
+  metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -103,7 +103,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ingredients ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.recipes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_favorites ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.receipt_scans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.event_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shopping_lists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 
@@ -129,8 +129,8 @@ CREATE POLICY "Service role can manage recipes" ON public.recipes
 CREATE POLICY "Users can CRUD own favorites" ON public.user_favorites
   FOR ALL USING (auth.uid() = user_id);
 
--- Receipt Scans 정책
-CREATE POLICY "Users can CRUD own scans" ON public.receipt_scans
+-- Event Logs 정책
+CREATE POLICY "Users can CRUD own event logs" ON public.event_logs
   FOR ALL USING (auth.uid() = user_id);
 
 -- Shopping Lists 정책

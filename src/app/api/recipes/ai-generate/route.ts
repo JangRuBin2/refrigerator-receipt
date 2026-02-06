@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { checkAccess } from '@/lib/subscription/free-trial';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -39,20 +40,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 프리미엄 체크
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    const now = new Date();
-    const expiresAt = subscription?.expires_at ? new Date(subscription.expires_at) : null;
-    const isPremium = subscription?.plan === 'premium' && (!expiresAt || expiresAt > now);
-
-    if (!isPremium) {
+    // 프리미엄/무료 체험 체크
+    const access = await checkAccess(supabase, user.id, 'ai_recipe_generate');
+    if (!access.hasAccess) {
       return NextResponse.json(
-        { error: 'Premium subscription required' },
+        {
+          error: '무료 체험 횟수를 모두 사용했습니다. 프리미엄으로 업그레이드해주세요.',
+          freeTrial: access.freeTrial,
+        },
         { status: 403 }
       );
     }
@@ -126,7 +121,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ recipe });
+    // 이벤트 로그 저장
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('event_logs') as any).insert({
+      user_id: user.id,
+      event_type: 'ai_recipe_generate',
+      metadata: {
+        ingredients,
+        preferences,
+        recipe_title: recipe.title,
+      },
+    });
+
+    // 사용 후 남은 횟수 재계산
+    const updatedAccess = await checkAccess(supabase, user.id, 'ai_recipe_generate');
+
+    return NextResponse.json({
+      recipe,
+      freeTrial: updatedAccess.freeTrial,
+      isPremium: updatedAccess.isPremium,
+    });
 
   } catch (error) {
     console.error('AI recipe generation error:', error);

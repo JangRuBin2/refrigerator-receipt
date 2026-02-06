@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { searchYouTubeRecipes, isYouTubeConfigured } from '@/lib/search/youtube';
 import { searchGoogleRecipes, isGoogleConfigured } from '@/lib/search/google';
+import { checkAccess } from '@/lib/subscription/free-trial';
 import type { ExternalRecipe } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,18 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // 프리미엄/무료 체험 확인
+    const access = await checkAccess(supabase, user.id, 'external_recipe_search');
+    if (!access.hasAccess) {
+      return NextResponse.json(
+        {
+          error: '무료 체험 횟수를 모두 사용했습니다. 프리미엄으로 업그레이드해주세요.',
+          freeTrial: access.freeTrial,
+        },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -111,6 +124,21 @@ export async function GET(request: NextRequest) {
     // 셔플해서 섞기
     results.sort(() => Math.random() - 0.5);
 
+    // 이벤트 로그 저장
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.from('event_logs') as any).insert({
+      user_id: user.id,
+      event_type: 'external_recipe_search',
+      metadata: {
+        query: customQuery || ingredientsParam,
+        strategy,
+        results_count: results.length,
+      },
+    });
+
+    // 사용 후 남은 횟수 재계산
+    const updatedAccess = await checkAccess(supabase, user.id, 'external_recipe_search');
+
     return NextResponse.json({
       query: customQuery || ingredientsParam,
       results,
@@ -119,6 +147,8 @@ export async function GET(request: NextRequest) {
         google: googleConfigured,
       },
       strategy,
+      freeTrial: updatedAccess.freeTrial,
+      isPremium: updatedAccess.isPremium,
     });
   } catch (error) {
     console.error('Recipe search error:', error);
