@@ -16,9 +16,7 @@ export type PremiumFeature =
   | 'external_recipe_search'
   | 'ai_recipe'
   | 'nutrition_analysis'
-  | 'smart_shopping'
-  | 'waste_analysis'
-  | 'no_ads';
+  | 'smart_shopping';
 
 // 환경변수로 프리미엄 체크 우회 설정
 // 개발 환경에서만 NEXT_PUBLIC_BYPASS_PREMIUM=true 설정
@@ -31,8 +29,6 @@ const PREMIUM_FEATURES: Record<PremiumFeature, boolean> = {
   ai_recipe: true,
   nutrition_analysis: true,
   smart_shopping: true,
-  waste_analysis: true,
-  no_ads: true,
 };
 
 // 캐시 시간 (5분)

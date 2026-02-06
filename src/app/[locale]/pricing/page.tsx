@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Check, Crown, Zap, X, Sparkles, BarChart3, ShoppingCart, Recycle, Camera, Search, Ban } from 'lucide-react';
+import { Check, Crown, Zap, X, Sparkles, BarChart3, ShoppingCart, Camera, Search } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -50,22 +50,10 @@ export default function PricingPage() {
       color: 'text-orange-500',
     },
     {
-      icon: Recycle,
-      title: t('pricing.feature.wasteAnalysis'),
-      description: t('pricing.feature.wasteDesc'),
-      color: 'text-teal-500',
-    },
-    {
       icon: Search,
       title: t('pricing.feature.externalSearch'),
       description: 'YouTube, Google에서 레시피 검색',
       color: 'text-red-500',
-    },
-    {
-      icon: Ban,
-      title: t('pricing.feature.noAds'),
-      description: '깔끔한 광고 없는 환경',
-      color: 'text-gray-500',
     },
   ];
 
@@ -79,9 +67,7 @@ export default function PricingPage() {
     { feature: t('pricing.feature.aiRecipe'), free: false, premium: true },
     { feature: t('pricing.feature.nutritionAnalysis'), free: false, premium: true },
     { feature: t('pricing.feature.smartShopping'), free: false, premium: true },
-    { feature: t('pricing.feature.wasteAnalysis'), free: false, premium: true },
     { feature: t('pricing.feature.externalSearch'), free: false, premium: true },
-    { feature: t('pricing.feature.noAds'), free: false, premium: true },
   ];
 
   return (

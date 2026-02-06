@@ -716,15 +716,23 @@ function RecipesContent() {
             {/* Instructions */}
             <div>
               <h4 className="mb-2 font-semibold">{t('recipe.instructions')}</h4>
-              <ol className="list-inside list-decimal space-y-2">
-                {(selectedRecipe.instructions[locale] || selectedRecipe.instructions.en)?.map(
-                  (step, idx) => (
-                    <li key={idx} className="text-gray-600 dark:text-gray-400">
-                      {step}
-                    </li>
-                  )
-                )}
-              </ol>
+              {(selectedRecipe.instructions[locale] || selectedRecipe.instructions.en)?.length ? (
+                <ol className="list-inside list-decimal space-y-2">
+                  {(selectedRecipe.instructions[locale] || selectedRecipe.instructions.en)?.map(
+                    (step, idx) => (
+                      <li key={idx} className="text-gray-600 dark:text-gray-400">
+                        {step}
+                      </li>
+                    )
+                  )}
+                </ol>
+              ) : (
+                <div className="rounded-lg bg-gray-50 p-4 text-center dark:bg-gray-700">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {t('common.comingSoon')}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 pt-4">

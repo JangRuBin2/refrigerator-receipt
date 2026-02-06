@@ -56,8 +56,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const sizeStyles = {
-      sm: 'h-9 px-4 text-sm',
-      md: 'h-11 px-5 text-sm',
+      sm: 'h-11 min-h-[44px] px-4 text-sm', // min 44px for accessibility
+      md: 'h-11 min-h-[44px] px-5 text-sm',
       lg: 'h-13 px-6 text-base',
       xl: 'h-14 px-8 text-base',
     };
@@ -116,8 +116,8 @@ export const IconButton = forwardRef<
   Omit<ButtonProps, 'children'> & { icon: React.ReactNode; label: string }
 >(({ icon, label, className, size = 'md', ...props }, ref) => {
   const sizeStyles = {
-    sm: 'h-8 w-8',
-    md: 'h-10 w-10',
+    sm: 'h-11 w-11 min-h-[44px] min-w-[44px]', // min 44px for accessibility
+    md: 'h-11 w-11 min-h-[44px] min-w-[44px]',
     lg: 'h-12 w-12',
     xl: 'h-14 w-14',
   };

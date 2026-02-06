@@ -125,9 +125,10 @@ const ToastItem = ({ toast }: { toast: ToastType }) => {
             light();
             removeToast(toast.id);
           }}
-          className="flex-shrink-0 p-1 rounded-full opacity-60 hover:opacity-100 transition-opacity text-white dark:text-gray-900"
+          className="flex flex-shrink-0 min-h-[44px] min-w-[44px] items-center justify-center rounded-full opacity-60 hover:opacity-100 transition-opacity text-white dark:text-gray-900"
+          aria-label="Close notification"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
       </div>
 

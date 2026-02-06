@@ -359,6 +359,9 @@ export default function ShoppingPage() {
                   </div>
                 ))}
               </div>
+              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                {t('shopping.aiDisclaimer')}
+              </p>
             </CardContent>
           </Card>
         )}
@@ -419,9 +422,10 @@ export default function ShoppingPage() {
 
                         <button
                           onClick={() => deleteItem(item.id)}
-                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                          className="flex min-h-[44px] min-w-[44px] items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                          aria-label="Delete item"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
                     ))}

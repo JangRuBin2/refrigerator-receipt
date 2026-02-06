@@ -65,9 +65,7 @@ function CheckoutContent() {
     { icon: '🤖', text: t('pricing.feature.aiRecipe') },
     { icon: '📊', text: t('pricing.feature.nutritionAnalysis') },
     { icon: '🛒', text: t('pricing.feature.smartShopping') },
-    { icon: '♻️', text: t('pricing.feature.wasteAnalysis') },
     { icon: '🔍', text: t('pricing.feature.externalSearch') },
-    { icon: '🚫', text: t('pricing.feature.noAds') },
   ];
 
   const handleSubscribe = async () => {

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Crown, Camera, Sparkles, BarChart3, ShoppingCart, Search, X } from 'lucide-react';
+import { Crown, Camera, Sparkles, BarChart3, ShoppingCart, Search } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import type { PremiumFeature } from '@/hooks/usePremium';
@@ -19,8 +19,6 @@ const featureIcons: Record<PremiumFeature, React.ReactNode> = {
   ai_recipe: <Sparkles className="h-6 w-6" />,
   nutrition_analysis: <BarChart3 className="h-6 w-6" />,
   smart_shopping: <ShoppingCart className="h-6 w-6" />,
-  waste_analysis: <BarChart3 className="h-6 w-6" />,
-  no_ads: <X className="h-6 w-6" />,
 };
 
 const featureKeys: Record<PremiumFeature, string> = {
@@ -29,8 +27,6 @@ const featureKeys: Record<PremiumFeature, string> = {
   ai_recipe: 'aiRecipe',
   nutrition_analysis: 'nutritionAnalysis',
   smart_shopping: 'smartShopping',
-  waste_analysis: 'wasteAnalysis',
-  no_ads: 'noAds',
 };
 
 export function PremiumModal({ isOpen, onClose, feature }: PremiumModalProps) {

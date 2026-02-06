@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Camera, Upload, Check, RefreshCw, Sparkles, Clock, AlertCircle, Crown, ChevronRight } from 'lucide-react';
+import { Camera, Upload, Check, RefreshCw, Sparkles, Clock, AlertCircle, Crown, ChevronRight, Play, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,7 +13,9 @@ import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { usePremium } from '@/hooks/usePremium';
+import { useAppsInTossAds } from '@/hooks/useAppsInTossAds';
 import { PremiumModal } from '@/components/premium/PremiumModal';
+import { AD_GROUP_IDS } from '@/types/apps-in-toss-ads';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
 import type { ScannedItem, Category, Unit, StorageType } from '@/types';
@@ -40,6 +42,9 @@ export default function ScanPage() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const { isPremium } = usePremium();
+  const { isAvailable: isAdsAvailable, adState, watchAdForReward } = useAppsInTossAds();
+  const [isWatchingAd, setIsWatchingAd] = useState(false);
+  const [canWatchAd, setCanWatchAd] = useState(false);
 
   useEffect(() => {
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
@@ -53,6 +58,7 @@ export default function ScanPage() {
           const data = await response.json();
           if (data.usage) {
             setUsage(data.usage);
+            setCanWatchAd(data.usage.canWatchAd || false);
           }
         }
       } catch {
@@ -74,11 +80,49 @@ export default function ScanPage() {
   const currentStepIndex = STEPS.indexOf(step);
 
   const handleScanClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
-    if (!isPremium) {
+    // 프리미엄이 아니고 사용량 초과 시 프리미엄 모달 표시
+    if (!isPremium && usage && usage.remaining <= 0) {
       setShowPremiumModal(true);
       return;
     }
     inputRef.current?.click();
+  };
+
+  const handleWatchAd = async () => {
+    if (!isAdsAvailable || isWatchingAd) return;
+
+    setIsWatchingAd(true);
+    try {
+      const success = await watchAdForReward(async () => {
+        // 광고 시청 완료 후 서버에 보상 요청
+        const response = await fetch('/api/receipts/ad-reward', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adGroupId: AD_GROUP_IDS.SCAN_REWARDED }),
+        });
+
+        if (response.ok) {
+          // 사용량 정보 새로고침
+          const usageResponse = await fetch('/api/receipts/scan');
+          if (usageResponse.ok) {
+            const data = await usageResponse.json();
+            if (data.usage) {
+              setUsage(data.usage);
+              setCanWatchAd(data.usage.canWatchAd || false);
+            }
+          }
+          toast.success(t('scan.adWatchSuccess'));
+        }
+      });
+
+      if (!success) {
+        toast.error(t('scan.adWatchFailed'));
+      }
+    } catch {
+      toast.error(t('scan.adWatchFailed'));
+    } finally {
+      setIsWatchingAd(false);
+    }
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -261,32 +305,50 @@ export default function ScanPage() {
               {/* Daily Usage */}
               {usage && (
                 <div className={cn(
-                  'toss-card flex items-center justify-between',
+                  'toss-card',
                   usage.remaining > 0
                     ? 'border-l-4 border-primary-500'
                     : 'border-l-4 border-red-500'
                 )}>
-                  <div className="flex items-center gap-toss-sm">
-                    <Camera className="h-5 w-5 text-gray-500" />
-                    <div>
-                      <p className="toss-body2 font-medium">
-                        {t('scan.dailyUsage', { used: usage.used, limit: usage.dailyLimit })}
-                      </p>
-                      <p className="toss-caption">
-                        {usage.remaining > 0
-                          ? `${usage.remaining}회 남음`
-                          : '오늘 사용량 초과'}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-toss-sm">
+                      <Camera className="h-5 w-5 text-gray-500" />
+                      <div>
+                        <p className="toss-body2 font-medium">
+                          {t('scan.dailyUsage', { used: usage.used, limit: usage.effectiveLimit || usage.dailyLimit })}
+                        </p>
+                        <p className="toss-caption">
+                          {usage.remaining > 0
+                            ? `${usage.remaining}회 남음`
+                            : '오늘 사용량 초과'}
+                        </p>
+                      </div>
                     </div>
+                    {usage.remaining === 0 && !isPremium && (
+                      <button
+                        onClick={() => setShowPremiumModal(true)}
+                        className="flex items-center gap-1 rounded-full bg-primary-600 px-3 py-1.5 text-xs font-medium text-white"
+                      >
+                        <Crown className="h-3 w-3" />
+                        업그레이드
+                      </button>
+                    )}
                   </div>
-                  {usage.remaining === 0 && !isPremium && (
-                    <button
-                      onClick={() => setShowPremiumModal(true)}
-                      className="flex items-center gap-1 rounded-full bg-primary-600 px-3 py-1.5 text-xs font-medium text-white"
-                    >
-                      <Crown className="h-3 w-3" />
-                      업그레이드
-                    </button>
+
+                  {/* 광고 시청 버튼 (한도 초과 시) - 준비 중 */}
+                  {usage.remaining <= 0 && !isPremium && (
+                    <div className="mt-toss-sm pt-toss-sm border-t border-gray-100 dark:border-gray-700">
+                      <button
+                        disabled
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-300 px-4 py-3 text-sm font-medium text-gray-500 cursor-not-allowed"
+                      >
+                        <Play className="h-4 w-4" />
+                        {t('scan.watchAdForScans')}
+                        <span className="ml-1 rounded bg-gray-400 px-1.5 py-0.5 text-xs text-white">
+                          {t('common.comingSoon')}
+                        </span>
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

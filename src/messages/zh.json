@@ -13,7 +13,9 @@
     "error": "发生错误",
     "success": "成功",
     "noData": "暂无数据",
-    "retry": "重试"
+    "retry": "重试",
+    "comingSoon": "即将推出",
+    "aiDisclaimer": "此内容由AI生成，仅供参考。"
   },
   "nav": {
     "home": "首页",
@@ -120,6 +122,7 @@
   },
   "recommend": {
     "title": "菜单推荐",
+    "description": "不知道今天吃什么？让AI来帮你推荐",
     "randomMode": "随机",
     "tasteMode": "口味推荐",
     "randomTitle": "今天吃什么？",
@@ -157,7 +160,13 @@
     "fileTooLarge": "图片太大了。请上传10MB以下的图片。",
     "dailyUsage": "今日: {used}/{limit}次",
     "dailyLimitReached": "已达到每日上传限制",
-    "upgradeForMore": "升级高级版可扫描更多"
+    "upgradeForMore": "升级高级版可扫描更多",
+    "watchAdForScans": "观看广告获取1次扫描",
+    "watchingAd": "广告加载中...",
+    "adWatchSuccess": "观看完成！已添加1次扫描",
+    "adWatchFailed": "观看广告失败",
+    "adLimitReached": "今日广告观看次数已达上限",
+    "remainingAdWatches": "今日还可观看{count}次广告"
   },
   "settings": {
     "title": "设置",
@@ -189,6 +198,7 @@
     "login": "登录",
     "logout": "退出登录",
     "loginWithGoogle": "使用Google登录",
+    "loginWithToss": "使用Toss登录",
     "loginDescription": "登录以管理您的冰箱",
     "welcomeBack": "欢迎回来！",
     "continueAsGuest": "以访客身份继续",
@@ -269,6 +279,7 @@
     "addItem": "添加项目",
     "itemNamePlaceholder": "输入食材名...",
     "aiRecommend": "AI推荐",
+    "aiDisclaimer": "AI生成的推荐，仅供参考。",
     "completeList": "完成购物",
     "filter": {
       "all": "全部",
@@ -289,6 +300,7 @@
     "sugar": "糖",
     "categoryBalance": "类别均衡",
     "aiRecommendations": "AI推荐",
+    "aiDisclaimer": "此内容由AI生成，仅供参考。",
     "ingredientDetails": "食材营养详情",
     "statusGood": "适宜",
     "statusLow": "不足",

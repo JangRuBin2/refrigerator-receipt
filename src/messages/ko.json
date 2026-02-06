@@ -13,7 +13,9 @@
     "error": "오류가 발생했습니다",
     "success": "성공",
     "noData": "데이터가 없습니다",
-    "retry": "다시 시도"
+    "retry": "다시 시도",
+    "comingSoon": "준비 중",
+    "aiDisclaimer": "AI가 생성한 콘텐츠입니다. 참고용으로만 활용하세요."
   },
   "nav": {
     "home": "홈",
@@ -122,6 +124,7 @@
   },
   "recommend": {
     "title": "메뉴 추천",
+    "description": "오늘 뭐 먹을지 고민될 때, AI가 추천해드려요",
     "randomMode": "진짜 랜덤",
     "tasteMode": "입맛 추천",
     "randomTitle": "오늘 뭐 먹지?",
@@ -159,7 +162,13 @@
     "fileTooLarge": "이미지 용량이 너무 큽니다. 10MB 이하의 이미지를 업로드해주세요.",
     "dailyUsage": "오늘 {used}/{limit}회 사용",
     "dailyLimitReached": "일일 업로드 제한에 도달했습니다",
-    "upgradeForMore": "프리미엄으로 업그레이드하면 더 많이 스캔할 수 있습니다"
+    "upgradeForMore": "프리미엄으로 업그레이드하면 더 많이 스캔할 수 있습니다",
+    "watchAdForScans": "광고 보고 1회 스캔 받기",
+    "watchingAd": "광고 로딩 중...",
+    "adWatchSuccess": "광고 시청 완료! 1회 스캔이 추가되었습니다",
+    "adWatchFailed": "광고 시청에 실패했습니다",
+    "adLimitReached": "오늘 광고 시청 한도에 도달했습니다",
+    "remainingAdWatches": "오늘 광고 {count}회 더 시청 가능"
   },
   "settings": {
     "title": "설정",
@@ -191,6 +200,7 @@
     "login": "로그인",
     "logout": "로그아웃",
     "loginWithGoogle": "Google로 로그인",
+    "loginWithToss": "토스로 로그인",
     "loginDescription": "로그인하여 냉장고를 관리하세요",
     "welcomeBack": "다시 오셨군요!",
     "continueAsGuest": "게스트로 계속하기",
@@ -277,6 +287,7 @@
     "addItem": "항목 추가",
     "itemNamePlaceholder": "재료명 입력...",
     "aiRecommend": "AI 추천",
+    "aiDisclaimer": "AI가 생성한 추천입니다. 참고용으로만 활용하세요.",
     "completeList": "장보기 완료",
     "filter": {
       "all": "전체",
@@ -297,6 +308,7 @@
     "sugar": "당류",
     "categoryBalance": "카테고리별 균형",
     "aiRecommendations": "AI 영양 추천",
+    "aiDisclaimer": "AI가 생성한 콘텐츠입니다. 참고용으로만 활용하세요.",
     "ingredientDetails": "재료별 영양 정보",
     "statusGood": "적정",
     "statusLow": "부족",

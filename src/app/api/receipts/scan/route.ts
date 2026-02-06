@@ -20,6 +20,7 @@ interface ScanRecord {
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const DAILY_LIMIT_FREE = 5; // 무료 사용자 일일 제한
 const DAILY_LIMIT_PREMIUM = 50; // 프리미엄 사용자 일일 제한
+const AD_REWARD_SCANS = 1; // 광고 시청당 추가 스캔 횟수
 
 interface ScanResult {
   items: Array<{
@@ -68,16 +69,29 @@ export async function POST(request: NextRequest) {
       .eq('event_type', 'receipt_scan')
       .gte('created_at', todayISO);
 
-    const currentCount = todayCount || 0;
+    // 광고 시청으로 얻은 보너스 스캔 횟수 확인
+    const { count: adWatchCount } = await supabase
+      .from('event_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('event_type', 'ad_watch_scan_reward')
+      .gte('created_at', todayISO);
 
-    if (currentCount >= dailyLimit) {
+    const currentCount = todayCount || 0;
+    const bonusScans = (adWatchCount || 0) * AD_REWARD_SCANS;
+    const effectiveLimit = dailyLimit + bonusScans;
+
+    if (currentCount >= effectiveLimit) {
       return NextResponse.json(
         {
-          error: `일일 업로드 제한(${dailyLimit}회)에 도달했습니다. ${isPremium ? '내일 다시 시도해주세요.' : '프리미엄으로 업그레이드하면 더 많이 스캔할 수 있습니다.'}`,
+          error: `일일 업로드 제한(${effectiveLimit}회)에 도달했습니다. ${isPremium ? '내일 다시 시도해주세요.' : '광고를 시청하거나 프리미엄으로 업그레이드하세요.'}`,
           limitReached: true,
           dailyLimit,
+          bonusScans,
+          effectiveLimit,
           currentCount,
           isPremium,
+          canWatchAd: !isPremium && (adWatchCount || 0) < 3,
         },
         { status: 429 }
       );
@@ -177,8 +191,10 @@ export async function POST(request: NextRequest) {
       ...result,
       usage: {
         dailyLimit,
+        bonusScans,
+        effectiveLimit,
         used: currentCount + 1,
-        remaining: dailyLimit - currentCount - 1,
+        remaining: effectiveLimit - currentCount - 1,
         isPremium,
       },
     });
@@ -266,7 +282,17 @@ export async function GET() {
       .eq('event_type', 'receipt_scan')
       .gte('created_at', todayISO);
 
+    // 광고 시청으로 얻은 보너스 스캔 횟수 확인
+    const { count: adWatchCount } = await supabase
+      .from('event_logs')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('event_type', 'ad_watch_scan_reward')
+      .gte('created_at', todayISO);
+
     const used = todayCount || 0;
+    const bonusScans = (adWatchCount || 0) * 1; // AD_REWARD_SCANS
+    const effectiveLimit = dailyLimit + bonusScans;
 
     // 스캔 기록 (event_logs에서 receipt_scan 타입만 조회)
     const { data: events, error } = await supabase
@@ -295,9 +321,12 @@ export async function GET() {
       scans,
       usage: {
         dailyLimit,
+        bonusScans,
+        effectiveLimit,
         used,
-        remaining: Math.max(0, dailyLimit - used),
+        remaining: Math.max(0, effectiveLimit - used),
         isPremium,
+        canWatchAd: !isPremium && (adWatchCount || 0) < 3,
       },
     });
   } catch {

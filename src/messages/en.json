@@ -13,7 +13,9 @@
     "error": "An error occurred",
     "success": "Success",
     "noData": "No data available",
-    "retry": "Retry"
+    "retry": "Retry",
+    "comingSoon": "Coming Soon",
+    "aiDisclaimer": "This content is AI-generated. Use for reference only."
   },
   "nav": {
     "home": "Home",
@@ -122,6 +124,7 @@
   },
   "recommend": {
     "title": "Menu Recommend",
+    "description": "Let AI help you decide what to eat today",
     "randomMode": "Random",
     "tasteMode": "By Taste",
     "randomTitle": "What to eat today?",
@@ -159,7 +162,13 @@
     "fileTooLarge": "The image is too large. Please upload an image under 10MB.",
     "dailyUsage": "Today: {used}/{limit} scans",
     "dailyLimitReached": "Daily upload limit reached",
-    "upgradeForMore": "Upgrade to Premium for more scans"
+    "upgradeForMore": "Upgrade to Premium for more scans",
+    "watchAdForScans": "Watch ad for 1 scan",
+    "watchingAd": "Loading ad...",
+    "adWatchSuccess": "Ad watched! 1 scan added",
+    "adWatchFailed": "Failed to watch ad",
+    "adLimitReached": "Daily ad watch limit reached",
+    "remainingAdWatches": "{count} more ads available today"
   },
   "settings": {
     "title": "Settings",
@@ -191,6 +200,7 @@
     "login": "Login",
     "logout": "Logout",
     "loginWithGoogle": "Login with Google",
+    "loginWithToss": "Login with Toss",
     "loginDescription": "Login to manage your fridge",
     "welcomeBack": "Welcome back!",
     "continueAsGuest": "Continue as Guest",
@@ -277,6 +287,7 @@
     "addItem": "Add Item",
     "itemNamePlaceholder": "Enter item name...",
     "aiRecommend": "AI Recommendations",
+    "aiDisclaimer": "AI-generated recommendations. Use for reference only.",
     "completeList": "Complete Shopping",
     "filter": {
       "all": "All",
@@ -297,6 +308,7 @@
     "sugar": "Sugar",
     "categoryBalance": "Category Balance",
     "aiRecommendations": "AI Recommendations",
+    "aiDisclaimer": "This content is AI-generated. Use for reference only.",
     "ingredientDetails": "Ingredient Details",
     "statusGood": "Good",
     "statusLow": "Low",

@@ -441,6 +441,12 @@ export default function RecommendPage() {
         {/* Random Mode */}
         {mode === 'random' && (
           <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
+                <Shuffle className="mr-1 h-3 w-3" />
+                {t('recommend.randomMode')}
+              </Badge>
+            </div>
             <Card className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
               <CardContent className="p-6 text-center">
                 <h2 className="mb-4 text-xl font-bold">{t('recommend.randomTitle')}</h2>
@@ -498,6 +504,12 @@ export default function RecommendPage() {
         {/* Taste Mode */}
         {mode === 'taste' && !showResults && (
           <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                <Sparkles className="mr-1 h-3 w-3" />
+                {t('recommend.tasteMode')}
+              </Badge>
+            </div>
             {/* Progress Bar */}
             <div className="flex items-center gap-3">
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
@@ -564,6 +576,12 @@ export default function RecommendPage() {
         {/* Taste Results */}
         {mode === 'taste' && showResults && (
           <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                <Sparkles className="mr-1 h-3 w-3" />
+                {t('recommend.tasteMode')}
+              </Badge>
+            </div>
             <h2 className="text-lg font-bold">{t('recommend.result')}</h2>
 
             {tasteLoading ? (
@@ -646,6 +664,20 @@ export default function RecommendPage() {
         {/* AI Recipe Mode */}
         {mode === 'ai' && (
           <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                <Wand2 className="mr-1 h-3 w-3" />
+                AI 맞춤 레시피
+              </Badge>
+              {!isPremium && (
+                <Badge variant="warning" className="text-xs">
+                  <Crown className="mr-1 h-3 w-3" />
+                  {freeTrialInfo && freeTrialInfo.remainingCount > 0
+                    ? `${freeTrialInfo.remainingCount}회 무료`
+                    : 'Premium'}
+                </Badge>
+              )}
+            </div>
             <Card className="bg-gradient-to-br from-emerald-50 to-cyan-50 dark:from-emerald-900/20 dark:to-cyan-900/20">
               <CardContent className="p-6">
                 <div className="mb-4 flex items-center gap-3">
@@ -823,6 +855,11 @@ export default function RecommendPage() {
                       </p>
                     </div>
                   )}
+
+                  {/* AI Disclaimer */}
+                  <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                    {t('common.aiDisclaimer')}
+                  </p>
 
                   {/* Action Buttons */}
                   <div className="mt-4 flex items-center gap-3">
