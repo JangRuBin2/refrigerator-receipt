@@ -20,7 +20,10 @@
       "WebFetch(domain:goddaehee.tistory.com)",
       "WebSearch",
       "WebFetch(domain:developers-apps-in-toss.toss.im)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(node -e:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git push:*)"
     ]
   }
 }
