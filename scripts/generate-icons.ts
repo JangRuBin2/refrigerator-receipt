@@ -4,63 +4,60 @@ import * as path from 'path';
 
 const publicDir = path.join(process.cwd(), 'public');
 
-// 밀키퍼 로고 SVG (냉장고 + 식재료)
+// Full square icon SVG (no border, solid background, large centered fridge)
 const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <!-- Background Circle -->
-  <circle cx="256" cy="256" r="240" fill="#FFF7ED"/>
-  <circle cx="256" cy="256" r="240" stroke="#F97316" stroke-width="16"/>
+  <rect width="512" height="512" fill="#FFF7ED"/>
 
-  <!-- Refrigerator Body -->
-  <rect x="156" y="96" width="200" height="320" rx="20" fill="#F97316"/>
-  <rect x="166" y="106" width="180" height="300" rx="14" fill="#FDBA74"/>
+  <g transform="translate(256,256) scale(1.35) translate(-256,-256)">
+    <!-- Refrigerator Body -->
+    <rect x="156" y="96" width="200" height="320" rx="20" fill="#F97316"/>
+    <rect x="166" y="106" width="180" height="300" rx="14" fill="#FDBA74"/>
 
-  <!-- Freezer Section -->
-  <rect x="176" y="116" width="160" height="80" rx="8" fill="#FFF7ED"/>
-  <rect x="186" y="126" width="140" height="60" rx="4" fill="#FFEDD5"/>
+    <!-- Freezer Section -->
+    <rect x="176" y="116" width="160" height="80" rx="8" fill="#FFF7ED"/>
+    <rect x="186" y="126" width="140" height="60" rx="4" fill="#FFEDD5"/>
 
-  <!-- Fridge Section -->
-  <rect x="176" y="206" width="160" height="190" rx="8" fill="#FFF7ED"/>
+    <!-- Fridge Section -->
+    <rect x="176" y="206" width="160" height="190" rx="8" fill="#FFF7ED"/>
 
-  <!-- Shelves -->
-  <rect x="186" y="256" width="140" height="4" rx="2" fill="#FDBA74"/>
-  <rect x="186" y="316" width="140" height="4" rx="2" fill="#FDBA74"/>
+    <!-- Shelves -->
+    <rect x="186" y="256" width="140" height="4" rx="2" fill="#FDBA74"/>
+    <rect x="186" y="316" width="140" height="4" rx="2" fill="#FDBA74"/>
 
-  <!-- Food Items -->
-  <!-- Apple -->
-  <circle cx="220" cy="236" r="16" fill="#EF4444"/>
-  <path d="M220 220 Q225 210 230 218" stroke="#22C55E" stroke-width="3" fill="none"/>
+    <!-- Food Items -->
+    <circle cx="220" cy="236" r="16" fill="#EF4444"/>
+    <path d="M220 220 Q225 210 230 218" stroke="#22C55E" stroke-width="3" fill="none"/>
 
-  <!-- Carrot -->
-  <path d="M270 230 L290 250 L280 260 L260 240 Z" fill="#F97316"/>
-  <path d="M265 225 Q270 220 275 225" stroke="#22C55E" stroke-width="2" fill="none"/>
+    <path d="M270 230 L290 250 L280 260 L260 240 Z" fill="#F97316"/>
+    <path d="M265 225 Q270 220 275 225" stroke="#22C55E" stroke-width="2" fill="none"/>
 
-  <!-- Milk -->
-  <rect x="210" y="270" width="24" height="36" rx="3" fill="#FAFAFA" stroke="#E5E7EB" stroke-width="2"/>
-  <rect x="214" y="278" width="16" height="8" fill="#3B82F6"/>
+    <rect x="210" y="270" width="24" height="36" rx="3" fill="#FAFAFA" stroke="#E5E7EB" stroke-width="2"/>
+    <rect x="214" y="278" width="16" height="8" fill="#3B82F6"/>
 
-  <!-- Cheese -->
-  <path d="M250 340 L280 340 L265 370 Z" fill="#FACC15"/>
-  <circle cx="260" cy="350" r="3" fill="#FEF9C3"/>
-  <circle cx="270" cy="355" r="2" fill="#FEF9C3"/>
+    <ellipse cx="270" cy="288" rx="12" ry="16" fill="#FEF3C7"/>
 
-  <!-- Broccoli -->
-  <circle cx="220" cy="350" r="12" fill="#22C55E"/>
-  <circle cx="212" cy="345" r="8" fill="#16A34A"/>
-  <circle cx="228" cy="345" r="8" fill="#16A34A"/>
-  <rect x="217" y="358" width="6" height="12" fill="#15803D"/>
+    <path d="M250 340 L280 340 L265 370 Z" fill="#FACC15"/>
+    <circle cx="260" cy="350" r="3" fill="#FEF9C3"/>
+    <circle cx="270" cy="355" r="2" fill="#FEF9C3"/>
 
-  <!-- Door Handle -->
-  <rect x="320" y="180" width="8" height="40" rx="4" fill="#EA580C"/>
-  <rect x="320" y="280" width="8" height="40" rx="4" fill="#EA580C"/>
+    <circle cx="220" cy="350" r="12" fill="#22C55E"/>
+    <circle cx="212" cy="345" r="8" fill="#16A34A"/>
+    <circle cx="228" cy="345" r="8" fill="#16A34A"/>
+    <rect x="217" y="358" width="6" height="12" fill="#15803D"/>
 
-  <!-- Sparkle -->
-  <path d="M380 140 L385 155 L400 160 L385 165 L380 180 L375 165 L360 160 L375 155 Z" fill="#FBBF24"/>
-  <path d="M140 180 L143 190 L153 193 L143 196 L140 206 L137 196 L127 193 L137 190 Z" fill="#FBBF24"/>
+    <!-- Door Handle -->
+    <rect x="320" y="180" width="8" height="40" rx="4" fill="#EA580C"/>
+    <rect x="320" y="280" width="8" height="40" rx="4" fill="#EA580C"/>
+
+    <!-- Sparkle -->
+    <path d="M380 140 L385 155 L400 160 L385 165 L380 180 L375 165 L360 160 L375 155 Z" fill="#FBBF24"/>
+    <path d="M140 180 L143 190 L153 193 L143 196 L140 206 L137 196 L127 193 L137 190 Z" fill="#FBBF24"/>
+  </g>
 </svg>`;
 
-// 간단한 아이콘용 SVG (작은 사이즈에 적합)
+// Simple icon for small sizes (full square, no rounded corners)
 const simpleIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" rx="96" fill="#F97316"/>
+  <rect width="512" height="512" fill="#F97316"/>
 
   <!-- Simple Fridge -->
   <rect x="156" y="80" width="200" height="352" rx="24" fill="white"/>
@@ -96,7 +93,7 @@ async function generateIcons() {
   console.log('Generating icons...');
 
   for (const { name, size } of sizes) {
-    // 작은 사이즈는 간단한 아이콘 사용
+    // Use simple icon for small sizes
     const svg = size <= 96 ? simpleIconSvg : logoSvg;
 
     const outputPath = path.join(publicDir, name);
@@ -108,6 +105,13 @@ async function generateIcons() {
 
     console.log(`Created: ${name} (${size}x${size})`);
   }
+
+  // icon-600.png
+  await sharp(Buffer.from(logoSvg))
+    .resize(600, 600)
+    .png()
+    .toFile(path.join(publicDir, 'icon-600.png'));
+  console.log('Created: icon-600.png (600x600)');
 
   // OG Image (1200x630)
   const ogSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
@@ -130,9 +134,9 @@ async function generateIcons() {
     <circle cx="620" cy="210" r="10" fill="#22C55E"/>
 
     <!-- Text -->
-    <text x="600" y="360" text-anchor="middle" font-family="system-ui, sans-serif" font-size="72" font-weight="bold" fill="#1F2937">밀키퍼</text>
+    <text x="600" y="360" text-anchor="middle" font-family="system-ui, sans-serif" font-size="72" font-weight="bold" fill="#1F2937">MealKeeper</text>
     <text x="600" y="420" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" font-weight="600" fill="#F97316">MealKeeper</text>
-    <text x="600" y="500" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#6B7280">스마트 냉장고 관리 서비스</text>
+    <text x="600" y="500" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#6B7280">Smart Fridge Management</text>
   </svg>`;
 
   await sharp(Buffer.from(ogSvg))
@@ -141,8 +145,7 @@ async function generateIcons() {
     .toFile(path.join(publicDir, 'og-image.png'));
   console.log('Created: og-image.png (1200x630)');
 
-  // Favicon.ico를 위한 16x16, 32x32 PNG 생성 후 ICO 형식으로 저장
-  // sharp는 ICO를 직접 지원하지 않으므로 32x32 PNG를 favicon으로 복사
+  // Favicon.ico
   fs.copyFileSync(
     path.join(publicDir, 'favicon-32x32.png'),
     path.join(publicDir, 'favicon.ico')
