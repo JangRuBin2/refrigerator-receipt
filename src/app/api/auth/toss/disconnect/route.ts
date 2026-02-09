@@ -28,8 +28,30 @@ function validateBasicAuth(request: NextRequest): boolean {
     return false;
   }
 
-  const receivedToken = authHeader.slice('Basic '.length);
-  return receivedToken === expectedToken;
+  const receivedToken = authHeader.slice('Basic '.length).trim();
+
+  // 1) Base64 토큰 직접 비교
+  if (receivedToken === expectedToken) {
+    return true;
+  }
+
+  // 2) 수신된 토큰을 디코딩하여 env 값과 비교 (토스가 Base64 인코딩해서 보내는 경우)
+  try {
+    const decoded = Buffer.from(receivedToken, 'base64').toString('utf-8');
+    if (decoded === expectedToken) {
+      return true;
+    }
+  } catch {
+    // 디코딩 실패 시 무시
+  }
+
+  // 3) env 값을 인코딩하여 수신 토큰과 비교 (env에 평문 저장된 경우)
+  const encodedExpected = Buffer.from(expectedToken).toString('base64');
+  if (receivedToken === encodedExpected) {
+    return true;
+  }
+
+  return false;
 }
 
 function parseParams(request: NextRequest): { userKey: number; referrer: string } | null {
