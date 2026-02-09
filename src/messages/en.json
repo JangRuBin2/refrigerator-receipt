@@ -331,5 +331,45 @@
     "statusLow": "Low",
     "statusHigh": "High",
     "noData": "No ingredients to analyze"
+  },
+  "terms": {
+    "title": "MealKeeper Terms of Service",
+    "article1": {
+      "title": "Article 1 (Purpose)",
+      "content": "These terms and conditions set forth the conditions and procedures for using MealKeeper (hereinafter referred to as the \"Service\"), as well as the rights, obligations, and responsibilities of users and the service provider."
+    },
+    "article2": {
+      "title": "Article 2 (Definitions)",
+      "content": "1. \"Service\" refers to all related services provided by MealKeeper, including receipt scan-based fridge management, expiration date management, and AI recipe recommendations. 2. \"User\" refers to a person who uses the Service in accordance with these terms. 3. \"Toss Account\" refers to a user account authenticated through the Toss app."
+    },
+    "article3": {
+      "title": "Article 3 (Effect and Modification of Terms)",
+      "content": "1. These terms apply to all users who wish to use the Service. 2. The Service may modify these terms as necessary, and modified terms will be announced through in-service notices. 3. If a user does not agree to the modified terms, they may discontinue use of the Service and withdraw."
+    },
+    "article4": {
+      "title": "Article 4 (Provision of Service)",
+      "content": "The Service provides the following features: automatic ingredient registration through receipt scanning, fridge ingredient management and expiration alerts, AI-based recipe recommendations, smart shopping lists, and nutrition analysis reports. The Service is provided through Toss Apps-in-Toss, and some features may require a premium subscription."
+    },
+    "article5": {
+      "title": "Article 5 (User Obligations)",
+      "content": "1. Users must comply with applicable laws, these terms, usage guidelines, and notices related to the Service. 2. Users must not unlawfully use other people's personal information. 3. Users must not engage in activities that violate laws or public morals through the Service."
+    },
+    "article6": {
+      "title": "Article 6 (Privacy Protection)",
+      "content": "The Service collects, uses, stores, and processes personal information in accordance with applicable laws to protect users' privacy. Information collected: Toss user key, name, gender, date of birth. The Service does not use collected information for purposes other than providing the Service and does not provide it to third parties without user consent."
+    },
+    "article7": {
+      "title": "Article 7 (Restriction and Suspension of Service)",
+      "content": "1. The Service may temporarily suspend provision due to system maintenance, equipment replacement and failure, communication disruption, or similar reasons. 2. The Service may restrict use if a user violates these terms or interferes with normal operation of the Service."
+    },
+    "article8": {
+      "title": "Article 8 (Account Deletion and Disconnection)",
+      "content": "1. Users may request account deletion at any time through the settings within the Service. 2. When disconnecting through the Toss app, all user data (ingredients, recipes, subscription information, etc.) will be immediately deleted. 3. Deleted data cannot be recovered."
+    },
+    "article9": {
+      "title": "Article 9 (Disclaimer)",
+      "content": "1. The Service is exempt from liability when it cannot provide services due to force majeure such as natural disasters, war, or service interruption by telecommunications providers. 2. AI-generated recipes, nutritional information, etc. are for reference only, and the Service does not guarantee the accuracy of such information. 3. The Service is not liable for any loss of expected profit or damages incurred by users through use of the Service."
+    },
+    "effectiveDate": "Effective Date: February 1, 2025"
   }
 }
