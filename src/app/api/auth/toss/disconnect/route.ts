@@ -4,6 +4,19 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': 'https://apps-in-toss.toss.im',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+function withCors(response: NextResponse): NextResponse {
+  Object.entries(CORS_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
+
 function validateBasicAuth(request: NextRequest): boolean {
   const authHeader = request.headers.get('authorization');
   if (!authHeader?.startsWith('Basic ')) {
@@ -36,37 +49,37 @@ function parseParams(request: NextRequest): { userKey: number; referrer: string 
 
 async function handleDisconnect(request: NextRequest): Promise<NextResponse> {
   if (!validateBasicAuth(request)) {
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       { success: false, error: 'Unauthorized' },
       { status: 401 }
-    );
+    ));
   }
 
   try {
     const params = parseParams(request);
 
     if (!params || params.referrer !== 'UNLINK') {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { success: false, error: 'Invalid parameters' },
         { status: 400 }
-      );
+      ));
     }
 
     const { userKey } = params;
 
     // 콘솔 테스트 요청 (userKey === 0)은 삭제 건너뛰기
     if (userKey === 0) {
-      return NextResponse.json({ success: true, message: 'Test request acknowledged' });
+      return withCors(NextResponse.json({ success: true, message: 'Test request acknowledged' }));
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { success: false, error: 'Server configuration error' },
         { status: 500 }
-      );
+      ));
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
@@ -85,7 +98,7 @@ async function handleDisconnect(request: NextRequest): Promise<NextResponse> {
       .single();
 
     if (!profile) {
-      return NextResponse.json({ success: true, message: 'User not found or already deleted' });
+      return withCors(NextResponse.json({ success: true, message: 'User not found or already deleted' }));
     }
 
     // 구독 해지
@@ -102,19 +115,24 @@ async function handleDisconnect(request: NextRequest): Promise<NextResponse> {
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(profile.id);
 
     if (deleteError) {
-      return NextResponse.json(
+      return withCors(NextResponse.json(
         { success: false, error: 'Failed to delete user' },
         { status: 500 }
-      );
+      ));
     }
 
-    return NextResponse.json({ success: true });
+    return withCors(NextResponse.json({ success: true }));
   } catch {
-    return NextResponse.json(
+    return withCors(NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
-    );
+    ));
   }
+}
+
+// CORS preflight
+export async function OPTIONS() {
+  return withCors(new NextResponse(null, { status: 204 }));
 }
 
 // GET, POST 모두 지원
