@@ -69,3 +69,9 @@ export const IAP_PRODUCTS = {
 } as const;
 
 export type IapProductSku = typeof IAP_PRODUCTS[keyof typeof IAP_PRODUCTS];
+
+// 토스 연결 끊기 콜백 타입
+export interface TossDisconnectRequest {
+  userKey: number;
+  referrer: 'UNLINK';
+}

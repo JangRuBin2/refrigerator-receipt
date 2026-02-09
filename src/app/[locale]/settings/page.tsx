@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { User, Globe, Bell, Palette, Database, Info, LogOut, ChevronRight, Moon, Sun } from 'lucide-react';
+import { User, Globe, Bell, Palette, Database, Info, LogOut, UserX, ChevronRight, Moon, Sun } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -30,6 +30,8 @@ export default function SettingsPage() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -98,6 +100,22 @@ export default function SettingsPage() {
     setUser(null);
     setShowLogoutModal(false);
     router.refresh();
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      const response = await fetch('/api/auth/delete-account', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        clearIngredients();
+        router.push(`/${locale}/login`);
+      }
+    } catch {
+      setIsDeletingAccount(false);
+    }
   };
 
   const SettingsItem = ({
@@ -300,16 +318,26 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Logout */}
+        {/* Logout & Delete Account */}
         {user && (
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setShowLogoutModal(true)}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            {t('settings.logout')}
-          </Button>
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowLogoutModal(true)}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              {t('settings.logout')}
+            </Button>
+            <Button
+              variant="danger"
+              className="w-full"
+              onClick={() => setShowDeleteAccountModal(true)}
+            >
+              <UserX className="mr-2 h-4 w-4" />
+              {t('settings.deleteAccount')}
+            </Button>
+          </div>
         )}
 
         {/* Language Modal */}
@@ -382,6 +410,40 @@ export default function SettingsPage() {
               </Button>
               <Button onClick={handleLogout} className="flex-1">
                 {t('settings.logout')}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Delete Account Confirmation Modal */}
+        <Modal
+          isOpen={showDeleteAccountModal}
+          onClose={() => setShowDeleteAccountModal(false)}
+          title={t('settings.deleteAccount')}
+        >
+          <div className="space-y-4">
+            <p className="text-gray-600 dark:text-gray-400">
+              {t('settings.deleteAccountWarning')}
+            </p>
+            <p className="font-medium text-red-600">
+              {t('settings.deleteAccountConfirm')}
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteAccountModal(false)}
+                className="flex-1"
+                disabled={isDeletingAccount}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDeleteAccount}
+                className="flex-1"
+                disabled={isDeletingAccount}
+              >
+                {isDeletingAccount ? t('common.loading') : t('settings.deleteAccount')}
               </Button>
             </div>
           </div>

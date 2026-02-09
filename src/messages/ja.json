@@ -192,7 +192,11 @@
     "about": "情報",
     "version": "バージョン",
     "logout": "ログアウト",
-    "logoutConfirm": "本当にログアウトしますか？"
+    "logoutConfirm": "本当にログアウトしますか？",
+    "deleteAccount": "アカウント削除",
+    "deleteAccountWarning": "アカウントを削除すると、すべてのデータ（食材、レシピ、サブスクリプションなど）が完全に削除され、元に戻すことはできません。",
+    "deleteAccountConfirm": "本当にアカウントを削除しますか？",
+    "deleteAccountSuccess": "アカウントが削除されました"
   },
   "auth": {
     "login": "ログイン",

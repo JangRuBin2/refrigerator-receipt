@@ -194,7 +194,11 @@
     "about": "정보",
     "version": "버전",
     "logout": "로그아웃",
-    "logoutConfirm": "정말 로그아웃 하시겠습니까?"
+    "logoutConfirm": "정말 로그아웃 하시겠습니까?",
+    "deleteAccount": "회원 탈퇴",
+    "deleteAccountWarning": "회원 탈퇴 시 모든 데이터(냉장고 재료, 레시피, 구독 정보 등)가 영구적으로 삭제되며 복구할 수 없습니다.",
+    "deleteAccountConfirm": "정말 탈퇴하시겠습니까?",
+    "deleteAccountSuccess": "회원 탈퇴가 완료되었습니다"
   },
   "auth": {
     "login": "로그인",

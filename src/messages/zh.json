@@ -192,7 +192,11 @@
     "about": "关于",
     "version": "版本",
     "logout": "退出登录",
-    "logoutConfirm": "确定要退出登录吗？"
+    "logoutConfirm": "确定要退出登录吗？",
+    "deleteAccount": "注销账户",
+    "deleteAccountWarning": "注销账户将永久删除所有数据（食材、食谱、订阅等），且无法恢复。",
+    "deleteAccountConfirm": "确定要注销账户吗？",
+    "deleteAccountSuccess": "账户已注销"
   },
   "auth": {
     "login": "登录",
