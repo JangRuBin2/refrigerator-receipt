@@ -25,7 +25,8 @@
       "Bash(npx tsc:*)",
       "Bash(git push:*)",
       "Bash(ls:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(test:*)"
     ]
   }
 }
