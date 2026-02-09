@@ -110,6 +110,22 @@ OPENAI_API_KEY=
 - `/code-review` - Review code quality
 - `/build-fix` - Fix build errors
 - `/e2e` - Run E2E tests with Playwright
+- `/team` - Team 신선조 오케스트레이션 모드 활성화
+
+## Team 신선조 (ShinSeonJo)
+
+MealKeeper 개발을 위한 5인 전문가 팀 구성. `/team` 명령으로 활성화.
+
+| Teammate | Role | Domain |
+|----------|------|--------|
+| 프론트셰프 (FrontChef) | Frontend & UI | Pages, Components, Hooks, i18n, Animations |
+| 백엔드수셰프 (BackendSous) | Backend & API | API Routes, Supabase, Validation, Migrations |
+| AI소믈리에 (AISommelier) | AI & Data | OCR, Recipe AI, Nutrition, Search, Crawling |
+| 토스메트르 (TossMaitre) | Platform Integration | Toss SDK, OAuth, IAP, Ads, Subscription |
+| 품질키친포터 (QAPorter) | Quality Assurance | Tests, Security, Build, Performance |
+
+Team config: `.claude/teams/신선조.json`
+Teammate contexts: `.claude/teams/teammates/*.md`
 
 ## Database Tables
 

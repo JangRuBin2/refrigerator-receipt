@@ -23,7 +23,9 @@
       "WebFetch(domain:github.com)",
       "Bash(node -e:*)",
       "Bash(npx tsc:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)"
     ]
   }
 }
