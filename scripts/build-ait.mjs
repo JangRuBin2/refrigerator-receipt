@@ -99,8 +99,7 @@ if (!appJson) {
   };
 }
 
-// Update deploymentId and package dependencies
-appJson._metadata.deploymentId = randomUUID();
+// Keep existing deploymentId (issued by Toss console), only generate new if missing
 
 try {
   const pkgJson = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf-8'));
@@ -117,7 +116,7 @@ try {
 }
 
 writeFileSync(resolve(STAGING_DIR, 'app.json'), JSON.stringify(appJson), 'utf-8');
-console.log(`New deploymentId: ${appJson._metadata.deploymentId}`);
+console.log(`deploymentId: ${appJson._metadata.deploymentId}`);
 
 // ─────────────────────────────────────────────
 // Step 4: Copy web build + create .ait zip
