@@ -227,7 +227,10 @@
     "welcomeBack": "おかえりなさい！",
     "continueAsGuest": "ゲストとして続ける",
     "guestModeNote": "ゲストモードではデータはこの端末にのみ保存されます",
-    "loginRequired": "サービスを利用するにはログインが必要です"
+    "loginRequired": "サービスを利用するにはログインが必要です",
+    "loginCancelled": "Tossログインがキャンセルまたは失敗しました。もう一度お試しください。",
+    "loginFailed": "ログインに失敗しました。もう一度お試しください。",
+    "loginError": "ログインエラー"
   },
   "pricing": {
     "title": "料金プラン",

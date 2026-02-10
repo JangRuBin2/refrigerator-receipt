@@ -227,7 +227,10 @@
     "welcomeBack": "Welcome back!",
     "continueAsGuest": "Continue as Guest",
     "guestModeNote": "In guest mode, data is only saved on this device",
-    "loginRequired": "Please sign in to use the service"
+    "loginRequired": "Please sign in to use the service",
+    "loginCancelled": "Toss login was cancelled or failed. Please try again.",
+    "loginFailed": "Login failed. Please try again.",
+    "loginError": "Login error"
   },
   "pricing": {
     "title": "Pricing",

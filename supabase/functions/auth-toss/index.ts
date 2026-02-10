@@ -213,11 +213,22 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Sign in the new user
-      const { data: newSignInData, error: newSignInError } = await supabaseAdmin.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Brief delay to ensure user is fully committed to DB
+      await new Promise((r) => setTimeout(r, 200));
+
+      // Sign in the new user (with retry)
+      let newSignInData = null;
+      let newSignInError = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = await supabaseAdmin.auth.signInWithPassword({
+          email,
+          password,
+        });
+        newSignInData = result.data;
+        newSignInError = result.error;
+        if (newSignInData?.session) break;
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 300));
+      }
 
       if (newSignInError || !newSignInData?.session) {
         return new Response(

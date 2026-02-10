@@ -1,15 +1,20 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useStore } from '@/store/useStore';
-import { getIngredients } from '@/lib/api/ingredients';
+import { getIngredients, createIngredient } from '@/lib/api/ingredients';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
 export function IngredientSyncProvider() {
-  const { setIngredients, setDbSyncEnabled, ingredients } = useStore();
+  const setIngredients = useStore((s) => s.setIngredients);
+  const setDbSyncEnabled = useStore((s) => s.setDbSyncEnabled);
   const hasSynced = useRef(false);
+  const pathname = usePathname();
 
   useEffect(() => {
+    // Skip on login page to avoid interfering with auth flow
+    if (pathname?.includes('/login')) return;
     if (hasSynced.current || !isSupabaseConfigured()) return;
 
     const syncFromDb = async () => {
@@ -21,6 +26,7 @@ export function IngredientSyncProvider() {
 
         // Enable DB sync for future operations
         setDbSyncEnabled(true);
+        hasSynced.current = true;
 
         // Load from DB
         const dbIngredients = await getIngredients();
@@ -28,40 +34,39 @@ export function IngredientSyncProvider() {
         if (dbIngredients.length > 0) {
           // DB has data - use DB as source of truth
           setIngredients(dbIngredients);
-        } else if (ingredients.length > 0) {
-          // DB is empty but local has data - push local to DB
-          // This handles the migration case
-          const { createIngredient } = await import('@/lib/api/ingredients');
-          for (const item of ingredients) {
-            try {
-              await createIngredient({
-                name: item.name,
-                category: item.category,
-                quantity: item.quantity,
-                unit: item.unit,
-                storage_type: item.storageType,
-                purchase_date: item.purchaseDate,
-                expiry_date: item.expiryDate,
-              });
-            } catch {
-              // Skip items that fail to sync
+        } else {
+          // DB is empty - push local data to DB (migration)
+          const localIngredients = useStore.getState().ingredients;
+          if (localIngredients.length > 0) {
+            for (const item of localIngredients) {
+              try {
+                await createIngredient({
+                  name: item.name,
+                  category: item.category,
+                  quantity: item.quantity,
+                  unit: item.unit,
+                  storage_type: item.storageType,
+                  purchase_date: item.purchaseDate,
+                  expiry_date: item.expiryDate,
+                });
+              } catch {
+                // Skip failed items
+              }
+            }
+            // Reload from DB to get proper IDs
+            const refreshed = await getIngredients();
+            if (refreshed.length > 0) {
+              setIngredients(refreshed);
             }
           }
-          // Reload from DB to get proper IDs
-          const refreshed = await getIngredients();
-          if (refreshed.length > 0) {
-            setIngredients(refreshed);
-          }
         }
-
-        hasSynced.current = true;
       } catch {
         // Sync failed, keep using local data
       }
     };
 
     syncFromDb();
-  }, [setIngredients, setDbSyncEnabled, ingredients]);
+  }, [pathname, setIngredients, setDbSyncEnabled]);
 
   return null;
 }

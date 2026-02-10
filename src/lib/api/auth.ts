@@ -24,6 +24,15 @@ interface TossLoginResponse {
 }
 
 export async function tossLogin(authorizationCode: string, referrer: string): Promise<TossLoginResponse> {
+  // Ensure previous session is fully cleared before starting new login
+  const supabase = createClient();
+  const { data: { user: existingUser } } = await supabase.auth.getUser();
+  if (existingUser) {
+    await supabase.auth.signOut();
+    // Brief delay to let Supabase cleanup complete
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
   const response = await fetch(`${SUPABASE_URL}/functions/v1/auth-toss`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -38,11 +47,20 @@ export async function tossLogin(authorizationCode: string, referrer: string): Pr
   const data: TossLoginResponse = await response.json();
 
   if (data.success && data.session) {
-    const supabase = createClient();
-    await supabase.auth.setSession({
+    const { error: sessionError } = await supabase.auth.setSession({
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
     });
+
+    if (sessionError) {
+      return { success: false, error: sessionError.message };
+    }
+
+    // Verify session is established before returning
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: '세션 설정에 실패했습니다. 다시 시도해주세요.' };
+    }
   }
 
   return data;

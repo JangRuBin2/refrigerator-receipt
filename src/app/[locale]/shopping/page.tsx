@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
-import { cn } from '@/lib/utils';
+import { cn, extractErrorMessage } from '@/lib/utils';
 import type { Category, Unit, ShoppingItem } from '@/types/supabase';
 import {
   getShoppingList,
@@ -80,8 +80,7 @@ export default function ShoppingPage() {
       const data = await getShoppingList();
       setList(data.list);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(`${t('shopping.loadError')} [${msg}]`);
+      setError(`${t('shopping.loadError')} ${extractErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -119,8 +118,7 @@ export default function ShoppingPage() {
       setShowAddModal(false);
       setNewItem({ name: '', quantity: 1, unit: 'ea', category: 'etc' });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setAddError(`${t('shopping.addError')} [${msg}]`);
+      setAddError(`${t('shopping.addError')} ${extractErrorMessage(err)}`);
     }
   };
 

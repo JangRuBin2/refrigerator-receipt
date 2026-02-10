@@ -70,3 +70,14 @@ export function calculateExpiryDate(purchaseDate: string, category: string, stor
   date.setDate(date.getDate() + days);
   return date.toISOString().split('T')[0];
 }
+
+export function extractErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  if (err && typeof err === 'object') {
+    const obj = err as Record<string, unknown>;
+    if (typeof obj.message === 'string') return obj.message;
+    if (typeof obj.error === 'string') return obj.error;
+  }
+  return 'Unknown error';
+}

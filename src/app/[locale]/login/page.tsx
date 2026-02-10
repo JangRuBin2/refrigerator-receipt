@@ -33,25 +33,32 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Step 1: 토스 로그인 (SDK 브릿지 → 네이티브 인증 화면)
+      // Step 1: 토스 네이티브 로그인 (한 번만 호출)
       const loginResult = await tossAppLogin();
       if (!loginResult) {
-        setError('토스 로그인이 취소되었거나 실패했습니다. 다시 시도해주세요.');
+        setError(t('auth.loginCancelled'));
         setIsLoading(false);
         return;
       }
 
-      // Step 2: 서버에 인가코드 전달 → 토스 API 토큰 교환 → Supabase 세션 생성
-      const data = await tossLogin(loginResult.authorizationCode, loginResult.referrer);
+      // Step 2: 서버 토큰 교환 (실패 시 1회 재시도)
+      let data = await tossLogin(loginResult.authorizationCode, loginResult.referrer);
+
+      if (!data.success) {
+        await new Promise((r) => setTimeout(r, 500));
+        data = await tossLogin(loginResult.authorizationCode, loginResult.referrer);
+      }
+
       if (data.success) {
         window.location.href = `/${locale}/`;
-      } else {
-        setError(data.error || '로그인에 실패했습니다.');
-        setIsLoading(false);
+        return;
       }
+
+      setError(data.error || t('auth.loginFailed'));
+      setIsLoading(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      setError(`로그인 중 오류: ${msg}`);
+      setError(`${t('auth.loginError')}: ${msg}`);
       setIsLoading(false);
     }
   };

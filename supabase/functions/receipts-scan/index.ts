@@ -3,9 +3,8 @@ import { createSupabaseClient } from '../_shared/supabase.ts';
 import { callGemini, callGeminiWithImage, parseJsonFromText } from '../_shared/gemini.ts';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const DAILY_LIMIT_FREE = 5;
-const DAILY_LIMIT_PREMIUM = 50;
-const AD_REWARD_SCANS = 1;
+const WEEKLY_LIMIT_FREE = 3;
+const WEEKLY_LIMIT_PREMIUM = 50;
 
 const VALID_CATEGORIES = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
 const VALID_UNITS = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
@@ -52,31 +51,27 @@ async function getUsageInfo(supabase: any, userId: string) {
 
   const isPremium = profile?.is_premium &&
     (!profile.subscription_end_date || new Date(profile.subscription_end_date) > new Date());
-  const dailyLimit = isPremium ? DAILY_LIMIT_PREMIUM : DAILY_LIMIT_FREE;
+  const weeklyLimit = isPremium ? WEEKLY_LIMIT_PREMIUM : WEEKLY_LIMIT_FREE;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayISO = today.toISOString();
+  // Calculate start of current week (Monday)
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ...
+  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - mondayOffset);
+  weekStart.setHours(0, 0, 0, 0);
+  const weekStartISO = weekStart.toISOString();
 
-  const { count: todayCount } = await supabase
+  const { count: weekCount } = await supabase
     .from('event_logs')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
     .eq('event_type', 'receipt_scan')
-    .gte('created_at', todayISO);
+    .gte('created_at', weekStartISO);
 
-  const { count: adWatchCount } = await supabase
-    .from('event_logs')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('event_type', 'ad_watch_scan_reward')
-    .gte('created_at', todayISO);
+  const used = weekCount || 0;
 
-  const used = todayCount || 0;
-  const bonusScans = (adWatchCount || 0) * AD_REWARD_SCANS;
-  const effectiveLimit = dailyLimit + bonusScans;
-
-  return { isPremium, dailyLimit, bonusScans, effectiveLimit, used, adWatchCount: adWatchCount || 0 };
+  return { isPremium, weeklyLimit, used };
 }
 
 Deno.serve(async (req) => {
@@ -128,13 +123,12 @@ Deno.serve(async (req) => {
         JSON.stringify({
           scans,
           usage: {
-            dailyLimit: usage.dailyLimit,
-            bonusScans: usage.bonusScans,
-            effectiveLimit: usage.effectiveLimit,
+            dailyLimit: usage.weeklyLimit,
+            effectiveLimit: usage.weeklyLimit,
             used: usage.used,
-            remaining: Math.max(0, usage.effectiveLimit - usage.used),
+            remaining: Math.max(0, usage.weeklyLimit - usage.used),
             isPremium: usage.isPremium,
-            canWatchAd: !usage.isPremium && usage.adWatchCount < 3,
+            canWatchAd: false,
           },
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -144,17 +138,14 @@ Deno.serve(async (req) => {
     // POST: scan receipt
     const usage = await getUsageInfo(supabase, user.id);
 
-    if (usage.used >= usage.effectiveLimit) {
+    if (usage.used >= usage.weeklyLimit) {
       return new Response(
         JSON.stringify({
-          error: `일일 업로드 제한(${usage.effectiveLimit}회)에 도달했습니다.`,
+          error: `주간 스캔 제한(${usage.weeklyLimit}회)에 도달했습니다.`,
           limitReached: true,
-          dailyLimit: usage.dailyLimit,
-          bonusScans: usage.bonusScans,
-          effectiveLimit: usage.effectiveLimit,
+          weeklyLimit: usage.weeklyLimit,
           currentCount: usage.used,
           isPremium: usage.isPremium,
-          canWatchAd: !usage.isPremium && usage.adWatchCount < 3,
         }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -251,11 +242,10 @@ Deno.serve(async (req) => {
       JSON.stringify({
         ...result,
         usage: {
-          dailyLimit: usage.dailyLimit,
-          bonusScans: usage.bonusScans,
-          effectiveLimit: usage.effectiveLimit,
+          dailyLimit: usage.weeklyLimit,
+          effectiveLimit: usage.weeklyLimit,
           used: usage.used + 1,
-          remaining: usage.effectiveLimit - usage.used - 1,
+          remaining: Math.max(0, usage.weeklyLimit - usage.used - 1),
           isPremium: usage.isPremium,
         },
       }),

@@ -24,12 +24,22 @@ export async function tossAppLogin(): Promise<{
   authorizationCode: string;
   referrer: string;
 } | null> {
-  try {
-    const result = await appLogin();
-    return result;
-  } catch {
-    return null;
+  // Retry once on "signal is aborted" error (transient SDK bridge issue)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const result = await appLogin();
+      return result;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (attempt === 0 && msg.includes('abort')) {
+        // Wait briefly and retry
+        await new Promise((r) => setTimeout(r, 500));
+        continue;
+      }
+      return null;
+    }
   }
+  return null;
 }
 
 // IAP functions use checkoutPayment bridge

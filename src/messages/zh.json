@@ -227,7 +227,10 @@
     "welcomeBack": "欢迎回来！",
     "continueAsGuest": "以访客身份继续",
     "guestModeNote": "访客模式下数据仅保存在此设备上",
-    "loginRequired": "请登录以使用服务"
+    "loginRequired": "请登录以使用服务",
+    "loginCancelled": "Toss登录已取消或失败，请重试。",
+    "loginFailed": "登录失败，请重试。",
+    "loginError": "登录错误"
   },
   "pricing": {
     "title": "价格方案",

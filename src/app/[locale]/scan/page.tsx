@@ -292,7 +292,7 @@ export default function ScanPage() {
                         <p className="toss-caption">
                           {usage.remaining > 0
                             ? `${usage.remaining}회 남음`
-                            : '오늘 사용량 초과'}
+                            : '이번 주 사용량 초과'}
                         </p>
                       </div>
                     </div>
@@ -307,19 +307,12 @@ export default function ScanPage() {
                     )}
                   </div>
 
-                  {/* 광고 시청 버튼 (한도 초과 시) - 준비 중 */}
+                  {/* 한도 초과 시 안내 */}
                   {usage.remaining <= 0 && !isPremium && (
                     <div className="mt-toss-sm pt-toss-sm border-t border-gray-100 dark:border-gray-700">
-                      <button
-                        disabled
-                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-300 px-4 py-3 text-sm font-medium text-gray-500 cursor-not-allowed"
-                      >
-                        <Play className="h-4 w-4" />
-                        {t('scan.watchAdForScans')}
-                        <span className="ml-1 rounded bg-gray-400 px-1.5 py-0.5 text-xs text-white">
-                          {t('common.comingSoon')}
-                        </span>
-                      </button>
+                      <p className="text-center text-sm text-gray-500">
+                        매주 월요일에 사용량이 초기화됩니다
+                      </p>
                     </div>
                   )}
                 </div>
