@@ -7,7 +7,6 @@ import {
   createOneTimePurchaseOrder,
   getPendingOrders,
   completeProductGrant,
-  getTossUserKey,
 } from '@/lib/apps-in-toss/sdk';
 import { iapActivate } from '@/lib/api/auth';
 import type {
@@ -42,15 +41,10 @@ export function useAppsInToss(): UseAppsInTossReturn {
       setIsAvailable(available);
 
       if (available) {
-        const [productList, userKey] = await Promise.all([
-          getProductItemList(),
-          getTossUserKey(),
-        ]);
-
+        const productList = await getProductItemList();
         if (productList) {
           setProducts(productList);
         }
-        setTossUserKey(userKey);
       }
 
       setIsLoading(false);

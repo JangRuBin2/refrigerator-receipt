@@ -211,6 +211,7 @@
     "deleteWarning": "此操作无法撤销",
     "about": "关于",
     "version": "版本",
+    "tossUser": "Toss用户",
     "logout": "退出登录",
     "logoutConfirm": "确定要退出登录吗？",
     "deleteAccount": "注销账户",
@@ -221,7 +222,6 @@
   "auth": {
     "login": "登录",
     "logout": "退出登录",
-    "loginWithGoogle": "使用Google登录",
     "loginWithToss": "使用Toss登录",
     "loginDescription": "登录以管理您的冰箱",
     "welcomeBack": "欢迎回来！",
@@ -316,8 +316,10 @@
     "addItem": "添加项目",
     "itemNamePlaceholder": "输入食材名...",
     "aiRecommend": "AI推荐",
-    "aiDisclaimer": "AI生成的推荐，仅供参考。",
+    "aiDisclaimer": "分析冰箱食材和购买记录，为您推荐所需物品。",
     "completeList": "完成购物",
+    "loadError": "无法加载购物清单，请重试。",
+    "addError": "无法添加项目，请重试。",
     "filter": {
       "all": "全部",
       "unchecked": "待购",

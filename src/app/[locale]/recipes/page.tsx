@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useSearchParams } from 'next/navigation';
-import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, ExternalLink, Search, Youtube, Crown, AlertTriangle, Timer } from 'lucide-react';
+import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, Search } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -455,197 +455,21 @@ function RecipesContent() {
         </div>
       )}
 
-      {/* External Recipe Search Section */}
-      <Card>
+      {/* External Recipe Search Section - 준비 중 */}
+      <Card className="opacity-60">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              <Search className="h-5 w-5 text-primary-600" />
+              <Search className="h-5 w-5 text-gray-400" />
               {t('recipe.externalRecommend')}
             </h2>
-            {!isPremium && (
-              <Badge variant="warning" className="text-xs">
-                <Crown className="mr-1 h-3 w-3" />
-                {freeTrialInfo && freeTrialInfo.remainingCount > 0
-                  ? `${freeTrialInfo.remainingCount}회 무료`
-                  : 'Premium'}
-              </Badge>
-            )}
+            <Badge variant="default" className="text-xs">
+              {t('common.comingSoon')}
+            </Badge>
           </div>
-
-          {/* 수동 검색 입력 */}
-          <form onSubmit={handleCustomSearch} className="mb-4">
-            <div className="relative">
-              <Input
-                type="text"
-                value={customSearchQuery}
-                onChange={(e) => setCustomSearchQuery(e.target.value)}
-                placeholder={t('recipe.searchPlaceholder')}
-                className="pr-12"
-              />
-              <button
-                type="submit"
-                disabled={externalLoading || !customSearchQuery.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-gray-400 transition-colors"
-              >
-                <Search className="h-5 w-5" />
-              </button>
-            </div>
-          </form>
-
-          {/* 전략 선택 */}
-          <div className="mb-4 grid grid-cols-2 gap-2">
-            <button
-              onClick={() => setSearchStrategy('random')}
-              className={cn(
-                'rounded-lg px-3 py-2.5 text-sm font-medium transition-all flex items-center justify-center gap-2 border',
-                searchStrategy === 'random'
-                  ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:bg-primary-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:border-primary-600'
-              )}
-            >
-              <Shuffle className="h-4 w-4" />
-              {t('recipe.randomStrategy')}
-            </button>
-            <button
-              onClick={() => setSearchStrategy('expiring')}
-              className={cn(
-                'rounded-lg px-3 py-2.5 text-sm font-medium transition-all flex items-center justify-center gap-2 border',
-                searchStrategy === 'expiring'
-                  ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:bg-primary-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:border-primary-600'
-              )}
-            >
-              <Timer className="h-4 w-4" />
-              {t('recipe.expiringStrategy')}
-              {expiringCount > 0 && (
-                <span className="ml-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{expiringCount}</span>
-              )}
-            </button>
-          </div>
-
-          <Button
-            onClick={() => searchExternalRecipes(false)}
-            disabled={externalLoading || ingredients.length === 0}
-            className="w-full"
-          >
-            {externalLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('recipe.searching')}
-              </>
-            ) : (
-              <>
-                {!isPremium && <Crown className="mr-2 h-4 w-4" />}
-                {isPremium && (searchStrategy === 'expiring' ? <Timer className="mr-2 h-4 w-4" /> : <Shuffle className="mr-2 h-4 w-4" />)}
-                {t('recipe.searchByIngredients')}
-              </>
-            )}
-          </Button>
-
-          {ingredients.length === 0 && (
-            <p className="mt-3 text-center text-sm text-gray-500">{t('fridge.empty')}</p>
-          )}
-
-          {externalError && (
-            <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-              <span>{externalError}</span>
-            </div>
-          )}
-
-          {externalQuery && externalRecipes.length > 0 && (
-            <p className="mt-3 text-center text-sm text-gray-500">
-              {t('recipe.searchQuery', { query: externalQuery.replace(/,/g, ', ') })}
-            </p>
-          )}
-
-          {externalRecipes.length > 0 && (
-            <>
-              {/* Source Filter */}
-              <div className="mt-4 flex gap-2 justify-center">
-                {(['all', 'youtube', 'google'] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setExternalFilter(f)}
-                    disabled={f !== 'all' && !!apiStatus && !apiStatus[f as 'youtube' | 'google']}
-                    className={cn(
-                      'rounded-full px-4 py-1.5 text-sm font-medium transition-colors',
-                      externalFilter === f
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300',
-                      f !== 'all' && apiStatus && !apiStatus[f as 'youtube' | 'google'] && 'opacity-50 cursor-not-allowed'
-                    )}
-                  >
-                    {f === 'all' ? t('fridge.all') : t(`recipe.${f}`)}
-                  </button>
-                ))}
-              </div>
-
-              {/* Results */}
-              <div className="mt-4 space-y-3">
-                {filteredExternalRecipes.map((recipe) => (
-                  <a
-                    key={recipe.id}
-                    href={recipe.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block"
-                  >
-                    <Card className="transition-transform hover:scale-[1.01] overflow-hidden">
-                      <CardContent className="p-0">
-                        <div className="flex">
-                          {recipe.thumbnail && (
-                            <div className="relative h-24 w-32 flex-shrink-0">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={recipe.thumbnail}
-                                alt={recipe.title}
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                          )}
-                          <div className="flex-1 p-3 min-w-0">
-                            <div className="flex items-start gap-2">
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-sm line-clamp-2">{recipe.title}</h4>
-                                {recipe.snippet && (
-                                  <p className="mt-1 text-xs text-gray-500 line-clamp-1">{recipe.snippet}</p>
-                                )}
-                              </div>
-                              <ExternalLink className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                            </div>
-                            <div className="mt-2 flex items-center gap-2">
-                              <Badge
-                                variant={recipe.source === 'youtube' ? 'danger' : 'info'}
-                                className="text-xs"
-                              >
-                                {recipe.source === 'youtube' ? (
-                                  <span className="flex items-center gap-1">
-                                    <Youtube className="h-3 w-3" />
-                                    YouTube
-                                  </span>
-                                ) : (
-                                  'Google'
-                                )}
-                              </Badge>
-                              {recipe.channelName && (
-                                <span className="text-xs text-gray-500 truncate">{recipe.channelName}</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </a>
-                ))}
-
-                {filteredExternalRecipes.length === 0 && (
-                  <p className="text-center text-sm text-gray-500 py-4">{t('recipe.noExternalResults')}</p>
-                )}
-              </div>
-            </>
-          )}
+          <p className="mt-2 text-sm text-gray-400">
+            YouTube, Google에서 레시피를 검색할 수 있는 기능이 곧 추가됩니다.
+          </p>
         </CardContent>
       </Card>
 

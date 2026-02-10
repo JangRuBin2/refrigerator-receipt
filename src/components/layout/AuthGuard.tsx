@@ -1,46 +1,69 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useParams, usePathname } from 'next/navigation';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
 const PUBLIC_PATHS = ['/login', '/terms'];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((path) => {
-    const stripped = pathname.replace(/^\/(ko|en|ja|zh)/, '');
-    return stripped === path || stripped.startsWith(path);
+    const stripped = pathname
+      .replace(/\.html$/, '')
+      .replace(/\/index$/, '')
+      .replace(/\/$/, '')
+      .replace(/^\/(ko|en|ja|zh)/, '');
+    return stripped === path || stripped.startsWith(path) || stripped === '';
   });
 }
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
-  const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const locale = (params.locale as string) || 'ko';
 
   useEffect(() => {
     const checkAuth = async () => {
-      const pathname = window.location.pathname;
+      const currentPath = window.location.pathname;
 
-      if (isPublicPath(pathname)) {
+      if (isPublicPath(currentPath)) {
         setIsAuthed(true);
         return;
       }
 
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.replace(`/${locale}/login`);
+      if (!isSupabaseConfigured()) {
+        setIsAuthed(true);
         return;
       }
 
-      setIsAuthed(true);
+      try {
+        const supabase = createClient();
+
+        const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
+          setTimeout(() => resolve({ data: { user: null } }), 5000)
+        );
+
+        const { data: { user } } = await Promise.race([
+          supabase.auth.getUser(),
+          timeoutPromise,
+        ]);
+
+        if (user) {
+          setIsAuthed(true);
+          return;
+        }
+
+        setIsAuthed(false);
+        window.location.href = `/${locale}/login/`;
+      } catch {
+        setIsAuthed(false);
+        window.location.href = `/${locale}/login/`;
+      }
     };
 
     checkAuth();
-  }, [locale, router]);
+  }, [locale, pathname]);
 
   if (isAuthed === null) {
     return (
@@ -48,6 +71,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
       </div>
     );
+  }
+
+  if (isAuthed === false) {
+    return null;
   }
 
   return <>{children}</>;

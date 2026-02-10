@@ -4,7 +4,7 @@
 
 ## Overview
 
-MealKeeper는 영수증 OCR 스캔을 통해 식재료를 자동 등록하고, 유통기한 관리, AI 기반 레시피 추천, 영양 분석까지 제공하는 올인원 냉장고 관리 앱입니다.
+MealKeeper는 영수증 OCR 스캔을 통해 식재료를 자동 등록하고, 유통기한 관리, AI 기반 레시피 추천까지 제공하는 올인원 냉장고 관리 앱입니다.
 
 **Toss Apps-in-Toss** 플랫폼에서 서비스됩니다.
 
@@ -16,12 +16,12 @@ MealKeeper는 영수증 OCR 스캔을 통해 식재료를 자동 등록하고, �
 - **레시피 조회**: 내장 레시피 DB 검색, 재료 일치율 표시
 - **메뉴 추천**: 랜덤 룰렛, 입맛 테스트 기반 추천
 - **즐겨찾기**: 레시피 북마크
-- **영수증 스캔**: 일 3회 무료 (광고 시청으로 추가 가능 - 준비 중)
+- **영수증 스캔**: 일 5회 무료 (AI Vision / OCR)
 
-### Premium Features
-- **무제한 영수증 스캔**: Google Cloud Vision OCR + OpenAI Vision API
+### Premium Features (준비 중)
+- **무제한 영수증 스캔**: 일 50회
 - **AI 맞춤 레시피**: 냉장고 재료 기반 신규 레시피 생성
-- **외부 레시피 검색**: YouTube/Google 연동 검색
+- **외부 레시피 검색**: YouTube/Google 연동 검색 (준비 중)
 - **스마트 장보기**: AI 추천 기반 자동 장보기 목록
 - **영양 분석**: 현재/주간/월간 영양 균형 리포트
 
@@ -29,284 +29,136 @@ MealKeeper는 영수증 OCR 스캔을 통해 식재료를 자동 등록하고, �
 
 | Category | Technology |
 |----------|------------|
-| Framework | Next.js 14 (App Router) |
+| Framework | Next.js 14 (App Router, Static Export) |
 | Language | TypeScript |
 | Styling | Tailwind CSS |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth + Toss Login |
+| Database | Supabase (PostgreSQL + Edge Functions) |
+| Auth | Toss OAuth2 + Supabase Auth |
 | State | Zustand |
 | i18n | next-intl (ko, en, ja, zh) |
 | Animation | Framer Motion |
-| Icons | Lucide React |
-| Platform | Toss Apps-in-Toss |
-
-## Toss Apps-in-Toss Integration
-
-### 지원 기능
-| 기능 | 상태 | 설명 |
-|------|------|------|
-| 토스 로그인 | 구현 완료 | 토스 앱 환경에서 자동 인증 |
-| 인앱결제 (IAP) | 구현 완료 | Premium 구독 결제 |
-| 보상형 광고 | 준비 중 | Partner Center 설정 필요 |
-
-### 검수 체크리스트 준수사항
-- 핀치줌 비활성화 (`user-scalable=no`)
-- 라이트/다크 모드 네비게이션 바 색상
-- 44px 최소 터치 영역 (접근성)
-- AI 생성 콘텐츠 고지 문구
-- 토스 앱 환경에서 Google 로그인 숨김
-
-### IAP 상품 SKU
-| SKU | 상품명 | 가격 |
-|-----|--------|------|
-| `premium_monthly` | Premium 월간 | ₩1,900 |
-| `premium_yearly` | Premium 연간 | ₩15,900 (30% 할인) |
-
-> Toss Partner Center에서 SKU 등록 필요
+| AI/OCR | Google Gemini + Cloud Vision |
+| Platform | Toss Apps-in-Toss (`@apps-in-toss/web-framework`) |
 
 ## Project Structure
 
 ```
 src/
-├── app/
-│   ├── api/
-│   │   ├── auth/
-│   │   │   ├── callback/       # OAuth callback
-│   │   │   ├── signout/        # Sign out
-│   │   │   └── toss/           # Toss login API
-│   │   ├── ingredients/        # Ingredient CRUD
-│   │   ├── recipes/
-│   │   │   ├── ai-generate/    # AI recipe generation
-│   │   │   ├── ai-save/        # Save AI recipes
-│   │   │   ├── random/         # Random recipe
-│   │   │   ├── recommend/      # Recipe recommendations
-│   │   │   ├── search/         # External search
-│   │   │   └── taste/          # Taste-based recommendations
-│   │   ├── receipts/
-│   │   │   ├── scan/           # Receipt OCR scanning
-│   │   │   └── ad-reward/      # Ad reward for scans
-│   │   ├── shopping/           # Shopping list
-│   │   ├── nutrition/          # Nutrition analysis
-│   │   ├── subscription/       # Premium subscription
-│   │   ├── iap/                # Toss IAP integration
-│   │   └── favorites/          # Recipe favorites
-│   └── [locale]/               # Localized pages
-│       ├── page.tsx            # Home dashboard
-│       ├── fridge/             # Fridge management
-│       ├── scan/               # Receipt scanning
-│       ├── recipes/            # Recipe browser
-│       ├── recommend/          # Menu recommendations
-│       ├── shopping/           # Shopping list
-│       ├── nutrition/          # Nutrition analysis
-│       ├── pricing/            # Pricing plans
-│       ├── checkout/           # Payment checkout
-│       ├── login/              # Authentication
-│       └── settings/           # User settings
+├── app/[locale]/          # Localized pages
+│   ├── page.tsx           # Home dashboard
+│   ├── fridge/            # 냉장고 관리
+│   ├── scan/              # 영수증 스캔
+│   ├── recipes/           # 레시피
+│   ├── shopping/          # 장보기 목록
+│   ├── login/             # 토스 로그인
+│   ├── settings/          # 설정
+│   └── terms/             # 이용약관
 ├── components/
-│   ├── layout/                 # Header, BottomNav
-│   ├── ui/                     # Reusable UI components
-│   ├── premium/                # Premium modal
-│   └── seo/                    # JSON-LD structured data
+│   ├── layout/            # Header, BottomNav, AuthGuard, DeepLinkHandler
+│   ├── ui/                # Card, Button, Modal, Badge, Input, Toast 등
+│   ├── premium/           # PremiumModal
+│   └── seo/               # JSON-LD 구조화 데이터
 ├── hooks/
-│   ├── usePremium.ts           # Premium status hook
-│   ├── useAppsInToss.ts        # Toss IAP hook
-│   └── useAppsInTossAds.ts     # Toss Ads hook
+│   ├── usePremium.ts      # 프리미엄 상태
+│   ├── useAppsInToss.ts   # 토스 IAP
+│   └── useAppsInTossAds.ts # 토스 광고
 ├── lib/
-│   ├── supabase/               # Supabase client setup
-│   ├── apps-in-toss/           # Toss SDK wrappers
-│   │   ├── sdk.ts              # IAP SDK
-│   │   └── ads.ts              # Ads SDK
-│   ├── ocr/                    # OCR utilities
-│   ├── recommend/              # Recommendation engine
-│   ├── search/                 # YouTube/Google search
-│   └── utils.ts                # Utility functions
-├── store/
-│   ├── useStore.ts             # Zustand global store
-│   └── useToastStore.ts        # Toast notifications
-├── types/
-│   ├── index.ts                # Core type definitions
-│   ├── supabase.ts             # Database types
-│   ├── apps-in-toss.ts         # Toss IAP types
-│   └── apps-in-toss-ads.ts     # Toss Ads types
-├── messages/                   # i18n translation files
-│   ├── ko.json
-│   ├── en.json
-│   ├── ja.json
-│   └── zh.json
-└── i18n/                       # i18n configuration
+│   ├── supabase/          # Supabase 클라이언트
+│   ├── apps-in-toss/      # 토스 SDK 래퍼 (sdk.ts, ads.ts)
+│   ├── api/               # Edge Function 호출 (auth, scan, recipes 등)
+│   └── utils.ts           # 유틸리티
+├── store/                 # Zustand 스토어
+├── types/                 # TypeScript 타입
+├── messages/              # 번역 파일 (ko, en, ja, zh)
+└── i18n/                  # i18n 설정
+
+supabase/functions/        # Supabase Edge Functions (Deno)
+├── _shared/               # 공용 모듈 (cors, supabase, gemini)
+├── auth-toss/             # 토스 OAuth2 로그인
+├── auth-delete-account/   # 회원 탈퇴
+├── auth-toss-disconnect/  # 토스 연결 끊기 콜백
+├── receipts-scan/         # 영수증 OCR 스캔
+├── recipes-ai-generate/   # AI 레시피 생성
+├── recipes-search/        # 외부 레시피 검색
+├── nutrition-analyze/     # 영양 분석
+├── shopping-recommend/    # 장보기 추천
+├── iap-activate/          # IAP 구독 활성화
+└── iap-status/            # IAP 상태 조회
+
+scripts/
+└── fix-root-html.mjs      # SPA fallback용 root index.html 생성
 ```
 
 ## Database Schema
 
 | Table | Description |
 |-------|-------------|
-| `profiles` | User profiles (includes `toss_user_key`) |
-| `ingredients` | User's fridge ingredients |
-| `recipes` | Recipe database |
-| `user_favorites` | Bookmarked recipes |
-| `receipt_scans` | OCR scan history |
-| `shopping_lists` | Shopping list items |
-| `subscriptions` | Premium subscriptions |
-| `event_logs` | Usage tracking (scans, ad watches, etc.) |
+| `profiles` | 사용자 프로필 (`toss_user_key` 포함) |
+| `ingredients` | 냉장고 식재료 |
+| `recipes` | 레시피 DB |
+| `user_favorites` | 즐겨찾기 레시피 |
+| `event_logs` | 사용 이력 (스캔, 광고 등) |
+| `shopping_lists` | 장보기 목록 |
+| `subscriptions` | 프리미엄 구독 |
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 18+
 - npm
-- Supabase account
-- Google Cloud account (for OCR)
-- OpenAI API key (for AI features)
-- Toss Partner Center account (for IAP/Ads)
+- Supabase 프로젝트
+- Google Cloud 계정 (Gemini API + Cloud Vision)
+- Toss Partner Center 계정
 
 ### Installation
 
 ```bash
-# Clone repository
 git clone <repository-url>
 cd refrigerator-receipt
-
-# Install dependencies
 npm install
-
-# Setup environment variables
 cp .env.example .env.local
-```
-
-### Environment Variables
-
-```bash
-# ===================
-# Required
-# ===================
-
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-
-# Google Cloud Vision (OCR)
-GOOGLE_CLOUD_PROJECT_ID=your-project-id
-GOOGLE_CLOUD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
-GOOGLE_CLOUD_CLIENT_EMAIL=xxx@xxx.iam.gserviceaccount.com
-
-# OpenAI (AI features)
-OPENAI_API_KEY=sk-...
-
-# ===================
-# Toss Apps-in-Toss
-# ===================
-
-# Toss Login (자체 생성 - 임의의 시크릿 키)
-TOSS_AUTH_SECRET=your-random-secret-key
-
-# Toss Ads (Partner Center에서 발급)
-NEXT_PUBLIC_TOSS_AD_SCAN_REWARDED=ait-ad-xxx
-
-# ===================
-# Optional
-# ===================
-
-# YouTube Data API (외부 레시피 검색)
-YOUTUBE_API_KEY=AIza...
-
-# Google Custom Search (외부 레시피 검색)
-GOOGLE_SEARCH_API_KEY=AIza...
-GOOGLE_SEARCH_ENGINE_ID=abc123...
-
-# Site Verification
-GOOGLE_SITE_VERIFICATION=xxx
-NAVER_SITE_VERIFICATION=xxx
+# .env.local에 환경변수 설정
 ```
 
 ### Development
 
 ```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Lint
-npm run lint
+npm run dev          # 개발 서버 (localhost:3000)
+npm run build        # Next.js 빌드 (static export)
+npm run build:ait    # 토스 .ait 파일 빌드
+npm run lint         # ESLint
 ```
 
-## Key Features Detail
+### Supabase Edge Functions
 
-### Receipt Scanning
-영수증 이미지를 업로드하면 Google Cloud Vision OCR로 텍스트를 추출하고, OpenAI Vision API로 식재료를 분석합니다. AI가 카테고리, 수량, 예상 유통기한까지 자동 분류합니다.
+```bash
+# 개별 함수 배포
+npx supabase functions deploy auth-toss --no-verify-jwt
+npx supabase functions deploy receipts-scan --no-verify-jwt
 
-- 무료 사용자: 일 3회 제한
-- 프리미엄 사용자: 무제한
-- 광고 시청: +1회 (준비 중)
-
-### AI Recipe Generation
-냉장고에 있는 재료를 기반으로 OpenAI API가 새로운 레시피를 생성합니다. 조리 시간, 난이도, 요리 종류 등 선호도를 설정할 수 있습니다.
-
-> AI 생성 콘텐츠에는 고지 문구가 표시됩니다.
-
-### Taste-based Recommendation
-5단계 질문(매운맛, 국물, 조리시간, 재료 선호 등)에 답하면 취향에 맞는 레시피를 점수화하여 추천합니다.
-
-### Nutrition Analysis
-냉장고 재료 기반 영양소 분석 및 균형 점수(0-100)를 제공합니다. 주간/월간 구매 패턴 분석과 AI 영양 추천도 포함됩니다.
-
-### Smart Shopping List
-유통기한 임박 재료, 자주 구매하는 품목 등을 분석하여 AI가 장보기 목록을 추천합니다.
-
-## Subscription Plans
-
-| Feature | Free | Premium (월 ₩1,900) |
-|---------|------|---------------------|
-| 식재료 수동 등록 | O | O |
-| 유통기한 알림 | O | O |
-| 레시피 조회 | O | O |
-| 메뉴 추천 (랜덤/입맛) | O | O |
-| 영수증 스캔 | 일 3회 | 무제한 |
-| 외부 레시피 검색 | X | O |
-| AI 맞춤 레시피 | 일 1회 | 무제한 |
-| 영양 분석 리포트 | X | O |
-| 스마트 장보기 | X | O |
-
-## Internationalization
-
-지원 언어: 한국어 (ko), English (en), 日本語 (ja), 中文 (zh)
-
-URL 구조: `/{locale}/page` (예: `/ko/fridge`, `/en/recipes`)
-
-## Accessibility
-
-- 최소 터치 영역 44px 확보
-- 라이트/다크 모드 지원
-- 스크린 리더 지원 (aria-label)
+# 시크릿 설정
+npx supabase secrets set GOOGLE_GEMINI_API_KEY=xxx
+npx supabase secrets set APPS_IN_TOSS_API_URL=https://apps-in-toss-api.toss.im
+npx supabase secrets set APPS_IN_TOSS_MTLS_CERT=<base64-encoded-pem>
+npx supabase secrets set APPS_IN_TOSS_MTLS_KEY=<base64-encoded-pem>
+```
 
 ## Deployment
 
-### Vercel (권장)
-
-```bash
-# Vercel CLI로 배포
-vercel --prod
-```
-
-환경변수는 Vercel Dashboard → Settings → Environment Variables에서 설정
-
 ### Toss Apps-in-Toss 배포
 
-1. Vercel에 배포
-2. Toss Partner Center에서 앱 등록
-3. IAP 상품 SKU 등록 (`premium_monthly`, `premium_yearly`)
-4. 광고 그룹 ID 등록 (선택)
-5. 검수 요청
+1. `npm run build:ait` → `.ait` 파일 생성
+2. [Toss Partner Console](https://console.apps-in-toss.toss.im/) → 앱 업로드
+3. Supabase Edge Functions 배포
+4. 검수 요청
+
+> 상세 배포 가이드: [docs/APPS-IN-TOSS-DEPLOYMENT.md](docs/APPS-IN-TOSS-DEPLOYMENT.md)
+
+## Business Info
+
+- 대표: 장루빈
+- 사업자등록번호: 790-39-01572
 
 ## License
 
 Private - All rights reserved
-
-## Contributing
-
-This is a private project. Please contact the maintainers for contribution guidelines.

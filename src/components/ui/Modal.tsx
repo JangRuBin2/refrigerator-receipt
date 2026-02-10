@@ -27,18 +27,18 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
         className={cn(
-          'relative z-10 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800',
-          'max-h-[90vh] overflow-y-auto',
+          'relative z-10 mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800',
+          'max-h-[85vh] overflow-y-auto',
           'animate-in fade-in zoom-in-95 duration-200',
           className
         )}

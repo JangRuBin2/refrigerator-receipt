@@ -70,18 +70,22 @@ export default function ShoppingPage() {
     category: 'etc' as Category,
   });
   const [filter, setFilter] = useState<'all' | 'unchecked' | 'checked'>('all');
+  const [error, setError] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
 
   // 목록 조회
   const fetchList = useCallback(async () => {
     try {
+      setError(null);
       const data = await getShoppingList();
       setList(data.list);
-    } catch {
-      // Error fetching list - fail silently
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`${t('shopping.loadError')} [${msg}]`);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // AI 추천 조회
   const fetchRecommendations = async () => {
@@ -90,7 +94,7 @@ export default function ShoppingPage() {
       const data = await getShoppingRecommendations([]) as { recommendations?: RecommendedItem[] };
       setRecommendations(data.recommendations || []);
     } catch {
-      // Error fetching recommendations - fail silently
+      // AI 추천은 부가 기능이므로 실패해도 목록 사용에 영향 없음
     } finally {
       setRecommendLoading(false);
     }
@@ -104,6 +108,7 @@ export default function ShoppingPage() {
   // 아이템 추가
   const addItem = async (item: Partial<ShoppingItem>) => {
     if (!item.name?.trim()) return;
+    setAddError(null);
 
     try {
       const data = await addShoppingItems(
@@ -113,8 +118,9 @@ export default function ShoppingPage() {
       setList(data.list);
       setShowAddModal(false);
       setNewItem({ name: '', quantity: 1, unit: 'ea', category: 'etc' });
-    } catch {
-      // Error adding item - fail silently
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setAddError(`${t('shopping.addError')} [${msg}]`);
     }
   };
 
@@ -229,6 +235,22 @@ export default function ShoppingPage() {
         <Header locale={locale} title={t('shopping.title')} />
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen">
+        <Header locale={locale} title={t('shopping.title')} />
+        <div className="flex flex-col items-center justify-center py-20 px-4">
+          <AlertTriangle className="h-12 w-12 text-orange-500 mb-4" />
+          <p className="text-gray-500 text-center">{error}</p>
+          <Button onClick={fetchList} className="mt-4">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            {t('common.retry')}
+          </Button>
         </div>
       </div>
     );
@@ -426,6 +448,11 @@ export default function ShoppingPage() {
         title={t('shopping.addItem')}
       >
         <div className="space-y-4">
+          {addError && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
+              {addError}
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium mb-1">{t('fridge.ingredientName')}</label>
             <Input

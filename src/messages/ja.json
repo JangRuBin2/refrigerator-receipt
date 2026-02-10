@@ -211,6 +211,7 @@
     "deleteWarning": "この操作は取り消せません",
     "about": "情報",
     "version": "バージョン",
+    "tossUser": "Tossユーザー",
     "logout": "ログアウト",
     "logoutConfirm": "本当にログアウトしますか？",
     "deleteAccount": "アカウント削除",
@@ -221,7 +222,6 @@
   "auth": {
     "login": "ログイン",
     "logout": "ログアウト",
-    "loginWithGoogle": "Googleでログイン",
     "loginWithToss": "Tossでログイン",
     "loginDescription": "ログインして冷蔵庫を管理しましょう",
     "welcomeBack": "おかえりなさい！",
@@ -316,8 +316,10 @@
     "addItem": "アイテム追加",
     "itemNamePlaceholder": "食材名を入力...",
     "aiRecommend": "AIおすすめ",
-    "aiDisclaimer": "AIが生成したおすすめです。参考情報としてご利用ください。",
+    "aiDisclaimer": "冷蔵庫の食材と購入履歴を分析して必要な品目をおすすめします。",
     "completeList": "買い物完了",
+    "loadError": "買い物リストを読み込めませんでした。再試行してください。",
+    "addError": "アイテムを追加できませんでした。再試行してください。",
     "filter": {
       "all": "すべて",
       "unchecked": "未完了",

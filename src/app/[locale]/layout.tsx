@@ -5,6 +5,8 @@ import { routing } from '@/i18n/routing';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ToastContainer } from '@/components/ui/Toast';
 import { AuthGuard } from '@/components/layout/AuthGuard';
+import { DeepLinkHandler } from '@/components/layout/DeepLinkHandler';
+import { IngredientSyncProvider } from '@/components/layout/IngredientSyncProvider';
 import { WebApplicationJsonLd, OrganizationJsonLd } from '@/components/seo/JsonLd';
 import { Metadata } from 'next';
 import '../globals.css';
@@ -153,19 +155,19 @@ export default async function LocaleLayout({
         <meta name="apple-mobile-web-app-title" content="밀키퍼" />
         <meta name="format-detection" content="telephone=no" />
         <link
-          rel="preload"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-          as="style"
-        />
-        <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+          media="print"
+          // @ts-ignore
+          onLoad="this.media='all'"
         />
         <WebApplicationJsonLd locale={locale} />
         <OrganizationJsonLd />
       </head>
       <body className="bg-gray-50 font-sans antialiased dark:bg-gray-900">
         <NextIntlClientProvider locale={locale} messages={messages}>
+          <DeepLinkHandler />
+          <IngredientSyncProvider />
           <div className="mx-auto min-h-screen max-w-lg bg-white shadow-lg dark:bg-gray-800">
             <main className="pb-20">
               <AuthGuard>{children}</AuthGuard>

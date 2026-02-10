@@ -43,21 +43,39 @@ export default function SettingsPage() {
         const { data: { user } } = await supabase.auth.getUser();
 
         if (user) {
+          // Try to get name from user_metadata first
+          let name = user.user_metadata?.full_name || user.user_metadata?.name;
+
+          // If no name in metadata, try profiles table
+          if (!name) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('name')
+              .eq('id', user.id)
+              .single();
+            name = profile?.name;
+          }
+
+          // Fallback for Toss users
+          if (!name && user.user_metadata?.auth_provider === 'toss') {
+            name = t('settings.tossUser');
+          }
+
           setUser({
             id: user.id,
             email: user.email || '',
-            name: user.user_metadata?.full_name || user.user_metadata?.name,
+            name,
             avatar_url: user.user_metadata?.avatar_url,
           });
         }
-      } catch (error) {
-        console.error('Error checking user:', error);
+      } catch {
+        // Failed to check user
       } finally {
         setIsLoading(false);
       }
     };
     checkUser();
-  }, []);
+  }, [t]);
 
   const handleLanguageChange = (newLocale: Locale) => {
     updateSettings({ locale: newLocale });
@@ -85,14 +103,8 @@ export default function SettingsPage() {
     setShowDeleteModal(false);
   };
 
-  const handleLogin = async () => {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/${locale}/settings`,
-      },
-    });
+  const handleLogin = () => {
+    router.push(`/${locale}/login`);
   };
 
   const handleLogout = async () => {
@@ -167,7 +179,7 @@ export default function SettingsPage() {
     <div className="min-h-screen">
       <Header locale={locale} title={t('settings.title')} showSettings={false} />
 
-      <div className="space-y-4 p-4">
+      <div className="space-y-4 p-4 pb-24">
         {/* Profile Section */}
         <Card>
           <CardContent className="p-4">
@@ -189,7 +201,7 @@ export default function SettingsPage() {
             </div>
             {!user && !isLoading && (
               <Button onClick={handleLogin} className="mt-4 w-full">
-                {t('auth.loginWithGoogle')}
+                {t('auth.login')}
               </Button>
             )}
           </CardContent>
@@ -292,8 +304,6 @@ export default function SettingsPage() {
                 {t('settings.data')}
               </h3>
             </div>
-            <SettingsItem icon={Database} label={t('settings.backup')} disabled badge={t('common.comingSoon')} />
-            <SettingsItem icon={Database} label={t('settings.restore')} disabled badge={t('common.comingSoon')} />
             <SettingsItem
               icon={Database}
               label={t('settings.deleteAll')}
@@ -305,12 +315,28 @@ export default function SettingsPage() {
 
         {/* About */}
         <Card>
-          <CardContent className="divide-y divide-gray-100 p-0 dark:divide-gray-700">
-            <SettingsItem
-              icon={Info}
-              label={t('settings.version')}
-              value="1.0.0"
-            />
+          <CardContent className="p-4">
+            <h3 className="mb-3 text-sm font-medium text-gray-500">
+              {t('settings.about')}
+            </h3>
+            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex justify-between">
+                <span>{t('settings.version')}</span>
+                <span>1.0.0</span>
+              </div>
+              <div className="flex justify-between">
+                <span>대표</span>
+                <span>장루빈</span>
+              </div>
+              <div className="flex justify-between">
+                <span>사업자등록번호</span>
+                <span>790-39-01572</span>
+              </div>
+              <div className="flex justify-between">
+                <span>연락처</span>
+                <span>010-2465-1015</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -335,6 +361,11 @@ export default function SettingsPage() {
             </Button>
           </div>
         )}
+
+        {/* Copyright */}
+        <p className="py-4 text-center text-xs text-gray-400 dark:text-gray-500">
+          © {new Date().getFullYear()} MealKeeper. All rights reserved.
+        </p>
 
         {/* Language Modal */}
         <Modal

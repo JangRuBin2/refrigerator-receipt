@@ -339,15 +339,18 @@ export default function ScanPage() {
                   </div>
                   <button
                     onClick={() => setUseAIVision(!useAIVision)}
+                    role="switch"
+                    aria-checked={useAIVision}
                     className={cn(
-                      'relative h-7 w-12 rounded-full transition-colors',
-                      useAIVision ? 'bg-purple-600' : 'bg-gray-300'
+                      'relative h-[31px] w-[51px] flex-shrink-0 rounded-full transition-colors duration-200',
+                      useAIVision ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'
                     )}
                   >
-                    <motion.span
-                      animate={{ x: useAIVision ? 22 : 2 }}
-                      transition={spring.snappy}
-                      className="absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm"
+                    <span
+                      className={cn(
+                        'absolute left-[2px] top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow-md transition-transform duration-200',
+                        useAIVision && 'translate-x-5'
+                      )}
                     />
                   </button>
                 </div>

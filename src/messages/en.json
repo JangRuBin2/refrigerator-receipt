@@ -211,6 +211,7 @@
     "deleteWarning": "This action cannot be undone",
     "about": "About",
     "version": "Version",
+    "tossUser": "Toss User",
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to logout?",
     "deleteAccount": "Delete Account",
@@ -221,7 +222,6 @@
   "auth": {
     "login": "Login",
     "logout": "Logout",
-    "loginWithGoogle": "Login with Google",
     "loginWithToss": "Login with Toss",
     "loginDescription": "Login to manage your fridge",
     "welcomeBack": "Welcome back!",
@@ -322,8 +322,10 @@
     "addItem": "Add Item",
     "itemNamePlaceholder": "Enter item name...",
     "aiRecommend": "AI Recommendations",
-    "aiDisclaimer": "AI-generated recommendations. Use for reference only.",
+    "aiDisclaimer": "Analyzes your fridge items and purchase history to suggest what you need.",
     "completeList": "Complete Shopping",
+    "loadError": "Failed to load shopping list. Please try again.",
+    "addError": "Failed to add item. Please try again.",
     "filter": {
       "all": "All",
       "unchecked": "To Buy",

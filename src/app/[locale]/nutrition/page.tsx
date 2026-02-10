@@ -97,8 +97,9 @@ export default function NutritionPage() {
     try {
       const data = await analyzeNutrition() as { report: NutritionReport };
       setReport(data.report);
-    } catch {
-      setError(t('common.error'));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`${t('common.error')} [${msg}]`);
     } finally {
       setLoading(false);
     }
@@ -110,8 +111,9 @@ export default function NutritionPage() {
     try {
       const data = await analyzePeriodNutrition(period) as { report: PeriodReport };
       setPeriodReport(data.report);
-    } catch {
-      setError(t('common.error'));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`${t('common.error')} [${msg}]`);
     } finally {
       setLoading(false);
     }

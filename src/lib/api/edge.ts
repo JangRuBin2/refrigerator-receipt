@@ -28,10 +28,22 @@ export async function callEdgeFunction<T>(
     }
   );
 
+  const text = await response.text();
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || `Edge function error: ${response.status}`);
+    let errorMessage = `Edge function error: ${response.status}`;
+    try {
+      const error = JSON.parse(text);
+      errorMessage = error.error || errorMessage;
+    } catch {
+      // Non-JSON error response
+    }
+    throw new Error(errorMessage);
   }
 
-  return response.json();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(`서버 응답을 처리할 수 없습니다.`);
+  }
 }

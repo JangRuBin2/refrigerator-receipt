@@ -37,6 +37,9 @@ yarn-error.log*
 # Supabase
 supabase/.temp/
 
+# Apps in Toss build artifact
+*.ait
+
 # Vercel
 .vercel
 

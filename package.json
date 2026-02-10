@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/fix-root-html.mjs",
     "start": "next start",
     "lint": "next lint",
-    "build:ait": "next build",
-    "deploy:ait": "npx ait deploy"
+    "build:ait": "npx granite build",
+    "build:ait:debug": "AIT_DEBUG=true npx granite build"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^1.9.4",
@@ -28,6 +28,7 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@apps-in-toss/cli": "^1.9.4",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
