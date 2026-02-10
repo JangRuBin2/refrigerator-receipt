@@ -86,7 +86,9 @@
       "Bash(cmp:*)",
       "Bash(md5:*)",
       "Bash(git log:*)",
-      "Bash(npm run build:ait:*)"
+      "Bash(npm run build:ait:*)",
+      "Bash(npx next build:*)",
+      "Bash(node scripts/fix-root-html.mjs:*)"
     ]
   }
 }
