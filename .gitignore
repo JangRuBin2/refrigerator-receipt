@@ -39,6 +39,7 @@ supabase/.temp/
 
 # Apps in Toss build artifact
 *.ait
+.ait-staging/
 
 # Vercel
 .vercel

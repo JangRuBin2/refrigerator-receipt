@@ -67,10 +67,12 @@ images: { unoptimized: true },  // static export에서 이미지 최적화 불�
 ```json
 {
   "build": "next build && node scripts/fix-root-html.mjs",
-  "build:ait": "npx granite build",
-  "build:ait:debug": "AIT_DEBUG=true npx granite build"
+  "build:ait": "node scripts/build-ait.mjs",
+  "build:ait:debug": "AIT_DEBUG=true node scripts/build-ait.mjs"
 }
 ```
+
+> `granite build`는 `pluginHooks` 에러로 불안정하므로 `build-ait.mjs`로 직접 .ait 생성.
 
 ---
 
@@ -269,21 +271,33 @@ const corsHeaders = {
 ## 8. 빌드 & 배포 플로우
 
 ```
-npm run build:ait
+pnpm build:ait
   │
-  ├── 1. next build (정적 HTML 출력 → out/)
-  ├── 2. scripts/fix-root-html.mjs (root index.html 생성)
-  └── 3. granite build (out/ → .ait 파일 패키징)
+  ├── 1. pnpm build (next build + fix-root-html.mjs → out/)
+  ├── 2. 기존 .ait에서 RN 번들(bundle.ios/android) 추출 재사용
+  ├── 3. out/ → web/ 복사, app.json 메타데이터 갱신
+  └── 4. zip → acorn.ait 생성
 
 .ait 파일 → 토스 Partner Console에 수동 업로드
+  또는: npx ait deploy
 ```
 
 ### 디버그 빌드
 
 ```bash
-npm run build:ait:debug
+pnpm build:ait:debug
 # AIT_DEBUG=true → 진단 페이지 + 에러 오버레이 주입
 ```
+
+### build-ait.mjs 동작 원리
+
+`granite build`가 `pluginHooks` 에러로 동작하지 않아 직접 .ait를 생성하는 스크립트.
+
+1. `pnpm build` 실행 (next build + fix-root-html.mjs)
+2. 기존 acorn.ait에서 RN 래퍼 번들 추출 (WebView앱이므로 거의 변경 없음)
+3. `out/` 디렉토리를 `web/`으로 복사
+4. `app.json` 메타데이터 갱신 (새 deploymentId, package.json dependencies)
+5. 전체를 zip으로 묶어 `acorn.ait` 생성
 
 ---
 

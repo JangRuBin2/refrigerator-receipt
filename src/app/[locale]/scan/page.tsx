@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Camera, Upload, Check, RefreshCw, Sparkles, Clock, AlertCircle, Crown, ChevronRight, Play, Loader2 } from 'lucide-react';
+import { Camera, Upload, Check, RefreshCw, Sparkles, Clock, AlertCircle, Crown, ChevronRight } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -13,12 +13,10 @@ import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { usePremium } from '@/hooks/usePremium';
-import { useAppsInTossAds } from '@/hooks/useAppsInTossAds';
 import { PremiumModal } from '@/components/premium/PremiumModal';
-import { AD_GROUP_IDS } from '@/types/apps-in-toss-ads';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
-import { getScanUsage, scanReceipt, claimAdReward } from '@/lib/api/scan';
+import { getScanUsage, scanReceipt } from '@/lib/api/scan';
 import type { ScannedItem, Category, Unit, StorageType } from '@/types';
 
 const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
@@ -43,9 +41,6 @@ export default function ScanPage() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const { isPremium } = usePremium();
-  const { isAvailable: isAdsAvailable, adState, watchAdForReward } = useAppsInTossAds();
-  const [isWatchingAd, setIsWatchingAd] = useState(false);
-  const [canWatchAd, setCanWatchAd] = useState(false);
 
   useEffect(() => {
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
@@ -56,7 +51,6 @@ export default function ScanPage() {
       try {
         const data = await getScanUsage();
         setUsage(data);
-        setCanWatchAd(data.canWatchAd || false);
       } catch {
         // Ignore
       }
@@ -70,45 +64,17 @@ export default function ScanPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<string>('');
   const [useAIVision, setUseAIVision] = useState(true);
-  const [usage, setUsage] = useState<{ dailyLimit: number; effectiveLimit?: number; used: number; remaining: number; canWatchAd?: boolean; isPremium?: boolean } | null>(null);
+  const [usage, setUsage] = useState<{ dailyLimit: number; effectiveLimit?: number; used: number; remaining: number; isPremium?: boolean } | null>(null);
   const [isResultSheetOpen, setIsResultSheetOpen] = useState(false);
 
   const currentStepIndex = STEPS.indexOf(step);
 
   const handleScanClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
-    // 프리미엄이 아니고 사용량 초과 시 프리미엄 모달 표시
     if (!isPremium && usage && usage.remaining <= 0) {
       setShowPremiumModal(true);
       return;
     }
     inputRef.current?.click();
-  };
-
-  const handleWatchAd = async () => {
-    if (!isAdsAvailable || isWatchingAd) return;
-
-    setIsWatchingAd(true);
-    try {
-      const success = await watchAdForReward(async () => {
-        // 광고 시청 완료 후 보상 요청
-        await claimAdReward(AD_GROUP_IDS.SCAN_REWARDED);
-
-        // 사용량 정보 새로고침
-        const data = await getScanUsage();
-        setUsage(data);
-        setCanWatchAd(data.canWatchAd || false);
-
-        toast.success(t('scan.adWatchSuccess'));
-      });
-
-      if (!success) {
-        toast.error(t('scan.adWatchFailed'));
-      }
-    } catch {
-      toast.error(t('scan.adWatchFailed'));
-    } finally {
-      setIsWatchingAd(false);
-    }
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
