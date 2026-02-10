@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "build:ait": "npx granite build",
-    "build:ait:debug": "AIT_DEBUG=true npx granite build"
+    "build:ait:debug": "AIT_DEBUG=true npx granite build",
+    "deploy:functions": "npx supabase functions deploy --no-verify-jwt",
+    "deploy:all": "npm run build:ait && npm run deploy:functions && echo '✅ .ait 파일을 토스 Partner Console에 업로드하세요'"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^1.9.4",
