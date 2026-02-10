@@ -22,6 +22,7 @@ export async function getShoppingList() {
     const { data: newList, error: createError } = await supabase
       .from('shopping_lists')
       .insert({
+        id: crypto.randomUUID(),
         user_id: user.id,
         name: '장보기 목록',
         items: [],
@@ -62,6 +63,7 @@ export async function addShoppingItems(
       const { data: newList, error: createError } = await supabase
         .from('shopping_lists')
         .insert({
+          id: crypto.randomUUID(),
           user_id: user.id,
           name: '장보기 목록',
           items: [],

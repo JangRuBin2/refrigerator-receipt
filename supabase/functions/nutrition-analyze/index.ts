@@ -63,10 +63,24 @@ Deno.serve(async (req) => {
       period = url.searchParams.get('period');
     }
 
-    const { data: ingredients, error } = await supabase
+    // Build query - filter by purchase_date if period is specified
+    let query = supabase
       .from('ingredients')
       .select('name, category, quantity, unit')
       .eq('user_id', user.id);
+
+    if (period === 'week' || period === 'month') {
+      const now = new Date();
+      const startDate = new Date();
+      if (period === 'week') {
+        startDate.setDate(now.getDate() - 7);
+      } else {
+        startDate.setMonth(now.getMonth() - 1);
+      }
+      query = query.gte('purchase_date', startDate.toISOString().split('T')[0]);
+    }
+
+    const { data: ingredients, error } = await query;
 
     if (error) throw error;
 

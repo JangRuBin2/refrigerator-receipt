@@ -49,30 +49,28 @@ export default defineConfig({
 
 ## .ait 번들 생성
 
-### 알려진 문제
+`granite build` 정상 동작 확인됨 (2026-02, `@apps-in-toss/cli@1.9.4`).
+이전 `pluginHooks` 에러는 해결됨.
 
-`granite build` 실행 시 `pluginHooks` 에러 발생:
-- 원인: `granite` 바이너리가 `@granite-js/react-native`에서 제공됨
-- `@granite-js/react-native`의 `granite build`는 RN 번들(iOS/Android) 전용
-- WebView 앱용 web build path가 아닌 RN build path가 실행됨
-- 에러: `Cannot destructure property 'devServer' of 'config.pluginHooks'`
+```bash
+pnpm build:ait          # npx granite build 실행
+pnpm build:ait:debug    # AIT_DEBUG=true npx granite build
+```
 
-### 해결 방안 (미완료 - 추가 조사 필요)
+빌드 플로우:
+1. `next build` + `fix-root-html.mjs` → `out/` 생성
+2. RN 래퍼 번들 생성 (iOS/Android)
+3. `out/` → `web/` + `app.json` 패키징
+4. `acorn.ait` 생성 (deploymentId는 UUIDv7 자동 생성)
 
-1. **앱인토스 콘솔에서 직접 업로드**: 콘솔 UI에서 번들 업로드 가능
-2. **CLI 배포**: `npx ait deploy --api-key {KEY}` (사전에 .ait 파일 필요)
-3. **앱인토스 개발자 커뮤니티 문의**: WebView + 외부 호스팅 앱의 .ait 생성 방법 확인 필요
-
-### CLI Deploy 명령어
+### 토스 콘솔 업로드
 
 ```bash
 # API 키 등록 (최초 1회)
 npx ait token add
 
-# 번들 업로드 (.ait 파일이 프로젝트 루트에 있어야 함)
-npx ait deploy
-npx ait deploy --api-key {API_KEY}
-npx ait deploy --location ./path/to/file.ait
+# .ait 파일은 콘솔에서 직접 업로드
+# 콘솔 > 워크스페이스 > 앱 > 앱 출시 > .ait 업로드
 ```
 
 ## Vercel Deployment
