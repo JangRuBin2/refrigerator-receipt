@@ -7,8 +7,8 @@
     "build": "next build && node scripts/fix-root-html.mjs",
     "start": "next start",
     "lint": "next lint",
-    "build:ait": "node scripts/build-ait.mjs",
-    "build:ait:debug": "AIT_DEBUG=true node scripts/build-ait.mjs",
+    "build:ait": "npx granite build",
+    "build:ait:debug": "AIT_DEBUG=true npx granite build",
     "deploy:functions": "npx supabase functions deploy --no-verify-jwt",
     "deploy:all": "pnpm build:ait && pnpm deploy:functions && echo '✅ .ait 파일을 토스 Partner Console에 업로드하세요'"
   },
