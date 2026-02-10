@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ToastContainer } from '@/components/ui/Toast';
+import { AuthGuard } from '@/components/layout/AuthGuard';
 import { WebApplicationJsonLd, OrganizationJsonLd } from '@/components/seo/JsonLd';
 import { Metadata } from 'next';
 import '../globals.css';
@@ -164,9 +165,11 @@ export default async function LocaleLayout({
         <OrganizationJsonLd />
       </head>
       <body className="bg-gray-50 font-sans antialiased dark:bg-gray-900">
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <div className="mx-auto min-h-screen max-w-lg bg-white shadow-lg dark:bg-gray-800">
-            <main className="pb-20">{children}</main>
+            <main className="pb-20">
+              <AuthGuard>{children}</AuthGuard>
+            </main>
             <BottomNav locale={locale} />
           </div>
           <ToastContainer />

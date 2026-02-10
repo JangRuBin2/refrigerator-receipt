@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
+import { analyzeNutrition, analyzePeriodNutrition } from '@/lib/api/nutrition';
 
 type ViewMode = 'current' | 'week' | 'month';
 
@@ -94,9 +95,7 @@ export default function NutritionPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/nutrition/analyze');
-      if (!response.ok) throw new Error('Failed to fetch');
-      const data = await response.json();
+      const data = await analyzeNutrition() as { report: NutritionReport };
       setReport(data.report);
     } catch {
       setError(t('common.error'));
@@ -109,9 +108,7 @@ export default function NutritionPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/nutrition/report?period=${period}`);
-      if (!response.ok) throw new Error('Failed to fetch');
-      const data = await response.json();
+      const data = await analyzePeriodNutrition(period) as { report: PeriodReport };
       setPeriodReport(data.report);
     } catch {
       setError(t('common.error'));

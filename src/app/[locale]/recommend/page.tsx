@@ -14,6 +14,7 @@ import { tasteQuestions, type ScoredRecipe } from '@/lib/recommend/engine';
 import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import { useStore } from '@/store/useStore';
+import { getRecipes, getRandomRecipe, saveAiRecipe as saveAiRecipeApi, aiGenerateRecipe, scoreByTaste } from '@/lib/api/recipes';
 
 type Mode = 'select' | 'random' | 'taste' | 'ai';
 
@@ -73,15 +74,12 @@ export default function RecommendPage() {
   useEffect(() => {
     const fetchRecipeNames = async () => {
       try {
-        const response = await fetch('/api/recipes?limit=50');
-        if (response.ok) {
-          const data = await response.json();
-          const names = data.recipes?.map((r: RandomResult) =>
-            r.title?.[locale] || r.title?.ko || r.title?.en || ''
-          ).filter(Boolean) || [];
-          if (names.length > 0) {
-            setRecipeNames(names);
-          }
+        const data = await getRecipes({ limit: 50 });
+        const names = data.recipes?.map((r: RandomResult) =>
+          r.title?.[locale] || r.title?.ko || r.title?.en || ''
+        ).filter(Boolean) || [];
+        if (names.length > 0) {
+          setRecipeNames(names);
         }
       } catch {
         // Keep default names if fetch fails
@@ -119,19 +117,16 @@ export default function RecommendPage() {
     }, 100);
 
     try {
-      const response = await fetch('/api/recipes/random');
-      const data = await response.json();
+      const data = await getRandomRecipe() as unknown as RandomResult;
 
       // 애니메이션이 끝날 때까지 대기
       await new Promise(resolve => setTimeout(resolve, maxAnim * 100 + 200));
       clearInterval(interval);
 
-      if (response.ok) {
+      if (data) {
         setRandomResult(data);
         setRandomDisplayName(
-          (data.title as Record<string, string>)?.[locale] ||
-          (data.title as Record<string, string>)?.ko ||
-          ''
+          data.title?.[locale] || data.title?.ko || ''
         );
       }
     } catch {
@@ -158,14 +153,8 @@ export default function RecommendPage() {
   const submitTaste = async (finalAnswers: Record<string, string>) => {
     setTasteLoading(true);
     try {
-      const response = await fetch('/api/recipes/taste', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: finalAnswers }),
-      });
-      const data = await response.json();
-
-      if (response.ok && Array.isArray(data)) {
+      const data = await scoreByTaste(finalAnswers);
+      if (Array.isArray(data)) {
         setTasteResults(data);
       }
     } catch {
@@ -233,31 +222,13 @@ export default function RecommendPage() {
         preferences.cuisine = aiPreferences.cuisine;
       }
 
-      const response = await fetch('/api/recipes/ai-generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ingredients: ingredientNames,
-          preferences: Object.keys(preferences).length > 0 ? preferences : undefined,
-          locale,
-        }),
-      });
+      const data = await aiGenerateRecipe({
+        ingredients: ingredientNames,
+        preferences: Object.keys(preferences).length > 0 ? preferences : undefined,
+        locale,
+      }) as { recipe?: AIGeneratedRecipe; freeTrial?: { remainingCount: number; limit: number }; error?: string };
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          // 무료 체험 소진 또는 프리미엄 필요
-          setShowPremiumModal(true);
-          if (data.freeTrial) {
-            setFreeTrialInfo(data.freeTrial);
-          }
-          return;
-        }
-        throw new Error(data.error || 'Failed to generate recipe');
-      }
-
-      setAiRecipe(data.recipe);
+      setAiRecipe(data.recipe || null);
 
       // 무료 체험 정보 업데이트
       if (data.freeTrial) {
@@ -282,21 +253,8 @@ export default function RecommendPage() {
 
     setAiSaving(true);
     try {
-      const response = await fetch('/api/recipes/ai-save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...aiRecipe,
-          locale,
-        }),
-      });
-
-      if (response.ok || response.status === 409) {
-        setAiSaved(true);
-      } else {
-        const data = await response.json();
-        setAiError(data.error || '저장에 실패했습니다');
-      }
+      await saveAiRecipeApi({ ...aiRecipe, locale });
+      setAiSaved(true);
     } catch {
       setAiError('저장에 실패했습니다');
     } finally {
@@ -866,7 +824,7 @@ export default function RecommendPage() {
                     <Button
                       onClick={saveAiRecipe}
                       disabled={aiSaving || aiSaved}
-                      variant={aiSaved ? 'default' : 'outline'}
+                      variant={aiSaved ? 'primary' : 'outline'}
                       size="sm"
                       className={cn(
                         aiSaved && 'bg-red-500 hover:bg-red-500 text-white'

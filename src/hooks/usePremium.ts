@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { SubscriptionResponse } from '@/types/subscription';
+import { getSubscription as getSubscriptionApi } from '@/lib/api/subscription';
 
 interface UsePremiumReturn {
   isPremium: boolean;
@@ -62,13 +63,10 @@ export function usePremium(): UsePremiumReturn {
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/subscription');
-      if (response.ok) {
-        const data: SubscriptionResponse = await response.json();
-        cachedSubscription = data;
-        cacheTimestamp = Date.now();
-        setSubscription(data);
-      }
+      const data = await getSubscriptionApi();
+      cachedSubscription = data;
+      cacheTimestamp = Date.now();
+      setSubscription(data);
     } catch {
       // 실패 시 기본값
       const defaultSub: SubscriptionResponse = { isPremium: false, plan: 'free' };

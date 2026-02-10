@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
+import { deleteAccount as deleteAccountApi } from '@/lib/api/auth';
 
 interface UserProfile {
   id: string;
@@ -105,14 +106,9 @@ export default function SettingsPage() {
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true);
     try {
-      const response = await fetch('/api/auth/delete-account', {
-        method: 'POST',
-      });
-
-      if (response.ok) {
-        clearIngredients();
-        router.push(`/${locale}/login`);
-      }
+      await deleteAccountApi();
+      clearIngredients();
+      router.push(`/${locale}/login`);
     } catch {
       setIsDeletingAccount(false);
     }

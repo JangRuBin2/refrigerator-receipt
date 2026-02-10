@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /*/settings
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://mealkeeper.app/sitemap.xml
+Host: https://mealkeeper.app

@@ -18,6 +18,7 @@ import { PremiumModal } from '@/components/premium/PremiumModal';
 import { AD_GROUP_IDS } from '@/types/apps-in-toss-ads';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
+import { getScanUsage, scanReceipt, claimAdReward } from '@/lib/api/scan';
 import type { ScannedItem, Category, Unit, StorageType } from '@/types';
 
 const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
@@ -53,14 +54,9 @@ export default function ScanPage() {
   useEffect(() => {
     const fetchUsage = async () => {
       try {
-        const response = await fetch('/api/receipts/scan');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.usage) {
-            setUsage(data.usage);
-            setCanWatchAd(data.usage.canWatchAd || false);
-          }
-        }
+        const data = await getScanUsage();
+        setUsage(data);
+        setCanWatchAd(data.canWatchAd || false);
       } catch {
         // Ignore
       }
@@ -74,7 +70,7 @@ export default function ScanPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<string>('');
   const [useAIVision, setUseAIVision] = useState(true);
-  const [usage, setUsage] = useState<{ dailyLimit: number; used: number; remaining: number } | null>(null);
+  const [usage, setUsage] = useState<{ dailyLimit: number; effectiveLimit?: number; used: number; remaining: number; canWatchAd?: boolean; isPremium?: boolean } | null>(null);
   const [isResultSheetOpen, setIsResultSheetOpen] = useState(false);
 
   const currentStepIndex = STEPS.indexOf(step);
@@ -94,25 +90,15 @@ export default function ScanPage() {
     setIsWatchingAd(true);
     try {
       const success = await watchAdForReward(async () => {
-        // 광고 시청 완료 후 서버에 보상 요청
-        const response = await fetch('/api/receipts/ad-reward', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ adGroupId: AD_GROUP_IDS.SCAN_REWARDED }),
-        });
+        // 광고 시청 완료 후 보상 요청
+        await claimAdReward(AD_GROUP_IDS.SCAN_REWARDED);
 
-        if (response.ok) {
-          // 사용량 정보 새로고침
-          const usageResponse = await fetch('/api/receipts/scan');
-          if (usageResponse.ok) {
-            const data = await usageResponse.json();
-            if (data.usage) {
-              setUsage(data.usage);
-              setCanWatchAd(data.usage.canWatchAd || false);
-            }
-          }
-          toast.success(t('scan.adWatchSuccess'));
-        }
+        // 사용량 정보 새로고침
+        const data = await getScanUsage();
+        setUsage(data);
+        setCanWatchAd(data.canWatchAd || false);
+
+        toast.success(t('scan.adWatchSuccess'));
       });
 
       if (!success) {
@@ -148,40 +134,23 @@ export default function ScanPage() {
     setStep('scanning');
 
     try {
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('useAIVision', useAIVision.toString());
-
-      const response = await fetch('/api/receipts/scan', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 429 && data.limitReached) {
-          setUsage({ dailyLimit: data.dailyLimit, used: data.currentCount, remaining: 0 });
-          if (!data.isPremium) {
-            setShowPremiumModal(true);
-          }
-        }
-        throw new Error(data.error || 'Scan failed');
-      }
+      const data = await scanReceipt(file, useAIVision);
 
       if (data.usage) {
         setUsage(data.usage);
       }
 
-      const items: ExtendedScannedItem[] = data.items.map((item: {
+      const items: ExtendedScannedItem[] = (data.items as {
         name: string;
         quantity: number;
         unit: string;
         category: string;
         confidence?: number;
         estimatedExpiryDays?: number;
-      }) => ({
+      }[]).map((item) => ({
         ...item,
+        unit: item.unit as Unit,
+        category: item.category as Category,
         selected: true,
       }));
 
@@ -190,6 +159,9 @@ export default function ScanPage() {
       setStep('confirm');
       setIsResultSheetOpen(true);
     } catch (err) {
+      if (err instanceof Error && err.message.includes('limit')) {
+        setShowPremiumModal(true);
+      }
       toast.error(err instanceof Error ? err.message : 'Scan failed');
       setStep('upload');
     }

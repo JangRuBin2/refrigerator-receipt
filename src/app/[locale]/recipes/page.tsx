@@ -14,6 +14,8 @@ import { useStore } from '@/store/useStore';
 import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import { cn } from '@/lib/utils';
+import { getRecipes } from '@/lib/api/recipes';
+import { searchRecipes as searchExternalRecipesApi } from '@/lib/api/recipes';
 import type { Recipe, RecipeIngredient, ExternalRecipe, Difficulty } from '@/types';
 
 const RECIPES_PER_PAGE = 10;
@@ -103,23 +105,20 @@ function RecipesContent() {
         setLoadingMore(true);
       }
 
-      const response = await fetch(`/api/recipes?limit=${RECIPES_PER_PAGE}&offset=${currentOffset}`);
-      if (response.ok) {
-        const data = await response.json();
-        const mappedRecipes = (data.recipes || []).map(mapDBRecipeToRecipe);
+      const data = await getRecipes({ limit: RECIPES_PER_PAGE, offset: currentOffset });
+      const mappedRecipes = (data.recipes || []).map(mapDBRecipeToRecipe);
 
-        if (append) {
-          setRecipes(prev => [...prev, ...mappedRecipes]);
-        } else {
-          setRecipes(mappedRecipes);
-        }
-
-        // Check if there are more recipes to load
-        const total = data.total || 0;
-        const newHasMore = currentOffset + mappedRecipes.length < total;
-        setHasMore(newHasMore);
-        hasMoreRef.current = newHasMore;
+      if (append) {
+        setRecipes(prev => [...prev, ...mappedRecipes]);
+      } else {
+        setRecipes(mappedRecipes);
       }
+
+      // Check if there are more recipes to load
+      const total = data.total || 0;
+      const newHasMore = currentOffset + mappedRecipes.length < total;
+      setHasMore(newHasMore);
+      hasMoreRef.current = newHasMore;
     } catch {
       // error silently
     } finally {
@@ -223,39 +222,20 @@ function RecipesContent() {
     setExternalRecipes([]);
 
     try {
-      let url = '/api/recipes/search?type=all';
+      const query = useCustomQuery && customSearchQuery.trim()
+        ? customSearchQuery.trim()
+        : ingredients.map(i => i.name).join(',');
 
-      if (useCustomQuery && customSearchQuery.trim()) {
-        // 수동 검색
-        url += `&q=${encodeURIComponent(customSearchQuery.trim())}`;
-      } else {
-        // 재료 기반 검색
-        url += `&strategy=${searchStrategy}`;
-      }
-
-      const response = await fetch(url);
-      const data = await response.json();
+      const data = await searchExternalRecipesApi(query, locale) as {
+        results?: ExternalRecipe[];
+        query?: string;
+        apiStatus?: { youtube: boolean; google: boolean };
+        freeTrial?: { remainingCount: number; limit: number };
+      };
 
       // API 상태 저장
       if (data.apiStatus) {
         setApiStatus(data.apiStatus);
-      }
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          // 무료 체험 소진 또는 프리미엄 필요
-          setShowPremiumModal(true);
-          if (data.freeTrial) {
-            setFreeTrialInfo(data.freeTrial);
-          }
-          return;
-        }
-        if (response.status === 503) {
-          setExternalError(t('recipe.apiNotConfigured'));
-        } else {
-          setExternalError(data.error || t('common.error'));
-        }
-        return;
       }
 
       setExternalRecipes(data.results || []);
@@ -265,8 +245,12 @@ function RecipesContent() {
       if (data.freeTrial) {
         setFreeTrialInfo(data.freeTrial);
       }
-    } catch {
-      setExternalError(t('common.error'));
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('403')) {
+        setShowPremiumModal(true);
+      } else {
+        setExternalError(t('common.error'));
+      }
     } finally {
       setExternalLoading(false);
     }

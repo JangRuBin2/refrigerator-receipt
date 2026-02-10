@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { createClient } from '@/lib/supabase/client';
 import { isAppsInTossEnvironment, getTossUserKey } from '@/lib/apps-in-toss/sdk';
+import { tossLogin } from '@/lib/api/auth';
 
 export default function LoginPage() {
   const t = useTranslations();
@@ -70,14 +71,8 @@ export default function LoginPage() {
         return;
       }
 
-      // 토스 사용자 키로 서버에 로그인 요청
-      const response = await fetch('/api/auth/toss', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tossUserKey }),
-      });
-
-      const data = await response.json();
+      // 토스 사용자 키로 로그인 요청
+      const data = await tossLogin(tossUserKey);
 
       if (data.success) {
         router.push(`/${locale}`);

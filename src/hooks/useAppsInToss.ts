@@ -9,6 +9,7 @@ import {
   completeProductGrant,
   getTossUserKey,
 } from '@/lib/apps-in-toss/sdk';
+import { iapActivate } from '@/lib/api/auth';
 import type {
   IapProductItem,
   IapPurchaseResult,
@@ -81,17 +82,11 @@ export function useAppsInToss(): UseAppsInTossReturn {
     const result = await createOneTimePurchaseOrder(sku, async () => {
       // 서버에 구독 활성화 요청
       try {
-        const response = await fetch('/api/iap', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: result.orderId,
-            sku,
-            tossUserKey,
-          }),
+        const data = await iapActivate({
+          orderId: result.orderId || '',
+          sku,
+          tossUserKey,
         });
-
-        const data = await response.json();
         return data.success;
       } catch {
         return false;
@@ -111,25 +106,18 @@ export function useAppsInToss(): UseAppsInTossReturn {
     // 미결 주문이 있으면 상품 지급 처리
     for (const order of orders) {
       try {
-        // 서버에 구독 활성화 요청
-        const response = await fetch('/api/iap', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: order.orderId,
-            sku: order.sku,
-            tossUserKey,
-          }),
+        const data = await iapActivate({
+          orderId: order.orderId,
+          sku: order.sku,
+          tossUserKey,
         });
-
-        const data = await response.json();
 
         if (data.success) {
           // 지급 완료 처리
           await completeProductGrant(order.orderId);
         }
-      } catch (error) {
-        console.error('Failed to restore order:', order.orderId, error);
+      } catch {
+        // Failed to restore order - continue with next
       }
     }
 

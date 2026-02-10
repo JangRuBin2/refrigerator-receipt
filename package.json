@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:ait": "next build",
+    "deploy:ait": "npx ait deploy"
   },
   "dependencies": {
+    "@apps-in-toss/web-framework": "^1.9.4",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.1",
     "cheerio": "^1.2.0",

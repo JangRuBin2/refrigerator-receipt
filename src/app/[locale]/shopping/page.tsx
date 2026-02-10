@@ -25,6 +25,14 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/utils';
 import type { Category, Unit, ShoppingItem } from '@/types/supabase';
+import {
+  getShoppingList,
+  addShoppingItems,
+  updateShoppingItem,
+  deleteShoppingItem as deleteShoppingItemApi,
+  completeShoppingList,
+  getShoppingRecommendations,
+} from '@/lib/api/shopping';
 
 const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
 const UNITS: Unit[] = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
@@ -66,11 +74,8 @@ export default function ShoppingPage() {
   // 목록 조회
   const fetchList = useCallback(async () => {
     try {
-      const response = await fetch('/api/shopping');
-      if (response.ok) {
-        const data = await response.json();
-        setList(data.list);
-      }
+      const data = await getShoppingList();
+      setList(data.list);
     } catch {
       // Error fetching list - fail silently
     } finally {
@@ -82,11 +87,8 @@ export default function ShoppingPage() {
   const fetchRecommendations = async () => {
     setRecommendLoading(true);
     try {
-      const response = await fetch('/api/shopping/recommend');
-      if (response.ok) {
-        const data = await response.json();
-        setRecommendations(data.recommendations || []);
-      }
+      const data = await getShoppingRecommendations([]) as { recommendations?: RecommendedItem[] };
+      setRecommendations(data.recommendations || []);
     } catch {
       // Error fetching recommendations - fail silently
     } finally {
@@ -104,21 +106,13 @@ export default function ShoppingPage() {
     if (!item.name?.trim()) return;
 
     try {
-      const response = await fetch('/api/shopping', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: [item],
-          listId: list?.id,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setList(data.list);
-        setShowAddModal(false);
-        setNewItem({ name: '', quantity: 1, unit: 'ea', category: 'etc' });
-      }
+      const data = await addShoppingItems(
+        [{ name: item.name!, quantity: item.quantity, unit: item.unit, category: item.category }],
+        list?.id
+      );
+      setList(data.list);
+      setShowAddModal(false);
+      setNewItem({ name: '', quantity: 1, unit: 'ea', category: 'etc' });
     } catch {
       // Error adding item - fail silently
     }
@@ -152,15 +146,7 @@ export default function ShoppingPage() {
     });
 
     try {
-      await fetch('/api/shopping', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          listId: list.id,
-          itemId,
-          updates: { checked },
-        }),
-      });
+      await updateShoppingItem(list.id, itemId, { checked });
     } catch {
       // 실패 시 롤백
       fetchList();
@@ -181,9 +167,7 @@ export default function ShoppingPage() {
     });
 
     try {
-      await fetch(`/api/shopping?listId=${list.id}&itemId=${itemId}`, {
-        method: 'DELETE',
-      });
+      await deleteShoppingItemApi(list.id, itemId);
     } catch {
       // 실패 시 롤백
       fetchList();
@@ -195,9 +179,7 @@ export default function ShoppingPage() {
     if (!list) return;
 
     try {
-      await fetch(`/api/shopping?listId=${list.id}&complete=true`, {
-        method: 'DELETE',
-      });
+      await completeShoppingList(list.id);
       // 새 목록 생성됨
       fetchList();
     } catch {
