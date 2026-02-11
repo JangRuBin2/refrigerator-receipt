@@ -22,6 +22,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -208,6 +209,7 @@ export default function NutritionPage() {
   const macroRatio = currentNutrition ? calculateMacroRatio(currentNutrition) : { protein: 0, carbs: 0, fat: 0 };
 
   return (
+    <PremiumGate feature="nutrition_analysis">
     <div className="min-h-screen pb-20">
       <Header locale={locale} title={t('nutrition.title')} />
 
@@ -511,5 +513,6 @@ export default function NutritionPage() {
         )}
       </div>
     </div>
+    </PremiumGate>
   );
 }

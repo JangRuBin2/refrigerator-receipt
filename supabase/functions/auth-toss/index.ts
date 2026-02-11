@@ -262,6 +262,25 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
       });
 
+      // Create 7-day trial subscription for new users
+      const { data: existingSub } = await supabaseAdmin
+        .from('subscriptions')
+        .select('id')
+        .eq('user_id', signUpData.user.id)
+        .single();
+
+      if (!existingSub) {
+        const trialExpiresAt = new Date();
+        trialExpiresAt.setDate(trialExpiresAt.getDate() + 7);
+        await supabaseAdmin.from('subscriptions').insert({
+          user_id: signUpData.user.id,
+          plan: 'trial',
+          expires_at: trialExpiresAt.toISOString(),
+          trial_started_at: new Date().toISOString(),
+          auto_renew: false,
+        });
+      }
+
       return new Response(
         JSON.stringify({
           success: true,

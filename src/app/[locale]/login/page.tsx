@@ -50,7 +50,8 @@ export default function LoginPage() {
       }
 
       if (data.success) {
-        window.location.href = `/${locale}/`;
+        const welcomeParam = data.isNewUser ? '?welcome=true' : '';
+        window.location.href = `/${locale}/${welcomeParam}`;
         return;
       }
 

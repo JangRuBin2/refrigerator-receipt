@@ -10,6 +10,10 @@ interface UsePremiumReturn {
   subscription: SubscriptionResponse | null;
   refetch: () => Promise<void>;
   checkPremiumAccess: (feature: PremiumFeature) => boolean;
+  isTrial: boolean;
+  isTrialActive: boolean;
+  isTrialExpired: boolean;
+  trialDaysRemaining: number;
 }
 
 export type PremiumFeature =
@@ -17,9 +21,10 @@ export type PremiumFeature =
   | 'external_recipe_search'
   | 'ai_recipe'
   | 'nutrition_analysis'
-  | 'smart_shopping';
+  | 'smart_shopping'
+  | 'fridge_management'
+  | 'recipe_browsing';
 
-// 환경변수로 프리미엄 체크 우회 설정
 // 개발 환경에서만 NEXT_PUBLIC_BYPASS_PREMIUM=true 설정
 const BYPASS_PREMIUM_CHECK = process.env.NEXT_PUBLIC_BYPASS_PREMIUM === 'true';
 
@@ -30,10 +35,12 @@ const PREMIUM_FEATURES: Record<PremiumFeature, boolean> = {
   ai_recipe: true,
   nutrition_analysis: true,
   smart_shopping: true,
+  fridge_management: true,
+  recipe_browsing: true,
 };
 
-// 캐시 시간 (5분)
-const CACHE_DURATION = 5 * 60 * 1000;
+// 캐시 시간 (1분 - trial 만료 감지 개선)
+const CACHE_DURATION = 1 * 60 * 1000;
 
 let cachedSubscription: SubscriptionResponse | null = null;
 let cacheTimestamp: number | null = null;
@@ -43,7 +50,6 @@ export function usePremium(): UsePremiumReturn {
   const [isLoading, setIsLoading] = useState(!cachedSubscription && !BYPASS_PREMIUM_CHECK);
 
   const fetchSubscription = useCallback(async (force = false) => {
-    // 프리미엄 체크 우회 시 API 호출 스킵
     if (BYPASS_PREMIUM_CHECK) {
       const premiumSub: SubscriptionResponse = { isPremium: true, plan: 'premium' };
       setSubscription(premiumSub);
@@ -51,7 +57,6 @@ export function usePremium(): UsePremiumReturn {
       return;
     }
 
-    // 캐시가 유효한 경우 스킵
     if (!force && cachedSubscription && cacheTimestamp) {
       const now = Date.now();
       if (now - cacheTimestamp < CACHE_DURATION) {
@@ -68,7 +73,6 @@ export function usePremium(): UsePremiumReturn {
       cacheTimestamp = Date.now();
       setSubscription(data);
     } catch {
-      // 실패 시 기본값
       const defaultSub: SubscriptionResponse = { isPremium: false, plan: 'free' };
       setSubscription(defaultSub);
     } finally {
@@ -81,15 +85,12 @@ export function usePremium(): UsePremiumReturn {
   }, [fetchSubscription]);
 
   const checkPremiumAccess = useCallback((feature: PremiumFeature): boolean => {
-    // 프리미엄 체크 우회 시 모든 기능 접근 가능
     if (BYPASS_PREMIUM_CHECK) {
       return true;
     }
-    // 프리미엄 기능이 아니면 항상 접근 가능
     if (!PREMIUM_FEATURES[feature]) {
       return true;
     }
-    // 프리미엄 기능이면 구독 상태 확인
     return subscription?.isPremium ?? false;
   }, [subscription]);
 
@@ -97,13 +98,21 @@ export function usePremium(): UsePremiumReturn {
     await fetchSubscription(true);
   }, [fetchSubscription]);
 
+  const isTrial = subscription?.isTrial ?? false;
+  const isTrialActive = subscription?.isTrialActive ?? false;
+  const isTrialExpired = isTrial && !isTrialActive;
+  const trialDaysRemaining = subscription?.trialDaysRemaining ?? 0;
+
   return {
-    // 프리미엄 체크 우회 시 항상 true
     isPremium: BYPASS_PREMIUM_CHECK ? true : (subscription?.isPremium ?? false),
     isLoading,
     subscription,
     refetch,
     checkPremiumAccess,
+    isTrial,
+    isTrialActive,
+    isTrialExpired,
+    trialDaysRemaining,
   };
 }
 

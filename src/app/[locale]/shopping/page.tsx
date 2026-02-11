@@ -17,6 +17,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -255,6 +256,7 @@ export default function ShoppingPage() {
   }
 
   return (
+    <PremiumGate feature="smart_shopping">
     <div className="min-h-screen pb-20">
       <Header locale={locale} title={t('shopping.title')} />
 
@@ -502,5 +504,6 @@ export default function ShoppingPage() {
         </div>
       </Modal>
     </div>
+    </PremiumGate>
   );
 }

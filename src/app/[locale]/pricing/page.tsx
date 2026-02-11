@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Check, Crown, Zap, X, Sparkles, BarChart3, ShoppingCart, Camera, Search } from 'lucide-react';
+import { Check, Crown, Zap, X, Sparkles, BarChart3, ShoppingCart, Camera, Search, Refrigerator, UtensilsCrossed } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -16,19 +16,28 @@ export default function PricingPage() {
   const locale = params.locale as string;
 
   const freePlan = [
-    { text: t('pricing.feature.manualAdd'), included: true },
-    { text: t('pricing.feature.fridgeManage'), included: true },
-    { text: t('pricing.feature.expiryAlert'), included: true },
-    { text: t('pricing.feature.recipeView'), included: true },
     { text: t('pricing.feature.menuRecommend'), included: true },
+    { text: t('pricing.feature.manualAdd'), included: true },
   ];
 
   const premiumFeatures = [
     {
+      icon: Refrigerator,
+      title: t('pricing.feature.fridgeManagement'),
+      description: t('pricing.feature.fridgeManage'),
+      color: 'text-blue-500',
+    },
+    {
+      icon: UtensilsCrossed,
+      title: t('pricing.feature.recipeBrowsing'),
+      description: t('pricing.feature.recipeView'),
+      color: 'text-amber-500',
+    },
+    {
       icon: Camera,
       title: t('pricing.feature.unlimitedScan'),
-      description: '카메라/갤러리로 영수증 촬영하여 자동 식재료 등록',
-      color: 'text-blue-500',
+      description: t('pricing.feature.receiptScan'),
+      color: 'text-teal-500',
     },
     {
       icon: Sparkles,
@@ -58,11 +67,11 @@ export default function PricingPage() {
   ];
 
   const comparisonFeatures = [
-    { feature: t('pricing.feature.manualAdd'), free: true, premium: true },
-    { feature: t('pricing.feature.fridgeManage'), free: true, premium: true },
-    { feature: t('pricing.feature.expiryAlert'), free: true, premium: true },
-    { feature: t('pricing.feature.recipeView'), free: true, premium: true },
     { feature: t('pricing.feature.menuRecommend'), free: true, premium: true },
+    { feature: t('pricing.feature.manualAdd'), free: true, premium: true },
+    { feature: t('pricing.feature.fridgeManage'), free: false, premium: true },
+    { feature: t('pricing.feature.expiryAlert'), free: false, premium: true },
+    { feature: t('pricing.feature.recipeView'), free: false, premium: true },
     { feature: t('pricing.feature.unlimitedScan'), free: false, premium: true },
     { feature: t('pricing.feature.aiRecipe'), free: false, premium: true },
     { feature: t('pricing.feature.nutritionAnalysis'), free: false, premium: true },

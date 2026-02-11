@@ -1,19 +1,25 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/layout/Header';
 import { Badge } from '@/components/ui/Badge';
 import { getDaysUntilExpiry } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
+import { usePremium } from '@/hooks/usePremium';
+import { TrialWelcomeModal } from '@/components/premium/TrialWelcomeModal';
+import { TrialExpiringModal, isTrialExpiringDismissedToday } from '@/components/premium/TrialExpiringModal';
 import { spring, listContainer, listItem } from '@/lib/animations';
 import {
   AlertTriangle,
   Camera,
   ChefHat,
   ChevronRight,
+  Crown,
   Heart,
+  Lock,
   Package,
+  Plus,
   Refrigerator,
   ShoppingCart,
   Snowflake,
@@ -24,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import type { Category } from '@/types';
 
 const CATEGORY_EMOJI: Record<Category, string> = {
@@ -50,7 +56,26 @@ export default function HomePage() {
   const t = useTranslations();
   const params = useParams();
   const locale = params.locale as string;
+  const searchParams = useSearchParams();
   const { ingredients, favoriteRecipeIds } = useStore();
+  const { isPremium, isLoading: premiumLoading, isTrialActive, isTrialExpired, trialDaysRemaining } = usePremium();
+
+  // Welcome modal for new users
+  const [showWelcome, setShowWelcome] = useState(false);
+  useEffect(() => {
+    if (searchParams.get('welcome') === 'true') {
+      setShowWelcome(true);
+      window.history.replaceState({}, '', `/${locale}`);
+    }
+  }, [searchParams, locale]);
+
+  // Trial expiring modal (show when <= 2 days remaining, once per day)
+  const [showExpiring, setShowExpiring] = useState(false);
+  useEffect(() => {
+    if (!premiumLoading && isTrialActive && trialDaysRemaining <= 2 && !isTrialExpiringDismissedToday()) {
+      setShowExpiring(true);
+    }
+  }, [premiumLoading, isTrialActive, trialDaysRemaining]);
 
   const today = new Date();
   const dateString = today.toLocaleDateString(locale, {
@@ -136,6 +161,59 @@ export default function HomePage() {
           </p>
         </motion.section>
 
+        {/* Trial Banner */}
+        {isTrialActive && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...spring.gentle, delay: 0.03 }}
+          >
+            <div className="rounded-2xl bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-200 p-4 dark:from-primary-900/20 dark:to-blue-900/20 dark:border-primary-800">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-primary-100 p-2 dark:bg-primary-800">
+                  <Crown className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="toss-body2 font-semibold text-primary-700 dark:text-primary-300">
+                    {t('pricing.trialActive')}
+                  </p>
+                  <p className="toss-caption text-primary-600 dark:text-primary-400">
+                    {t('pricing.trialDaysLeft', { days: trialDaysRemaining })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* Trial Expired Banner */}
+        {isTrialExpired && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...spring.gentle, delay: 0.03 }}
+          >
+            <Link href={`/${locale}/pricing`}>
+              <div className="rounded-2xl bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 p-4 dark:from-orange-900/20 dark:to-red-900/20 dark:border-orange-800">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full bg-orange-100 p-2 dark:bg-orange-800">
+                    <Crown className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="toss-body2 font-semibold text-orange-700 dark:text-orange-300">
+                      {t('pricing.trialExpiredBanner')}
+                    </p>
+                    <p className="toss-caption text-orange-600 dark:text-orange-400">
+                      {t('pricing.trialExpiredBannerDesc')}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-orange-400" />
+                </div>
+              </div>
+            </Link>
+          </motion.section>
+        )}
+
         {/* Dashboard Stats Cards */}
         {hasIngredients && (
           <motion.section
@@ -214,7 +292,7 @@ export default function HomePage() {
                     {t('home.startScan')}
                   </motion.button>
                 </Link>
-                <Link href={`/${locale}/fridge`}>
+                <Link href={`/${locale}/fridge/add`}>
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     className="rounded-xl bg-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200"
@@ -542,7 +620,11 @@ export default function HomePage() {
                 <h3 className="toss-body1 font-semibold">{t('nutrition.title')}</h3>
                 <p className="toss-caption">{t('home.nutritionDescription')}</p>
               </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
+              {!isPremium ? (
+                <Lock className="h-5 w-5 text-gray-400" />
+              ) : (
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              )}
             </motion.div>
           </Link>
 
@@ -558,11 +640,45 @@ export default function HomePage() {
                 <h3 className="toss-body1 font-semibold">{t('shopping.title')}</h3>
                 <p className="toss-caption">{t('home.shoppingDescription')}</p>
               </div>
+              {!isPremium ? (
+                <Lock className="h-5 w-5 text-gray-400" />
+              ) : (
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              )}
+            </motion.div>
+          </Link>
+
+          {/* Manual Add - Free */}
+          <Link href={`/${locale}/fridge/add`}>
+            <motion.div
+              whileTap={{ scale: 0.98 }}
+              className="toss-card flex items-center gap-toss-md"
+            >
+              <div className="rounded-2xl bg-green-100 p-3 dark:bg-green-900/30">
+                <Plus className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="toss-body1 font-semibold">{t('fridge.manualAdd')}</h3>
+                <p className="toss-caption">{t('fridge.addIngredient')}</p>
+              </div>
               <ChevronRight className="h-5 w-5 text-gray-400" />
             </motion.div>
           </Link>
         </motion.section>
       </div>
+
+      {/* Trial Welcome Modal */}
+      <TrialWelcomeModal
+        isOpen={showWelcome}
+        onClose={() => setShowWelcome(false)}
+      />
+
+      {/* Trial Expiring Modal */}
+      <TrialExpiringModal
+        isOpen={showExpiring}
+        onClose={() => setShowExpiring(false)}
+        daysRemaining={trialDaysRemaining}
+      />
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/Input';
 import { useStore } from '@/store/useStore';
 import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 import { cn } from '@/lib/utils';
 import { getRecipes } from '@/lib/api/recipes';
 import { searchRecipes as searchExternalRecipesApi } from '@/lib/api/recipes';
@@ -590,11 +591,13 @@ export default function RecipesPage() {
   const locale = params.locale as string;
 
   return (
-    <div className="min-h-screen">
-      <Header locale={locale} title={t('recipe.title')} />
-      <Suspense fallback={<RecipesLoading />}>
-        <RecipesContent />
-      </Suspense>
-    </div>
+    <PremiumGate feature="recipe_browsing">
+      <div className="min-h-screen">
+        <Header locale={locale} title={t('recipe.title')} />
+        <Suspense fallback={<RecipesLoading />}>
+          <RecipesContent />
+        </Suspense>
+      </div>
+    </PremiumGate>
   );
 }

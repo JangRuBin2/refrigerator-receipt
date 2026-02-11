@@ -14,6 +14,7 @@ import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
 import { getScanUsage, scanReceipt } from '@/lib/api/scan';
@@ -201,6 +202,7 @@ export default function ScanPage() {
   };
 
   return (
+    <PremiumGate feature="receipt_scan">
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header locale={locale} title={t('scan.title')} />
 
@@ -591,5 +593,6 @@ export default function ScanPage() {
         feature="receipt_scan"
       />
     </div>
+    </PremiumGate>
   );
 }

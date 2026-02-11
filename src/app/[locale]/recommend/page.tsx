@@ -196,7 +196,10 @@ export default function RecommendPage() {
 
   // === AI Mode ===
   const handleAiModeClick = () => {
-    // 재료가 없으면 냉장고로 이동 안내
+    if (!isPremium) {
+      setShowPremiumModal(true);
+      return;
+    }
     setMode('ai');
   };
 
@@ -377,9 +380,7 @@ export default function RecommendPage() {
                 <div className="absolute right-3 top-3">
                   <Badge variant="warning" className="text-xs">
                     <Crown className="mr-1 h-3 w-3" />
-                    {freeTrialInfo && freeTrialInfo.remainingCount > 0
-                      ? `${freeTrialInfo.remainingCount}회 무료`
-                      : 'Premium'}
+                    Premium
                   </Badge>
                 </div>
               )}
@@ -630,9 +631,7 @@ export default function RecommendPage() {
               {!isPremium && (
                 <Badge variant="warning" className="text-xs">
                   <Crown className="mr-1 h-3 w-3" />
-                  {freeTrialInfo && freeTrialInfo.remainingCount > 0
-                    ? `${freeTrialInfo.remainingCount}회 무료`
-                    : 'Premium'}
+                  Premium
                 </Badge>
               )}
             </div>

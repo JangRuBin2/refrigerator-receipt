@@ -325,16 +325,24 @@ export default function SettingsPage() {
                 <span>1.0.0</span>
               </div>
               <div className="flex justify-between">
-                <span>대표</span>
+                <span>{t('settings.businessName')}</span>
+                <span>인프리</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t('settings.representative')}</span>
                 <span>장루빈</span>
               </div>
               <div className="flex justify-between">
-                <span>사업자등록번호</span>
+                <span>{t('settings.businessNumber')}</span>
                 <span>790-39-01572</span>
               </div>
               <div className="flex justify-between">
-                <span>연락처</span>
-                <span>010-2465-1015</span>
+                <span>{t('settings.contact')}</span>
+                <span>wkdfnqls2465@gmail.com</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="shrink-0">{t('settings.address')}</span>
+                <span className="text-right">대전광역시 유성구 대정로28번안길 80, 209동 1402호</span>
               </div>
             </div>
           </CardContent>

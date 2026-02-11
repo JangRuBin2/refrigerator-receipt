@@ -51,7 +51,17 @@ export async function checkPremiumStatus(
   const now = new Date();
   const expiresAt = subscription.expires_at ? new Date(subscription.expires_at) : null;
 
-  return subscription.plan === 'premium' && (!expiresAt || expiresAt > now);
+  // Premium: active if plan is premium and not expired
+  if (subscription.plan === 'premium') {
+    return !expiresAt || expiresAt > now;
+  }
+
+  // Trial: active if plan is trial and not expired
+  if (subscription.plan === 'trial') {
+    return expiresAt !== null && expiresAt > now;
+  }
+
+  return false;
 }
 
 export async function checkAccess(

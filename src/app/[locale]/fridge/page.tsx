@@ -12,6 +12,7 @@ import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { PremiumGate } from '@/components/premium/PremiumGate';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { getDaysUntilExpiry, getExpiryColor, calculateExpiryDate, cn } from '@/lib/utils';
@@ -153,6 +154,7 @@ export default function FridgePage() {
   };
 
   return (
+    <PremiumGate feature="fridge_management">
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header locale={locale} title={t('fridge.title')} />
 
@@ -398,5 +400,6 @@ export default function FridgePage() {
         variant="danger"
       />
     </div>
+    </PremiumGate>
   );
 }

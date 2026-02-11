@@ -2,15 +2,18 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Crown, Camera, Sparkles, BarChart3, ShoppingCart, Search } from 'lucide-react';
+import { Crown, Camera, Sparkles, BarChart3, ShoppingCart, Search, Refrigerator, UtensilsCrossed, Clock } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import type { PremiumFeature } from '@/hooks/usePremium';
+
+type PremiumModalVariant = 'trial_expired' | 'non_subscriber';
 
 interface PremiumModalProps {
   isOpen: boolean;
   onClose: () => void;
   feature?: PremiumFeature;
+  variant?: PremiumModalVariant;
 }
 
 const featureIcons: Record<PremiumFeature, React.ReactNode> = {
@@ -19,6 +22,8 @@ const featureIcons: Record<PremiumFeature, React.ReactNode> = {
   ai_recipe: <Sparkles className="h-6 w-6" />,
   nutrition_analysis: <BarChart3 className="h-6 w-6" />,
   smart_shopping: <ShoppingCart className="h-6 w-6" />,
+  fridge_management: <Refrigerator className="h-6 w-6" />,
+  recipe_browsing: <UtensilsCrossed className="h-6 w-6" />,
 };
 
 const featureKeys: Record<PremiumFeature, string> = {
@@ -27,9 +32,11 @@ const featureKeys: Record<PremiumFeature, string> = {
   ai_recipe: 'aiRecipe',
   nutrition_analysis: 'nutritionAnalysis',
   smart_shopping: 'smartShopping',
+  fridge_management: 'fridgeManagement',
+  recipe_browsing: 'recipeBrowsing',
 };
 
-export function PremiumModal({ isOpen, onClose, feature }: PremiumModalProps) {
+export function PremiumModal({ isOpen, onClose, feature, variant = 'non_subscriber' }: PremiumModalProps) {
   const t = useTranslations();
   const params = useParams();
   const router = useRouter();
@@ -40,6 +47,8 @@ export function PremiumModal({ isOpen, onClose, feature }: PremiumModalProps) {
     router.push(`/${locale}/pricing`);
   };
 
+  const isTrialExpired = variant === 'trial_expired';
+
   return (
     <Modal
       isOpen={isOpen}
@@ -48,19 +57,32 @@ export function PremiumModal({ isOpen, onClose, feature }: PremiumModalProps) {
       className="max-w-sm"
     >
       <div className="text-center">
-        {/* Crown Icon */}
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30">
-          <Crown className="h-8 w-8 text-yellow-500" />
+        {/* Icon */}
+        <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
+          isTrialExpired
+            ? 'bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30'
+            : 'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30'
+        }`}>
+          {isTrialExpired
+            ? <Clock className="h-8 w-8 text-orange-500" />
+            : <Crown className="h-8 w-8 text-yellow-500" />
+          }
         </div>
 
         {/* Title */}
         <h2 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">
-          {t('pricing.premiumRequired')}
+          {isTrialExpired
+            ? t('pricing.trialExpired')
+            : t('pricing.premiumRequired')
+          }
         </h2>
 
         {/* Description */}
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-          {t('pricing.premiumRequiredDescription')}
+          {isTrialExpired
+            ? t('pricing.trialExpiredDescription')
+            : t('pricing.premiumRequiredDescription')
+          }
         </p>
 
         {/* Feature Highlight */}
@@ -80,24 +102,24 @@ export function PremiumModal({ isOpen, onClose, feature }: PremiumModalProps) {
         {/* Premium Benefits */}
         <div className="mb-6 space-y-2 text-left">
           <p className="text-xs font-medium text-gray-500 uppercase">
-            Premium 혜택
+            {t('pricing.premiumBenefits')}
           </p>
           <ul className="space-y-1.5 text-sm">
             <li className="flex items-center gap-2">
-              <Camera className="h-4 w-4 text-blue-500" />
-              <span>무제한 영수증 스캔</span>
+              <Refrigerator className="h-4 w-4 text-blue-500" />
+              <span>{t('pricing.feature.fridgeManagement')}</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Camera className="h-4 w-4 text-teal-500" />
+              <span>{t('pricing.feature.unlimitedScan')}</span>
             </li>
             <li className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-500" />
-              <span>AI 맞춤 레시피 생성</span>
+              <span>{t('pricing.feature.aiRecipe')}</span>
             </li>
             <li className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4 text-green-500" />
-              <span>영양 분석 리포트</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-red-500" />
-              <span>외부 레시피 검색</span>
+              <span>{t('pricing.feature.nutritionAnalysis')}</span>
             </li>
           </ul>
         </div>
@@ -117,7 +139,10 @@ export function PremiumModal({ isOpen, onClose, feature }: PremiumModalProps) {
         <div className="space-y-2">
           <Button onClick={handleUpgrade} className="w-full" size="lg">
             <Crown className="mr-2 h-4 w-4" />
-            {t('pricing.upgradeToPremium')}
+            {isTrialExpired
+              ? t('pricing.startPremium')
+              : t('pricing.upgradeToPremium')
+            }
           </Button>
           <Button variant="ghost" onClick={onClose} className="w-full">
             {t('common.close')}

@@ -43,7 +43,7 @@ export async function checkFreeTrial(
 }
 
 /**
- * 프리미엄 상태 확인
+ * 프리미엄 상태 확인 (trial 포함)
  */
 export async function checkPremiumStatus(
   supabase: SupabaseClient,
@@ -60,7 +60,15 @@ export async function checkPremiumStatus(
   const now = new Date();
   const expiresAt = subscription.expires_at ? new Date(subscription.expires_at) : null;
 
-  return subscription.plan === 'premium' && (!expiresAt || expiresAt > now);
+  if (subscription.plan === 'premium') {
+    return !expiresAt || expiresAt > now;
+  }
+
+  if (subscription.plan === 'trial') {
+    return expiresAt !== null && expiresAt > now;
+  }
+
+  return false;
 }
 
 /**
