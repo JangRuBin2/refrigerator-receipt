@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import type { SupabaseClient } from './types.ts';
 
 const FREE_TRIAL_LIMITS: Record<string, number> = {
   external_recipe_search: 3,
@@ -13,8 +13,7 @@ interface FreeTrialResult {
 }
 
 export async function checkFreeTrial(
-  // deno-lint-ignore no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string,
   feature: string
 ): Promise<FreeTrialResult> {
@@ -38,8 +37,7 @@ export async function checkFreeTrial(
 }
 
 export async function checkPremiumStatus(
-  // deno-lint-ignore no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string
 ): Promise<boolean> {
   const { data: subscription } = await supabase
@@ -57,8 +55,7 @@ export async function checkPremiumStatus(
 }
 
 export async function checkAccess(
-  // deno-lint-ignore no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string,
   feature: string
 ): Promise<{

@@ -1,6 +1,7 @@
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { callGemini, parseJsonFromText } from '../_shared/gemini.ts';
+import type { Ingredient, Nutrition, IngredientNutrition, CategoryBalance, NutritionReport } from '../_shared/types.ts';
 
 const CATEGORY_NUTRITION: Record<string, { calories: number; protein: number; carbs: number; fat: number; fiber: number; sugar: number }> = {
   vegetables: { calories: 25, protein: 2, carbs: 5, fat: 0.3, fiber: 2, sugar: 2 },
@@ -114,11 +115,9 @@ Deno.serve(async (req) => {
   }
 });
 
-// deno-lint-ignore no-explicit-any
-async function analyzeNutrition(ingredients: any[], period: string | null): Promise<any> {
+async function analyzeNutrition(ingredients: Ingredient[], period: string | null): Promise<NutritionReport> {
   // Category count
   const categoryCount: Record<string, number> = {};
-  // deno-lint-ignore no-explicit-any
   for (const ing of ingredients) {
     categoryCount[ing.category] = (categoryCount[ing.category] || 0) + 1;
   }
@@ -136,8 +135,7 @@ async function analyzeNutrition(ingredients: any[], period: string | null): Prom
   }).sort((a, b) => b.percentage - a.percentage);
 
   // Nutrition calculation
-  // deno-lint-ignore no-explicit-any
-  const ingredientNutrition = ingredients.map((ing: any) => {
+  const ingredientNutrition: IngredientNutrition[] = ingredients.map((ing: Ingredient) => {
     const baseNutrition = CATEGORY_NUTRITION[ing.category] || CATEGORY_NUTRITION.etc;
     let multiplier = 1;
     if (ing.unit === 'kg') multiplier = 10;
@@ -164,8 +162,7 @@ async function analyzeNutrition(ingredients: any[], period: string | null): Prom
   });
 
   // Total nutrition
-  // deno-lint-ignore no-explicit-any
-  const totalNutrition = ingredientNutrition.reduce((acc: any, ing: any) => ({
+  const totalNutrition = ingredientNutrition.reduce((acc: Nutrition, ing: IngredientNutrition) => ({
     calories: acc.calories + ing.nutrition.calories,
     protein: acc.protein + ing.nutrition.protein,
     carbs: acc.carbs + ing.nutrition.carbs,
@@ -206,12 +203,9 @@ async function analyzeNutrition(ingredients: any[], period: string | null): Prom
 }
 
 async function getAIRecommendations(
-  // deno-lint-ignore no-explicit-any
-  ingredients: any[],
-  // deno-lint-ignore no-explicit-any
-  categoryBalance: any[],
-  // deno-lint-ignore no-explicit-any
-  nutrition: any
+  ingredients: Ingredient[],
+  categoryBalance: CategoryBalance[],
+  nutrition: Nutrition
 ): Promise<string[]> {
   const apiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 
@@ -222,10 +216,10 @@ async function getAIRecommendations(
   const prompt = `당신은 영양사입니다. 사용자의 냉장고 재료와 영양 분석 결과를 보고 간단한 식단 개선 추천을 해주세요.
 
 현재 냉장고 재료:
-${ingredients.map((i: { name: string; category: string }) => `- ${i.name} (${i.category})`).join('\n')}
+${ingredients.map((i: Ingredient) => `- ${i.name} (${i.category})`).join('\n')}
 
 카테고리별 비율:
-${categoryBalance.map((c: { category: string; percentage: number; status: string }) => `- ${c.category}: ${c.percentage}% (${c.status === 'good' ? '적정' : c.status === 'low' ? '부족' : '과다'})`).join('\n')}
+${categoryBalance.map((c: CategoryBalance) => `- ${c.category}: ${c.percentage}% (${c.status === 'good' ? '적정' : c.status === 'low' ? '부족' : '과다'})`).join('\n')}
 
 총 영양 성분:
 - 칼로리: ${nutrition.calories}kcal
@@ -254,14 +248,11 @@ JSON 배열만 응답:`;
   }
 }
 
-// deno-lint-ignore no-explicit-any
-function getDefaultRecommendations(categoryBalance: any[]): string[] {
+function getDefaultRecommendations(categoryBalance: CategoryBalance[]): string[] {
   const recommendations: string[] = [];
 
-  // deno-lint-ignore no-explicit-any
-  const lowCategories = categoryBalance.filter((c: any) => c.status === 'low');
-  // deno-lint-ignore no-explicit-any
-  const highCategories = categoryBalance.filter((c: any) => c.status === 'high');
+  const lowCategories = categoryBalance.filter((c: CategoryBalance) => c.status === 'low');
+  const highCategories = categoryBalance.filter((c: CategoryBalance) => c.status === 'high');
 
   const categoryNames: Record<string, string> = {
     vegetables: '채소류', fruits: '과일류', meat: '육류',
@@ -274,18 +265,15 @@ function getDefaultRecommendations(categoryBalance: any[]): string[] {
     }
   }
 
-  // deno-lint-ignore no-explicit-any
-  if (highCategories.some((c: any) => c.category === 'snacks')) {
+  if (highCategories.some((c: CategoryBalance) => c.category === 'snacks')) {
     recommendations.push('간식 섭취를 줄이고 건강한 대안을 찾아보세요.');
   }
 
-  // deno-lint-ignore no-explicit-any
-  if (!categoryBalance.some((c: any) => c.category === 'vegetables')) {
+  if (!categoryBalance.some((c: CategoryBalance) => c.category === 'vegetables')) {
     recommendations.push('신선한 채소를 식단에 추가하세요.');
   }
 
-  // deno-lint-ignore no-explicit-any
-  if (!categoryBalance.some((c: any) => ['meat', 'seafood', 'dairy'].includes(c.category))) {
+  if (!categoryBalance.some((c: CategoryBalance) => ['meat', 'seafood', 'dairy'].includes(c.category))) {
     recommendations.push('단백질 공급원을 추가하세요.');
   }
 

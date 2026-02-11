@@ -1,6 +1,7 @@
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { callGemini, parseJsonFromText } from '../_shared/gemini.ts';
+import type { Ingredient, ShoppingRecommendation, ScanEvent } from '../_shared/types.ts';
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -74,14 +75,10 @@ Deno.serve(async (req) => {
 });
 
 async function getAIRecommendations(
-  // deno-lint-ignore no-explicit-any
-  ingredients: any[],
-  // deno-lint-ignore no-explicit-any
-  scanEvents: any[]
-  // deno-lint-ignore no-explicit-any
-): Promise<any[]> {
-  // deno-lint-ignore no-explicit-any
-  const currentIngredients = ingredients.map((i: any) => ({
+  ingredients: Ingredient[],
+  scanEvents: ScanEvent[]
+): Promise<ShoppingRecommendation[]> {
+  const currentIngredients = ingredients.map((i: Ingredient) => ({
     name: i.name,
     category: i.category,
     daysUntilExpiry: Math.ceil(
@@ -91,8 +88,7 @@ async function getAIRecommendations(
 
   const purchaseHistory: Record<string, number> = {};
   for (const event of scanEvents) {
-    // deno-lint-ignore no-explicit-any
-    const items = (event.metadata as any)?.parsed_items as Array<{ name: string }> | null;
+    const items = (event.metadata as Record<string, unknown>)?.parsed_items as Array<{ name: string }> | null;
     if (items && Array.isArray(items)) {
       for (const item of items) {
         if (item.name) {
@@ -144,39 +140,31 @@ JSON 배열로 응답:
     const parsed = parseJsonFromText(text);
     if (!Array.isArray(parsed)) return getDefaultRecommendations(ingredients);
 
-    // deno-lint-ignore no-explicit-any
-    return parsed.filter((item: any) => item?.name && typeof item.name === 'string').map((item: any) => ({
-      name: item.name,
-      quantity: item.quantity || 1,
-      unit: item.unit || 'ea',
-      category: item.category || 'etc',
-      reason: item.reason || '',
-    }));
+    return parsed
+      .filter((item: Record<string, unknown>) => item?.name && typeof item.name === 'string')
+      .map((item: Record<string, unknown>): ShoppingRecommendation => ({
+        name: item.name as string,
+        quantity: (item.quantity as number) || 1,
+        unit: (item.unit as string) || 'ea',
+        category: (item.category as string) || 'etc',
+        reason: (item.reason as string) || '',
+      }));
   } catch {
     return getDefaultRecommendations(ingredients);
   }
 }
 
-// deno-lint-ignore no-explicit-any
-function getDefaultRecommendations(ingredients: any[]): any[] {
-  // deno-lint-ignore no-explicit-any
-  const recommendations: any[] = [];
-  // deno-lint-ignore no-explicit-any
-  const existingCategories = new Set(ingredients.map((i: any) => i.category));
+function getDefaultRecommendations(ingredients: Ingredient[]): ShoppingRecommendation[] {
+  const recommendations: ShoppingRecommendation[] = [];
+  const existingCategories = new Set(ingredients.map((i: Ingredient) => i.category));
 
   const essentials = [
-    // deno-lint-ignore no-explicit-any
-    { name: '계란', category: 'dairy', condition: !ingredients.some((i: any) => i.name?.includes('계란') || i.name?.includes('달걀')) },
-    // deno-lint-ignore no-explicit-any
-    { name: '우유', category: 'dairy', condition: !ingredients.some((i: any) => i.name?.includes('우유')) },
-    // deno-lint-ignore no-explicit-any
-    { name: '양파', category: 'vegetables', condition: !ingredients.some((i: any) => i.name?.includes('양파')) },
-    // deno-lint-ignore no-explicit-any
-    { name: '대파', category: 'vegetables', condition: !ingredients.some((i: any) => i.name?.includes('파')) },
-    // deno-lint-ignore no-explicit-any
-    { name: '마늘', category: 'condiments', condition: !ingredients.some((i: any) => i.name?.includes('마늘')) },
-    // deno-lint-ignore no-explicit-any
-    { name: '쌀', category: 'grains', condition: !ingredients.some((i: any) => i.name?.includes('쌀')) },
+    { name: '계란', category: 'dairy', condition: !ingredients.some((i: Ingredient) => i.name?.includes('계란') || i.name?.includes('달걀')) },
+    { name: '우유', category: 'dairy', condition: !ingredients.some((i: Ingredient) => i.name?.includes('우유')) },
+    { name: '양파', category: 'vegetables', condition: !ingredients.some((i: Ingredient) => i.name?.includes('양파')) },
+    { name: '대파', category: 'vegetables', condition: !ingredients.some((i: Ingredient) => i.name?.includes('파')) },
+    { name: '마늘', category: 'condiments', condition: !ingredients.some((i: Ingredient) => i.name?.includes('마늘')) },
+    { name: '쌀', category: 'grains', condition: !ingredients.some((i: Ingredient) => i.name?.includes('쌀')) },
   ];
 
   for (const item of essentials) {

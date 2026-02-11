@@ -1,6 +1,7 @@
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { checkAccess } from '../_shared/free-trial.ts';
+import { SearchResult, IngredientNameExpiry, YouTubeSearchItem, GoogleSearchItem } from '../_shared/types.ts';
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -102,11 +103,9 @@ Deno.serve(async (req) => {
       let selected: string[];
       if (strategy === 'expiring') {
         const count = Math.min(ingredients.length, Math.floor(Math.random() * 2) + 2);
-        // deno-lint-ignore no-explicit-any
-        selected = ingredients.slice(0, count).map((i: any) => i.name);
+        selected = ingredients.slice(0, count).map((i: IngredientNameExpiry) => i.name);
       } else {
-        // deno-lint-ignore no-explicit-any
-        const names = ingredients.map((i: any) => i.name);
+        const names = ingredients.map((i: IngredientNameExpiry) => i.name);
         const shuffled = names.sort(() => Math.random() - 0.5);
         const count = Math.min(shuffled.length, Math.floor(Math.random() * 2) + 2);
         selected = shuffled.slice(0, count);
@@ -116,10 +115,8 @@ Deno.serve(async (req) => {
       query = selected.join(' ');
     }
 
-    // deno-lint-ignore no-explicit-any
-    const results: any[] = [];
-    // deno-lint-ignore no-explicit-any
-    const promises: Promise<any[]>[] = [];
+    const results: SearchResult[] = [];
+    const promises: Promise<SearchResult[]>[] = [];
 
     // YouTube search
     if ((type === 'all' || type === 'youtube') && youtubeConfigured) {
@@ -169,8 +166,7 @@ Deno.serve(async (req) => {
   }
 });
 
-// deno-lint-ignore no-explicit-any
-async function searchYouTube(query: string, apiKey: string): Promise<any[]> {
+async function searchYouTube(query: string, apiKey: string): Promise<SearchResult[]> {
   try {
     const params = new URLSearchParams({
       part: 'snippet',
@@ -188,8 +184,7 @@ async function searchYouTube(query: string, apiKey: string): Promise<any[]> {
 
     const data = await response.json();
 
-    // deno-lint-ignore no-explicit-any
-    return (data.items || []).map((item: any) => ({
+    return (data.items || []).map((item: YouTubeSearchItem) => ({
       id: item.id.videoId,
       title: item.snippet.title,
       thumbnail:
@@ -197,7 +192,7 @@ async function searchYouTube(query: string, apiKey: string): Promise<any[]> {
         item.snippet.thumbnails?.medium?.url ||
         item.snippet.thumbnails?.default?.url,
       url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
-      source: 'youtube',
+      source: 'youtube' as const,
       channelName: item.snippet.channelTitle,
       snippet: item.snippet.description?.slice(0, 150),
       publishedAt: item.snippet.publishedAt,
@@ -207,8 +202,7 @@ async function searchYouTube(query: string, apiKey: string): Promise<any[]> {
   }
 }
 
-// deno-lint-ignore no-explicit-any
-async function searchGoogle(query: string, apiKey: string, engineId: string): Promise<any[]> {
+async function searchGoogle(query: string, apiKey: string, engineId: string): Promise<SearchResult[]> {
   try {
     const params = new URLSearchParams({
       key: apiKey,
@@ -224,15 +218,14 @@ async function searchGoogle(query: string, apiKey: string, engineId: string): Pr
 
     const data = await response.json();
 
-    // deno-lint-ignore no-explicit-any
-    return (data.items || []).map((item: any, index: number) => ({
+    return (data.items || []).map((item: GoogleSearchItem, index: number) => ({
       id: `google-${index}-${Date.now()}`,
       title: item.title,
       thumbnail:
         item.pagemap?.cse_thumbnail?.[0]?.src ||
         item.pagemap?.cse_image?.[0]?.src,
       url: item.link,
-      source: 'google',
+      source: 'google' as const,
       snippet: item.snippet?.slice(0, 150),
       channelName: item.pagemap?.metatags?.[0]?.['og:site_name'] || extractDomain(item.link),
     }));

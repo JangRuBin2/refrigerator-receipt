@@ -1,6 +1,7 @@
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { callGemini, callGeminiWithImage, parseJsonFromText } from '../_shared/gemini.ts';
+import type { SupabaseClient, ScannedItem, ScanResult } from '../_shared/types.ts';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const WEEKLY_LIMIT_FREE = 3;
@@ -41,8 +42,7 @@ interface ProfileRow {
   subscription_end_date: string | null;
 }
 
-// deno-lint-ignore no-explicit-any
-async function getUsageInfo(supabase: any, userId: string) {
+async function getUsageInfo(supabase: SupabaseClient, userId: string) {
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_premium, subscription_end_date')
@@ -109,13 +109,19 @@ Deno.serve(async (req) => {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // deno-lint-ignore no-explicit-any
-      const scans = (events || []).map((e: any) => ({
+      interface EventRow {
+        id: string;
+        user_id: string;
+        metadata: Record<string, unknown> | null;
+        created_at: string;
+      }
+
+      const scans = (events || []).map((e: EventRow) => ({
         id: e.id,
         user_id: e.user_id,
         raw_text: e.metadata?.raw_text,
         parsed_items: e.metadata?.parsed_items,
-        status: e.metadata?.status || 'completed',
+        status: (e.metadata?.status as string) || 'completed',
         created_at: e.created_at,
       }));
 
@@ -173,8 +179,7 @@ Deno.serve(async (req) => {
     const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
     const visionCredentials = Deno.env.get('GOOGLE_CLOUD_CREDENTIALS_JSON');
 
-    // deno-lint-ignore no-explicit-any
-    let result: { items: any[]; rawText: string; mode: string; scanId?: string };
+    let result: ScanResult;
 
     if (useAIVision && geminiKey) {
       // AI Vision mode: Gemini analyzes image directly
@@ -263,8 +268,7 @@ Deno.serve(async (req) => {
 // --- Helper functions ---
 
 interface AnalysisResult {
-  // deno-lint-ignore no-explicit-any
-  items: any[];
+  items: ScannedItem[];
   rawText: string;
   isValid: boolean;
   invalidReason?: string;
@@ -328,14 +332,23 @@ async function analyzeReceiptImage(imageBase64: string): Promise<AnalysisResult>
       };
     }
 
-    // deno-lint-ignore no-explicit-any
-    const items = ((parsed.items as any[]) || []).map((item: any) => ({
-      ...item,
-      category: VALID_CATEGORIES.includes(item.category) ? item.category : 'etc',
-      unit: VALID_UNITS.includes(item.unit) ? item.unit : 'ea',
-      confidence: Math.max(0, Math.min(1, item.confidence || 0.7)),
-      estimatedExpiryDays: DEFAULT_EXPIRY_DAYS[item.category] || 14,
-    }));
+    const items: ScannedItem[] = ((parsed.items as unknown[]) || []).map((item: Record<string, unknown>) => {
+      const name = (item.name as string) || '';
+      const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+      const rawCategory = (item.category as string) || 'etc';
+      const rawUnit = (item.unit as string) || 'ea';
+      const rawConfidence = typeof item.confidence === 'number' ? item.confidence : 0.7;
+      const category = VALID_CATEGORIES.includes(rawCategory) ? rawCategory : 'etc';
+      const unit = VALID_UNITS.includes(rawUnit) ? rawUnit : 'ea';
+      return {
+        name,
+        quantity,
+        unit,
+        category,
+        confidence: Math.max(0, Math.min(1, rawConfidence)),
+        estimatedExpiryDays: DEFAULT_EXPIRY_DAYS[category] || 14,
+      };
+    });
 
     return {
       items,
@@ -351,8 +364,7 @@ async function processWithOCR(
   imageBase64: string,
   visionCredentials: string | undefined,
   geminiKey: string | undefined
-// deno-lint-ignore no-explicit-any
-): Promise<{ items: any[]; rawText: string; mode: string }> {
+): Promise<ScanResult> {
   if (!visionCredentials) {
     throw new Error('OCR 서비스가 설정되지 않았습니다.');
   }
@@ -495,8 +507,7 @@ async function signRS256(input: string, privateKey: string): Promise<string> {
 }
 
 // AI receipt text parsing
-// deno-lint-ignore no-explicit-any
-async function parseReceiptWithAI(rawText: string): Promise<any[]> {
+async function parseReceiptWithAI(rawText: string): Promise<ScannedItem[]> {
   const prompt = `당신은 영수증 텍스트에서 식재료/식품만 추출하는 전문가입니다.
 
 다음 영수증 텍스트에서 식재료와 식품 항목만 추출해주세요.
@@ -526,15 +537,19 @@ ${rawText}
   const parsed = parseJsonFromText(text);
   if (!Array.isArray(parsed)) return [];
 
-  // deno-lint-ignore no-explicit-any
-  return parsed.filter((item: any) => item?.name && typeof item.name === 'string').map((item: any) => ({
-    name: item.name,
-    quantity: typeof item.quantity === 'number' ? item.quantity : 1,
-    unit: VALID_UNITS.includes(item.unit) ? item.unit : 'ea',
-    category: VALID_CATEGORIES.includes(item.category) ? item.category : 'etc',
-    confidence: Math.max(0, Math.min(1, item.confidence || 0.7)),
-    estimatedExpiryDays: DEFAULT_EXPIRY_DAYS[item.category] || 14,
-  }));
+  return parsed
+    .filter((item: Record<string, unknown>) => item?.name && typeof item.name === 'string')
+    .map((item: Record<string, unknown>): ScannedItem => {
+      const category = VALID_CATEGORIES.includes(item.category as string) ? (item.category as string) : 'etc';
+      return {
+        name: item.name as string,
+        quantity: typeof item.quantity === 'number' ? item.quantity : 1,
+        unit: VALID_UNITS.includes(item.unit as string) ? (item.unit as string) : 'ea',
+        category,
+        confidence: Math.max(0, Math.min(1, (typeof item.confidence === 'number' ? item.confidence : 0.7))),
+        estimatedExpiryDays: DEFAULT_EXPIRY_DAYS[category] || 14,
+      };
+    });
 }
 
 // Rule-based receipt parsing (fallback)
@@ -558,11 +573,9 @@ const excludePatterns = [
   /총\s*\d+/, /\*{3,}/, /={3,}/, /-{3,}/,
 ];
 
-// deno-lint-ignore no-explicit-any
-function parseReceiptTextRuleBased(text: string): any[] {
+function parseReceiptTextRuleBased(text: string): ScannedItem[] {
   const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
-  // deno-lint-ignore no-explicit-any
-  const items: any[] = [];
+  const items: ScannedItem[] = [];
   const seenNames = new Set<string>();
 
   for (const line of lines) {

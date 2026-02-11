@@ -1,6 +1,24 @@
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { createAdminClient } from '../_shared/supabase.ts';
 
+// Deno unstable mTLS API types (not available in standard type definitions)
+interface DenoHttpClient {
+  close(): void;
+}
+
+interface DenoWithHttpClient {
+  createHttpClient(options: {
+    cert: string;
+    key: string;
+    certChain: string;
+    privateKey: string;
+  }): DenoHttpClient;
+}
+
+interface FetchWithClient extends RequestInit {
+  client: DenoHttpClient;
+}
+
 const TOSS_API_URL = Deno.env.get('APPS_IN_TOSS_API_URL') || 'https://apps-in-toss-api.toss.im';
 
 function generateTossEmail(tossUserKey: string): string {
@@ -73,13 +91,11 @@ async function tossApiFetch(url: string, options: RequestInit): Promise<Response
   const cert = fixPem(rawCert);
   const key = fixPem(rawKey);
 
-  // deno-lint-ignore no-explicit-any
-  const httpClient = (Deno as any).createHttpClient({
+  const httpClient = (Deno as unknown as DenoWithHttpClient).createHttpClient({
     cert, key,
     certChain: cert, privateKey: key,
   });
-  // deno-lint-ignore no-explicit-any
-  return await fetch(url, { ...options, client: httpClient } as any);
+  return await fetch(url, { ...options, client: httpClient } as FetchWithClient);
 }
 
 // Step 1: Exchange authorizationCode for Toss access token

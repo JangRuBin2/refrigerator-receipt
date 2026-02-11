@@ -2,6 +2,7 @@ import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { callGemini, parseJsonFromText } from '../_shared/gemini.ts';
 import { checkAccess } from '../_shared/free-trial.ts';
+import { Recipe, RecipeSchema } from '../_shared/types.ts';
 
 interface GenerateRequest {
   ingredients: string[];
@@ -174,27 +175,12 @@ ${constraints || '- 특별한 조건 없음'}
 JSON만 응답하세요.`;
 }
 
-// deno-lint-ignore no-explicit-any
-function parseRecipeResponse(text: string): any | null {
+function parseRecipeResponse(text: string): Recipe | null {
   try {
     const parsed = parseJsonFromText(text) as Record<string, unknown>;
-
-    if (!parsed.title || !parsed.ingredients || !parsed.instructions) {
-      return null;
-    }
-
-    return {
-      title: parsed.title,
-      description: parsed.description || '',
-      cookingTime: parseInt(String(parsed.cookingTime)) || 30,
-      difficulty: ['easy', 'medium', 'hard'].includes(parsed.difficulty as string)
-        ? parsed.difficulty
-        : 'medium',
-      servings: parseInt(String(parsed.servings)) || 2,
-      ingredients: parsed.ingredients,
-      instructions: parsed.instructions,
-      tips: parsed.tips,
-    };
+    const result = RecipeSchema.safeParse(parsed);
+    if (!result.success) return null;
+    return result.data;
   } catch {
     return null;
   }
