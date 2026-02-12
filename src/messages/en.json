@@ -18,11 +18,11 @@
     "aiDisclaimer": "This content is AI-generated. Use for reference only."
   },
   "nav": {
-    "home": "Home",
-    "fridge": "Fridge",
+    "home": "Fridge",
+    "fridge": "Ingredients",
     "scan": "Scan",
     "recipes": "Recipes",
-    "settings": "Settings",
+    "settings": "My",
     "shopping": "Shopping"
   },
   "home": {
@@ -179,15 +179,12 @@
     "aiVisionDescription": "AI analyzes your receipt directly for more accurate recognition",
     "estimatedExpiry": "Est. expiry: {days} days",
     "fileTooLarge": "The image is too large. Please upload an image under 10MB.",
-    "dailyUsage": "Today: {used}/{limit} scans",
-    "dailyLimitReached": "Daily upload limit reached",
-    "upgradeForMore": "Upgrade to Premium for more scans",
-    "watchAdForScans": "Watch ad for 1 scan",
-    "watchingAd": "Loading ad...",
-    "adWatchSuccess": "Ad watched! 1 scan added",
-    "adWatchFailed": "Failed to watch ad",
-    "adLimitReached": "Daily ad watch limit reached",
-    "remainingAdWatches": "{count} more ads available today"
+    "premiumUnlimited": "Premium - Unlimited scans",
+    "adRequiredNotice": "Watch ad to scan",
+    "adRequiredDescription": "Premium members scan without ads",
+    "adRequired": "Please watch an ad to scan",
+    "watchingAd": "Preparing ad...",
+    "adWatchingDescription": "Scan will start after the ad"
   },
   "settings": {
     "title": "Settings",
@@ -223,7 +220,8 @@
     "deleteAccount": "Delete Account",
     "deleteAccountWarning": "Deleting your account will permanently remove all data (ingredients, recipes, subscriptions, etc.) and cannot be undone.",
     "deleteAccountConfirm": "Are you sure you want to delete your account?",
-    "deleteAccountSuccess": "Your account has been deleted"
+    "deleteAccountSuccess": "Your account has been deleted",
+    "deleteAccountError": "Failed to delete account"
   },
   "auth": {
     "login": "Login",
@@ -245,10 +243,10 @@
     "freePlan": "Free",
     "premiumPlan": "Premium",
     "free": "Free",
-    "monthlyPrice": "$1.49",
+    "monthlyPrice": "$1.53",
     "month": "month",
-    "yearlyPrice": "Annual $11.99/year (30% off)",
-    "yearlyMonthly": "$0.99/mo",
+    "yearlyPrice": "Annual $12.86/year (30% off)",
+    "yearlyMonthly": "$1.07/mo",
     "currentPlan": "Current Plan",
     "recommended": "Recommended",
     "mostPopular": "Popular",

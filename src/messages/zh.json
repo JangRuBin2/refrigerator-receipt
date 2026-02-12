@@ -18,11 +18,11 @@
     "aiDisclaimer": "此内容由AI生成，仅供参考。"
   },
   "nav": {
-    "home": "首页",
-    "fridge": "冰箱",
-    "scan": "扫描",
-    "recipes": "食谱",
-    "settings": "设置",
+    "home": "冰箱",
+    "fridge": "食材管理",
+    "scan": "小票扫描",
+    "recipes": "食谱推荐",
+    "settings": "我的",
     "shopping": "购物"
   },
   "home": {
@@ -179,15 +179,12 @@
     "aiVisionDescription": "AI直接分析收据，识别更准确",
     "estimatedExpiry": "预计保质期: {days}天",
     "fileTooLarge": "图片太大了。请上传10MB以下的图片。",
-    "dailyUsage": "今日: {used}/{limit}次",
-    "dailyLimitReached": "已达到每日上传限制",
-    "upgradeForMore": "升级高级版可扫描更多",
-    "watchAdForScans": "观看广告获取1次扫描",
-    "watchingAd": "广告加载中...",
-    "adWatchSuccess": "观看完成！已添加1次扫描",
-    "adWatchFailed": "观看广告失败",
-    "adLimitReached": "今日广告观看次数已达上限",
-    "remainingAdWatches": "今日还可观看{count}次广告"
+    "premiumUnlimited": "高级版 - 无限扫描",
+    "adRequiredNotice": "观看广告后可扫描",
+    "adRequiredDescription": "高级会员无需观看广告",
+    "adRequired": "请观看广告后扫描",
+    "watchingAd": "广告准备中...",
+    "adWatchingDescription": "广告结束后自动开始扫描"
   },
   "settings": {
     "title": "设置",
@@ -223,7 +220,8 @@
     "deleteAccount": "注销账户",
     "deleteAccountWarning": "注销账户将永久删除所有数据（食材、食谱、订阅等），且无法恢复。",
     "deleteAccountConfirm": "确定要注销账户吗？",
-    "deleteAccountSuccess": "账户已注销"
+    "deleteAccountSuccess": "账户已注销",
+    "deleteAccountError": "注销账户失败"
   },
   "auth": {
     "login": "登录",
@@ -245,10 +243,10 @@
     "freePlan": "Free",
     "premiumPlan": "Premium",
     "free": "免费",
-    "monthlyPrice": "¥10.9",
+    "monthlyPrice": "¥11.5",
     "month": "月",
-    "yearlyPrice": "年付 ¥89/年 (30%折扣)",
-    "yearlyMonthly": "月均 ¥7.4",
+    "yearlyPrice": "年付 ¥96.8/年 (30%折扣)",
+    "yearlyMonthly": "月均 ¥8.1",
     "currentPlan": "当前方案",
     "recommended": "推荐",
     "mostPopular": "热门",
@@ -328,7 +326,7 @@
       "premiumCost": "高级版费用",
       "netBenefit": "净收益",
       "monthlySaving": "约¥105/月",
-      "monthlyNet": "+¥94/月"
+      "monthlyNet": "+¥93/月"
     }
   },
   "features": {

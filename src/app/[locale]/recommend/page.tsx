@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { Shuffle, Sparkles, Clock, ChefHat, Loader2, RotateCcw, Search, ExternalLink, Crown, Wand2, Heart, Check } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -335,7 +335,7 @@ export default function RecommendPage() {
 
   return (
     <div className="min-h-screen">
-      <Header locale={locale} title={t('recommend.title')} />
+
 
       <div className="space-y-4 p-4">
         {/* Mode Selection */}

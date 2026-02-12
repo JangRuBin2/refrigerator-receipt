@@ -96,7 +96,16 @@
       "Bash(git diff:*)",
       "Bash(pnpm build:*)",
       "Bash(zip:*)",
-      "Bash(node scripts/build-ait.mjs:*)"
+      "Bash(node scripts/build-ait.mjs:*)",
+      "Bash(xargs:*)",
+      "Bash(pnpm dlx supabase:*)",
+      "WebFetch(domain:easylaw.go.kr)",
+      "WebFetch(domain:www.law.go.kr)",
+      "Bash(pip3 install:*)",
+      "Bash(node scripts/gen-iap-images.mjs:*)",
+      "WebFetch(domain:apps.apple.com)",
+      "WebFetch(domain:play.google.com)",
+      "Bash(git status:*)"
     ]
   }
 }

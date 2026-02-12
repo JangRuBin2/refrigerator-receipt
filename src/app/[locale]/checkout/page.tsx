@@ -4,15 +4,28 @@ import { useState, useEffect, Suspense } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Crown, CreditCard, Shield, Check, Loader2, ArrowLeft, Sparkles, AlertCircle, TrendingDown, Percent, Coffee } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 import { useAppsInToss } from '@/hooks/useAppsInToss';
 import { IAP_PRODUCTS } from '@/types/apps-in-toss';
+import type { IapProductItem } from '@/types/apps-in-toss';
 
 type Plan = 'monthly' | 'yearly';
+
+// SDK 상품에서 가격 가져오기 (판매가 = displayAmount)
+function getProductPrice(products: IapProductItem[], sku: string): string | null {
+  const product = products.find((p) => p.sku === sku);
+  return product?.displayAmount ?? null;
+}
+
+// 하드코딩 폴백 가격 (판매가 = VAT 포함 기준)
+const FALLBACK_PRICES = {
+  monthly: { price: '₩1,980', total: '₩1,980' },
+  yearly: { price: '₩1,386', total: '₩16,632' },
+};
 
 function CheckoutContent() {
   const t = useTranslations();
@@ -44,17 +57,32 @@ function CheckoutContent() {
     }
   }, [isAppsInToss, pendingOrders.length, restorePendingOrders]);
 
+  // SDK 상품 가격 (판매가) 또는 폴백
+  const monthlyTotal = getProductPrice(iapProducts, IAP_PRODUCTS.PREMIUM_MONTHLY) ?? FALLBACK_PRICES.monthly.total;
+  const yearlyTotal = getProductPrice(iapProducts, IAP_PRODUCTS.PREMIUM_YEARLY) ?? FALLBACK_PRICES.yearly.total;
+
+  // 연간 월 환산 가격 계산
+  const yearlyMonthlyPrice = (() => {
+    const match = yearlyTotal.match(/[\d,]+/);
+    if (match) {
+      const num = parseInt(match[0].replace(/,/g, ''), 10);
+      const monthly = Math.round(num / 12);
+      return `₩${monthly.toLocaleString()}`;
+    }
+    return FALLBACK_PRICES.yearly.price;
+  })();
+
   const plans = {
     monthly: {
-      price: '₩1,900',
+      price: monthlyTotal,
       period: t('pricing.month'),
-      total: '₩1,900',
+      total: monthlyTotal,
       badge: t('pricing.mostPopular'),
     },
     yearly: {
-      price: '₩1,325',
+      price: yearlyMonthlyPrice,
       period: t('pricing.month'),
-      total: '₩15,900',
+      total: yearlyTotal,
       badge: t('pricing.bestValue'),
       discount: '30%',
     },
@@ -112,7 +140,6 @@ function CheckoutContent() {
   if (isComplete) {
     return (
       <div className="min-h-screen">
-        <Header locale={locale} title={t('pricing.title')} />
         <div className="flex flex-col items-center justify-center p-8 text-center">
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
             <Check className="h-10 w-10 text-green-600" />
@@ -129,7 +156,6 @@ function CheckoutContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header locale={locale} title={t('pricing.subscribe')} />
 
       <div className="space-y-6 p-4">
         {/* Plan Selection */}
@@ -284,12 +310,25 @@ function CheckoutContent() {
               </span>
               <span className="font-medium">{plans[selectedPlan].total}</span>
             </div>
-            {selectedPlan === 'yearly' && (
-              <div className="flex justify-between text-sm text-green-600">
-                <span>할인</span>
-                <span>-₩6,900</span>
-              </div>
-            )}
+            {selectedPlan === 'yearly' && (() => {
+              // 월간 × 12 - 연간 = 할인액
+              const mMatch = monthlyTotal.match(/[\d,]+/);
+              const yMatch = yearlyTotal.match(/[\d,]+/);
+              if (mMatch && yMatch) {
+                const mNum = parseInt(mMatch[0].replace(/,/g, ''), 10);
+                const yNum = parseInt(yMatch[0].replace(/,/g, ''), 10);
+                const discount = mNum * 12 - yNum;
+                if (discount > 0) {
+                  return (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>할인</span>
+                      <span>-₩{discount.toLocaleString()}</span>
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
             <div className="border-t pt-3">
               <div className="flex justify-between font-semibold">
                 <span>총 결제 금액</span>

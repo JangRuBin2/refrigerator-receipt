@@ -3,7 +3,6 @@
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { User, Globe, Bell, Palette, Database, Info, LogOut, UserX, ChevronRight, Moon, Sun } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useStore } from '@/store/useStore';
@@ -33,6 +32,7 @@ export default function SettingsPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -117,12 +117,20 @@ export default function SettingsPage() {
 
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true);
+    setDeleteAccountError(null);
     try {
       await deleteAccountApi();
+      const supabase = createClient();
+      await supabase.auth.signOut();
       clearIngredients();
-      router.push(`/${locale}/login`);
-    } catch {
+      setUser(null);
+      setShowDeleteAccountModal(false);
+      window.location.href = `/${locale}/login`;
+    } catch (err) {
       setIsDeletingAccount(false);
+      setDeleteAccountError(
+        err instanceof Error ? err.message : String(err)
+      );
     }
   };
 
@@ -177,7 +185,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen">
-      <Header locale={locale} title={t('settings.title')} showSettings={false} />
+
 
       <div className="space-y-4 p-4 pb-24">
         {/* Profile Section */}
@@ -453,7 +461,12 @@ export default function SettingsPage() {
         {/* Delete Account Confirmation Modal */}
         <Modal
           isOpen={showDeleteAccountModal}
-          onClose={() => setShowDeleteAccountModal(false)}
+          onClose={() => {
+            if (!isDeletingAccount) {
+              setShowDeleteAccountModal(false);
+              setDeleteAccountError(null);
+            }
+          }}
           title={t('settings.deleteAccount')}
         >
           <div className="space-y-4">
@@ -463,10 +476,18 @@ export default function SettingsPage() {
             <p className="font-medium text-red-600">
               {t('settings.deleteAccountConfirm')}
             </p>
+            {deleteAccountError && (
+              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+                {t('settings.deleteAccountError')}: {deleteAccountError}
+              </div>
+            )}
             <div className="flex gap-3">
               <Button
                 variant="outline"
-                onClick={() => setShowDeleteAccountModal(false)}
+                onClick={() => {
+                  setShowDeleteAccountModal(false);
+                  setDeleteAccountError(null);
+                }}
                 className="flex-1"
                 disabled={isDeletingAccount}
               >

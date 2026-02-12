@@ -21,7 +21,7 @@ import {
   Calendar,
   BarChart3,
 } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+
 import { PremiumGate } from '@/components/premium/PremiumGate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -192,7 +192,7 @@ export default function NutritionPage() {
   if (error) {
     return (
       <div className="min-h-screen">
-        <Header locale={locale} title={t('nutrition.title')} />
+
         <div className="flex flex-col items-center justify-center py-20">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-gray-500">{error}</p>
@@ -211,7 +211,6 @@ export default function NutritionPage() {
   return (
     <PremiumGate feature="nutrition_analysis">
     <div className="min-h-screen pb-20">
-      <Header locale={locale} title={t('nutrition.title')} />
 
       <div className="space-y-4 p-4">
         {/* View Mode Tabs */}

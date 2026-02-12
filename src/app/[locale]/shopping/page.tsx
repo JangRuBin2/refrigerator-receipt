@@ -16,7 +16,7 @@ import {
   Package,
   AlertTriangle,
 } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+
 import { PremiumGate } from '@/components/premium/PremiumGate';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -231,7 +231,7 @@ export default function ShoppingPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <Header locale={locale} title={t('shopping.title')} />
+
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
         </div>
@@ -242,7 +242,7 @@ export default function ShoppingPage() {
   if (error) {
     return (
       <div className="min-h-screen">
-        <Header locale={locale} title={t('shopping.title')} />
+
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <AlertTriangle className="h-12 w-12 text-orange-500 mb-4" />
           <p className="text-gray-500 text-center">{error}</p>
@@ -258,7 +258,6 @@ export default function ShoppingPage() {
   return (
     <PremiumGate feature="smart_shopping">
     <div className="min-h-screen pb-20">
-      <Header locale={locale} title={t('shopping.title')} />
 
       <div className="space-y-4 p-4">
         {/* Progress Card */}

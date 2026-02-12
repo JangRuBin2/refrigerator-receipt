@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Camera, Upload, Check, RefreshCw, Sparkles, Clock, AlertCircle, Crown, ChevronRight } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+import { Camera, Upload, Check, RefreshCw, Sparkles, Clock, ChevronRight, Crown, PlayCircle } from 'lucide-react';
+
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -13,11 +13,10 @@ import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { usePremium } from '@/hooks/usePremium';
-import { PremiumModal } from '@/components/premium/PremiumModal';
-import { PremiumGate } from '@/components/premium/PremiumGate';
+import { useAppsInTossAds } from '@/hooks/useAppsInTossAds';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
-import { getScanUsage, scanReceipt } from '@/lib/api/scan';
+import { scanReceipt } from '@/lib/api/scan';
 import type { ScannedItem, Category, Unit, StorageType } from '@/types';
 
 const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
@@ -42,57 +41,77 @@ export default function ScanPage() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const { isPremium } = usePremium();
+  const { isAvailable: isAdsAvailable, adState, watchAdForReward } = useAppsInTossAds();
 
   useEffect(() => {
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
 
-  useEffect(() => {
-    const fetchUsage = async () => {
-      try {
-        const data = await getScanUsage();
-        setUsage(data);
-      } catch {
-        // Ignore
-      }
-    };
-    fetchUsage();
-  }, []);
-
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [step, setStep] = useState<Step>('upload');
   const [scannedItems, setScannedItems] = useState<ExtendedScannedItem[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<string>('');
   const [useAIVision, setUseAIVision] = useState(true);
-  const [usage, setUsage] = useState<{ dailyLimit: number; effectiveLimit?: number; used: number; remaining: number; isPremium?: boolean } | null>(null);
   const [isResultSheetOpen, setIsResultSheetOpen] = useState(false);
+  const [isWatchingAd, setIsWatchingAd] = useState(false);
+  // 파일 선택 후 광고 시청 대기 시 임시 저장
+  const pendingFileRef = useRef<File | null>(null);
 
   const currentStepIndex = STEPS.indexOf(step);
 
+  // 스캔 버튼 클릭 → 프리미엄이면 바로 스캔, 일반이면 광고 후 스캔
   const handleScanClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
-    if (!isPremium && usage && usage.remaining <= 0) {
-      setShowPremiumModal(true);
-      return;
-    }
     inputRef.current?.click();
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > MAX_FILE_SIZE) {
-        toast.error(t('scan.fileTooLarge'));
-        e.target.value = '';
-        return;
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(t('scan.fileTooLarge'));
+      e.target.value = '';
+      return;
+    }
+
+    // 이미지 미리보기 설정
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setPreviewImage(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // 프리미엄: 바로 스캔
+    if (isPremium) {
+      await startScanning(file);
+      return;
+    }
+
+    // 일반 회원: 광고 시청 후 스캔
+    if (isAdsAvailable) {
+      pendingFileRef.current = file;
+      setIsWatchingAd(true);
+
+      const rewarded = await watchAdForReward(() => {
+        // 광고 보상 콜백 - 여기서는 별도 처리 불필요
+      });
+
+      setIsWatchingAd(false);
+
+      if (rewarded) {
+        // 광고 시청 완료 → 스캔 진행
+        const pendingFile = pendingFileRef.current;
+        pendingFileRef.current = null;
+        if (pendingFile) {
+          await startScanning(pendingFile);
+        }
+      } else {
+        // 광고 시청 실패/취소
+        toast.error(t('scan.adRequired'));
+        pendingFileRef.current = null;
       }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-
+    } else {
+      // 토스 환경이 아닌 경우 (웹 브라우저) → 바로 스캔 허용
       await startScanning(file);
     }
   };
@@ -102,10 +121,6 @@ export default function ScanPage() {
 
     try {
       const data = await scanReceipt(file, useAIVision);
-
-      if (data.usage) {
-        setUsage(data.usage);
-      }
 
       const items: ExtendedScannedItem[] = (data.items as {
         name: string;
@@ -126,9 +141,6 @@ export default function ScanPage() {
       setStep('confirm');
       setIsResultSheetOpen(true);
     } catch (err) {
-      if (err instanceof Error && err.message.includes('limit')) {
-        setShowPremiumModal(true);
-      }
       toast.error(err instanceof Error ? err.message : 'Scan failed');
       setStep('upload');
     }
@@ -202,9 +214,7 @@ export default function ScanPage() {
   };
 
   return (
-    <PremiumGate feature="receipt_scan">
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header locale={locale} title={t('scan.title')} />
 
       <div className="p-toss-md pb-24">
         {/* Step Indicator */}
@@ -242,47 +252,25 @@ export default function ScanPage() {
               transition={spring.gentle}
               className="space-y-toss-md"
             >
-              {/* Daily Usage */}
-              {usage && (
-                <div className={cn(
-                  'toss-card',
-                  usage.remaining > 0
-                    ? 'border-l-4 border-primary-500'
-                    : 'border-l-4 border-red-500'
-                )}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-toss-sm">
-                      <Camera className="h-5 w-5 text-gray-500" />
-                      <div>
-                        <p className="toss-body2 font-medium">
-                          {t('scan.dailyUsage', { used: usage.used, limit: usage.effectiveLimit || usage.dailyLimit })}
-                        </p>
-                        <p className="toss-caption">
-                          {usage.remaining > 0
-                            ? `${usage.remaining}회 남음`
-                            : '이번 주 사용량 초과'}
-                        </p>
-                      </div>
-                    </div>
-                    {usage.remaining === 0 && !isPremium && (
-                      <button
-                        onClick={() => setShowPremiumModal(true)}
-                        className="flex items-center gap-1 rounded-full bg-primary-600 px-3 py-1.5 text-xs font-medium text-white"
-                      >
-                        <Crown className="h-3 w-3" />
-                        업그레이드
-                      </button>
-                    )}
+              {/* 프리미엄 안내 배지 */}
+              {isPremium ? (
+                <div className="toss-card border-l-4 border-yellow-500">
+                  <div className="flex items-center gap-toss-sm">
+                    <Crown className="h-5 w-5 text-yellow-500" />
+                    <p className="toss-body2 font-medium text-yellow-700 dark:text-yellow-400">
+                      {t('scan.premiumUnlimited')}
+                    </p>
                   </div>
-
-                  {/* 한도 초과 시 안내 */}
-                  {usage.remaining <= 0 && !isPremium && (
-                    <div className="mt-toss-sm pt-toss-sm border-t border-gray-100 dark:border-gray-700">
-                      <p className="text-center text-sm text-gray-500">
-                        매주 월요일에 사용량이 초기화됩니다
-                      </p>
+                </div>
+              ) : (
+                <div className="toss-card border-l-4 border-blue-500">
+                  <div className="flex items-center gap-toss-sm">
+                    <PlayCircle className="h-5 w-5 text-blue-500" />
+                    <div>
+                      <p className="toss-body2 font-medium">{t('scan.adRequiredNotice')}</p>
+                      <p className="toss-caption">{t('scan.adRequiredDescription')}</p>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 
@@ -370,6 +358,22 @@ export default function ScanPage() {
                 onChange={handleFileSelect}
                 className="hidden"
               />
+            </motion.div>
+          )}
+
+          {/* 광고 시청 중 */}
+          {isWatchingAd && (
+            <motion.div
+              key="ad"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            >
+              <div className="rounded-2xl bg-white p-8 text-center dark:bg-gray-800">
+                <PlayCircle className="mx-auto h-12 w-12 text-blue-500 animate-pulse" />
+                <p className="mt-4 text-lg font-semibold">{t('scan.watchingAd')}</p>
+                <p className="mt-2 text-sm text-gray-500">{t('scan.adWatchingDescription')}</p>
+              </div>
             </motion.div>
           )}
 
@@ -585,14 +589,6 @@ export default function ScanPage() {
           </Button>
         </BottomSheetActions>
       </BottomSheet>
-
-      {/* Premium Modal */}
-      <PremiumModal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        feature="receipt_scan"
-      />
     </div>
-    </PremiumGate>
   );
 }

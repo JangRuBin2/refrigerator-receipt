@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, Search } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -593,7 +593,7 @@ export default function RecipesPage() {
   return (
     <PremiumGate feature="recipe_browsing">
       <div className="min-h-screen">
-        <Header locale={locale} title={t('recipe.title')} />
+
         <Suspense fallback={<RecipesLoading />}>
           <RecipesContent />
         </Suspense>

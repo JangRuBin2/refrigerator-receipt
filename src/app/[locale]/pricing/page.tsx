@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { Check, Crown, Zap, X, Sparkles, BarChart3, ShoppingCart, Camera, Search, Refrigerator, UtensilsCrossed } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -81,7 +81,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen">
-      <Header locale={locale} title={t('pricing.title')} />
+
 
       <div className="space-y-6 p-4">
         {/* Header */}

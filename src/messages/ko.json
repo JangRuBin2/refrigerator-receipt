@@ -18,11 +18,11 @@
     "aiDisclaimer": "AI가 생성한 콘텐츠입니다. 참고용으로만 활용하세요."
   },
   "nav": {
-    "home": "홈",
-    "fridge": "냉장고",
-    "scan": "스캔",
-    "recipes": "레시피",
-    "settings": "설정",
+    "home": "냉장고",
+    "fridge": "재료관리",
+    "scan": "영수증스캔",
+    "recipes": "레시피추천",
+    "settings": "마이",
     "shopping": "장보기"
   },
   "home": {
@@ -179,15 +179,12 @@
     "aiVisionDescription": "AI가 영수증을 직접 분석하여 더 정확하게 인식합니다",
     "estimatedExpiry": "예상 유통기한: {days}일",
     "fileTooLarge": "이미지 용량이 너무 큽니다. 10MB 이하의 이미지를 업로드해주세요.",
-    "dailyUsage": "오늘 {used}/{limit}회 사용",
-    "dailyLimitReached": "일일 업로드 제한에 도달했습니다",
-    "upgradeForMore": "프리미엄으로 업그레이드하면 더 많이 스캔할 수 있습니다",
-    "watchAdForScans": "광고 보고 1회 스캔 받기",
-    "watchingAd": "광고 로딩 중...",
-    "adWatchSuccess": "광고 시청 완료! 1회 스캔이 추가되었습니다",
-    "adWatchFailed": "광고 시청에 실패했습니다",
-    "adLimitReached": "오늘 광고 시청 한도에 도달했습니다",
-    "remainingAdWatches": "오늘 광고 {count}회 더 시청 가능"
+    "premiumUnlimited": "프리미엄 회원 - 무제한 스캔",
+    "adRequiredNotice": "광고 시청 후 스캔 가능",
+    "adRequiredDescription": "프리미엄 회원은 광고 없이 바로 스캔합니다",
+    "adRequired": "스캔하려면 광고를 시청해주세요",
+    "watchingAd": "광고 준비 중...",
+    "adWatchingDescription": "광고가 끝나면 자동으로 스캔이 시작됩니다"
   },
   "settings": {
     "title": "설정",
@@ -223,7 +220,8 @@
     "deleteAccount": "회원 탈퇴",
     "deleteAccountWarning": "회원 탈퇴 시 모든 데이터(냉장고 재료, 레시피, 구독 정보 등)가 영구적으로 삭제되며 복구할 수 없습니다.",
     "deleteAccountConfirm": "정말 탈퇴하시겠습니까?",
-    "deleteAccountSuccess": "회원 탈퇴가 완료되었습니다"
+    "deleteAccountSuccess": "회원 탈퇴가 완료되었습니다",
+    "deleteAccountError": "회원 탈퇴에 실패했습니다"
   },
   "auth": {
     "login": "로그인",
@@ -245,10 +243,10 @@
     "freePlan": "Free",
     "premiumPlan": "Premium",
     "free": "무료",
-    "monthlyPrice": "₩1,900",
+    "monthlyPrice": "₩1,980",
     "month": "월",
-    "yearlyPrice": "연간 ₩15,900/년 (30% 할인)",
-    "yearlyMonthly": "월 ₩1,325",
+    "yearlyPrice": "연간 ₩16,632/년 (30% 할인)",
+    "yearlyMonthly": "월 ₩1,386",
     "currentPlan": "현재 플랜",
     "recommended": "추천",
     "mostPopular": "인기",
@@ -334,7 +332,7 @@
       "premiumCost": "프리미엄 비용",
       "netBenefit": "순 이익",
       "monthlySaving": "월 ~16,000원",
-      "monthlyNet": "월 +14,100원"
+      "monthlyNet": "월 +14,020원"
     }
   },
   "features": {

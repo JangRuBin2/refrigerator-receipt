@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Header } from '@/components/layout/Header';
+
 import { Badge } from '@/components/ui/Badge';
 import { getDaysUntilExpiry } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
@@ -144,7 +144,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header locale={locale} />
+
 
       <div className="space-y-toss-lg p-toss-md pb-24">
         {/* Hero Section */}

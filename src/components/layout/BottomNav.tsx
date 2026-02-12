@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Refrigerator, Camera, ChefHat, Settings, Lock } from 'lucide-react';
+import { Home, Refrigerator, Camera, ChefHat, User, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { usePremium } from '@/hooks/usePremium';
@@ -24,7 +24,7 @@ export function BottomNav({ locale }: { locale: string }) {
     { href: `/${locale}/fridge`, icon: Refrigerator, labelKey: 'fridge', premiumOnly: true },
     { href: `/${locale}/scan`, icon: Camera, labelKey: 'scan', premiumOnly: true },
     { href: `/${locale}/recipes`, icon: ChefHat, labelKey: 'recipes', premiumOnly: true },
-    { href: `/${locale}/settings`, icon: Settings, labelKey: 'settings' },
+    { href: `/${locale}/settings`, icon: User, labelKey: 'settings' },
   ];
 
   const isActive = (href: string) => {
@@ -35,8 +35,8 @@ export function BottomNav({ locale }: { locale: string }) {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/80 backdrop-blur-lg safe-bottom dark:border-gray-700 dark:bg-gray-900/80">
-      <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-4">
+    <div className="fixed bottom-0 left-0 right-0 z-40 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <nav className="mx-auto flex h-14 max-w-lg items-center justify-around rounded-full bg-white/95 shadow-[0_4px_24px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04] backdrop-blur-xl">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -47,23 +47,25 @@ export function BottomNav({ locale }: { locale: string }) {
               key={item.href}
               href={item.href}
               className={cn(
-                'relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1 rounded-lg px-3 py-2 transition-colors',
+                'relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-1.5 transition-colors',
                 active
-                  ? 'text-primary-600 dark:text-primary-400'
-                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  ? 'text-blue-600'
+                  : 'text-gray-400'
               )}
             >
               <div className="relative">
-                <Icon className={cn('h-5 w-5', active && 'animate-bounce-subtle')} />
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 1.8} />
                 {showLock && (
-                  <Lock className="absolute -right-1.5 -top-1.5 h-3 w-3 text-gray-400" />
+                  <Lock className="absolute -right-1.5 -top-1.5 h-2.5 w-2.5 text-gray-300" />
                 )}
               </div>
-              <span className="text-xs font-medium">{t(item.labelKey)}</span>
+              <span className={cn('text-[10px]', active ? 'font-semibold' : 'font-medium')}>
+                {t(item.labelKey)}
+              </span>
             </Link>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }

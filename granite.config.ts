@@ -7,9 +7,15 @@ export default defineConfig({
     icon: './public/icon-512.png',
     primaryColor: '#3182F6',
   },
+  navigationBar: {
+    withBackButton: true,
+    withHomeButton: false,
+  },
   permissions: [],
   webViewProps: {
     type: 'partner',
+    bounces: false,
+    overScrollMode: 'never',
   },
   web: {
     host: 'localhost',

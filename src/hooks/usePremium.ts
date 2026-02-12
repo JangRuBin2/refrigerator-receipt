@@ -30,7 +30,7 @@ const BYPASS_PREMIUM_CHECK = process.env.NEXT_PUBLIC_BYPASS_PREMIUM === 'true';
 
 // 각 기능이 프리미엄 전용인지 정의
 const PREMIUM_FEATURES: Record<PremiumFeature, boolean> = {
-  receipt_scan: true,
+  receipt_scan: false, // 광고 시청으로 무료 이용 가능
   external_recipe_search: true,
   ai_recipe: true,
   nutrition_analysis: true,

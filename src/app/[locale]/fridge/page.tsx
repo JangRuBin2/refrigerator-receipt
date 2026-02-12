@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Plus, Search, Trash2, Edit2, Package, Snowflake, Sun, X } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
+
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -156,7 +156,7 @@ export default function FridgePage() {
   return (
     <PremiumGate feature="fridge_management">
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header locale={locale} title={t('fridge.title')} />
+
 
       {/* Search - Fixed at top */}
       <div className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm dark:bg-gray-900/95 p-toss-md pb-0">

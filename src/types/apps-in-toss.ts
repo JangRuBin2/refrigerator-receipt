@@ -62,10 +62,10 @@ export interface IapOrderStatusResponse {
   purchasedAt?: string;
 }
 
-// 상품 SKU 상수
+// 상품 SKU 상수 (토스 콘솔 상품 ID와 일치해야 함)
 export const IAP_PRODUCTS = {
-  PREMIUM_MONTHLY: 'premium_monthly',
-  PREMIUM_YEARLY: 'premium_yearly',
+  PREMIUM_MONTHLY: 'ait.00000019137.0663824b.b20f0d783f.0903882326',
+  PREMIUM_YEARLY: 'ait.0000019137.6f6a37f6.828a06d1ea.0905836508',
 } as const;
 
 export type IapProductSku = typeof IAP_PRODUCTS[keyof typeof IAP_PRODUCTS];

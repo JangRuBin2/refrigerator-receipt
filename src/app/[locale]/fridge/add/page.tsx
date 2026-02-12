@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Header } from '@/components/layout/Header';
+
 import { IngredientForm } from '@/components/fridge/IngredientForm';
 
 export default function FridgeAddPage() {
@@ -19,7 +19,7 @@ export default function FridgeAddPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header locale={locale} title={t('fridge.addIngredient')} />
+
 
       <div className="p-toss-md pb-24">
         <motion.div

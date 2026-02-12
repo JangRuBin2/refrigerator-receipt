@@ -21,7 +21,6 @@ interface UseAppsInTossReturn {
   isLoading: boolean;
   products: IapProductItem[];
   pendingOrders: IapPendingOrder[];
-  tossUserKey: string | null;
   purchase: (sku: IapProductSku) => Promise<IapPurchaseResult>;
   restorePendingOrders: () => Promise<void>;
   refreshProducts: () => Promise<void>;
@@ -32,7 +31,6 @@ export function useAppsInToss(): UseAppsInTossReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<IapProductItem[]>([]);
   const [pendingOrders, setPendingOrders] = useState<IapPendingOrder[]>([]);
-  const [tossUserKey, setTossUserKey] = useState<string | null>(null);
 
   // 초기화
   useEffect(() => {
@@ -73,14 +71,11 @@ export function useAppsInToss(): UseAppsInTossReturn {
       };
     }
 
-    const result = await createOneTimePurchaseOrder(sku, async () => {
-      // 서버에 구독 활성화 요청
+    // createOneTimePurchaseOrder에 processProductGrant 콜백 전달
+    // SDK가 결제 성공 후 이 콜백을 orderId와 함께 호출
+    const result = await createOneTimePurchaseOrder(sku, async (orderId) => {
       try {
-        const data = await iapActivate({
-          orderId: result.orderId || '',
-          sku,
-          tossUserKey,
-        });
+        const data = await iapActivate({ orderId, sku, tossUserKey: null });
         return data.success;
       } catch {
         return false;
@@ -88,7 +83,7 @@ export function useAppsInToss(): UseAppsInTossReturn {
     });
 
     return result;
-  }, [isAvailable, tossUserKey]);
+  }, [isAvailable]);
 
   // 미결 주문 복원
   const restorePendingOrders = useCallback(async () => {
@@ -103,7 +98,7 @@ export function useAppsInToss(): UseAppsInTossReturn {
         const data = await iapActivate({
           orderId: order.orderId,
           sku: order.sku,
-          tossUserKey,
+          tossUserKey: null,
         });
 
         if (data.success) {
@@ -118,14 +113,13 @@ export function useAppsInToss(): UseAppsInTossReturn {
     // 다시 조회하여 상태 업데이트
     const updatedOrders = await getPendingOrders();
     setPendingOrders(updatedOrders);
-  }, [isAvailable, tossUserKey]);
+  }, [isAvailable]);
 
   return {
     isAvailable,
     isLoading,
     products,
     pendingOrders,
-    tossUserKey,
     purchase,
     restorePendingOrders,
     refreshProducts,

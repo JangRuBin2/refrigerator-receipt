@@ -28,12 +28,12 @@ Deno.serve(async (req) => {
     const { orderId, sku, tossUserKey } = body as {
       orderId: string;
       sku: string;
-      tossUserKey: string;
+      tossUserKey?: string | null;
     };
 
-    if (!orderId || !sku || !tossUserKey) {
+    if (!orderId || !sku) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing required fields' }),
+        JSON.stringify({ success: false, error: 'Missing required fields: orderId, sku' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         expires_at: expiresAt.toISOString(),
         auto_renew: true,
         toss_order_id: orderId,
-        toss_user_key: tossUserKey,
+        ...(tossUserKey ? { toss_user_key: tossUserKey } : {}),
         updated_at: now.toISOString(),
       }, {
         onConflict: 'user_id',

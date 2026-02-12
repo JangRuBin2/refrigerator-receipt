@@ -4,8 +4,10 @@ import { callGemini, callGeminiWithImage, parseJsonFromText } from '../_shared/g
 import type { SupabaseClient, ScannedItem, ScanResult } from '../_shared/types.ts';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const WEEKLY_LIMIT_FREE = 3;
-const WEEKLY_LIMIT_PREMIUM = 50;
+// 무료 회원: 광고 시청 후 무제한 (안전 한도 100/주)
+// 프리미엄: 무제한 (안전 한도 200/주)
+const WEEKLY_LIMIT_FREE = 100;
+const WEEKLY_LIMIT_PREMIUM = 200;
 
 const VALID_CATEGORIES = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
 const VALID_UNITS = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
