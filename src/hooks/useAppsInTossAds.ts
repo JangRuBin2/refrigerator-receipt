@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { isAppsInTossEnvironment } from '@/lib/apps-in-toss/sdk';
 import {
-  loadAppsInTossAdMob,
-  showAppsInTossAdMob,
+  isAdMobSupported,
+  loadRewardedAd,
+  showRewardedAd,
 } from '@/lib/apps-in-toss/ads';
 import type { AdState, AdShowResult, AdGroupId } from '@/types/apps-in-toss-ads';
 import { AD_GROUP_IDS } from '@/types/apps-in-toss-ads';
@@ -19,16 +19,16 @@ interface UseAppsInTossAdsReturn {
 
 export function useAppsInTossAds(): UseAppsInTossAdsReturn {
   const [adState, setAdState] = useState<AdState>('idle');
-  const isAvailable = typeof window !== 'undefined' && isAppsInTossEnvironment();
+  const isAvailable = typeof window !== 'undefined' && isAdMobSupported();
 
   // 보상형 광고 로드
-  const loadRewardedAd = useCallback(async (
+  const handleLoadRewardedAd = useCallback(async (
     adGroupId: AdGroupId = AD_GROUP_IDS.SCAN_REWARDED
   ): Promise<boolean> => {
     if (!isAvailable) return false;
 
     setAdState('loading');
-    const result = await loadAppsInTossAdMob(adGroupId, 'rewarded');
+    const result = await loadRewardedAd(adGroupId);
 
     if (result.type === 'success') {
       setAdState('loaded');
@@ -40,7 +40,7 @@ export function useAppsInTossAds(): UseAppsInTossAdsReturn {
   }, [isAvailable]);
 
   // 보상형 광고 표시
-  const showRewardedAd = useCallback(async (
+  const handleShowRewardedAd = useCallback(async (
     adGroupId: AdGroupId = AD_GROUP_IDS.SCAN_REWARDED
   ): Promise<AdShowResult> => {
     if (!isAvailable) {
@@ -48,12 +48,12 @@ export function useAppsInTossAds(): UseAppsInTossAdsReturn {
         type: 'error',
         adType: 'rewarded',
         errorCode: 'SDK_NOT_AVAILABLE',
-        errorMessage: 'Not in AppsInToss environment',
+        errorMessage: 'AdMob not supported in this environment',
       };
     }
 
     setAdState('showing');
-    const result = await showAppsInTossAdMob(adGroupId, 'rewarded');
+    const result = await showRewardedAd(adGroupId);
 
     setAdState('idle');
     return result;
@@ -65,11 +65,11 @@ export function useAppsInTossAds(): UseAppsInTossAdsReturn {
     adGroupId: AdGroupId = AD_GROUP_IDS.SCAN_REWARDED
   ): Promise<boolean> => {
     // 1. 광고 로드
-    const loaded = await loadRewardedAd(adGroupId);
+    const loaded = await handleLoadRewardedAd(adGroupId);
     if (!loaded) return false;
 
     // 2. 광고 표시
-    const result = await showRewardedAd(adGroupId);
+    const result = await handleShowRewardedAd(adGroupId);
 
     // 3. 보상 지급
     if (result.type === 'success' && result.rewarded) {
@@ -78,13 +78,13 @@ export function useAppsInTossAds(): UseAppsInTossAdsReturn {
     }
 
     return false;
-  }, [loadRewardedAd, showRewardedAd]);
+  }, [handleLoadRewardedAd, handleShowRewardedAd]);
 
   return {
     isAvailable,
     adState,
-    loadRewardedAd,
-    showRewardedAd,
+    loadRewardedAd: handleLoadRewardedAd,
+    showRewardedAd: handleShowRewardedAd,
     watchAdForReward,
   };
 }

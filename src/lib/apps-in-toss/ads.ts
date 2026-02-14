@@ -1,141 +1,117 @@
 // 앱인토스 광고 SDK 클라이언트 래퍼
-// 토스 앱 내 WebView 환경에서만 동작
+// GoogleAdMob SDK는 이벤트 콜백 기반 → Promise로 래핑
+
+import { GoogleAdMob } from '@apps-in-toss/web-framework';
 
 import type {
-  AdType,
   AdLoadResult,
   AdShowResult,
-  AdGroupId,
 } from '@/types/apps-in-toss-ads';
-import { isAppsInTossEnvironment } from './sdk';
 
-// 앱인토스 광고 SDK 존재 여부 확인
-function getAppsInTossAdsSDK(): AppsInTossAdsSDK | null {
-  if (typeof window === 'undefined') return null;
-  const win = window as WindowWithAppsInTossAds;
-  return win.AppsInToss?.ads ?? null;
-}
-
-// 광고 로드
-export async function loadAppsInTossAdMob(
-  adGroupId: AdGroupId,
-  adType: AdType
-): Promise<AdLoadResult> {
-  if (!isAppsInTossEnvironment()) {
-    return {
-      type: 'error',
-      adType,
-      errorCode: 'SDK_NOT_AVAILABLE',
-      errorMessage: 'Not in AppsInToss environment',
-    };
-  }
-
-  const sdk = getAppsInTossAdsSDK();
-  if (!sdk?.loadAppsInTossAdMob) {
-    return {
-      type: 'error',
-      adType,
-      errorCode: 'SDK_NOT_AVAILABLE',
-      errorMessage: 'AppsInToss Ads SDK not available',
-    };
-  }
-
+// GoogleAdMob 광고 지원 여부 확인
+export function isAdMobSupported(): boolean {
   try {
-    const result = await sdk.loadAppsInTossAdMob({
-      adGroupId,
-      adType,
-    });
-
-    if (result?.success) {
-      return { type: 'success', adType };
-    }
-
-    return {
-      type: 'error',
-      adType,
-      errorCode: 'AD_LOAD_FAILED',
-      errorMessage: result?.errorMessage || 'Failed to load ad',
-    };
-  } catch (error) {
-    console.error('[AppsInToss Ads] loadAppsInTossAdMob error:', error);
-    return {
-      type: 'error',
-      adType,
-      errorCode: 'UNKNOWN_ERROR',
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
-    };
+    return GoogleAdMob.loadAppsInTossAdMob.isSupported() === true;
+  } catch {
+    return false;
   }
 }
 
-// 광고 표시
-export async function showAppsInTossAdMob(
-  adGroupId: AdGroupId,
-  adType: AdType
-): Promise<AdShowResult> {
-  if (!isAppsInTossEnvironment()) {
-    return {
-      type: 'error',
-      adType,
-      errorCode: 'SDK_NOT_AVAILABLE',
-      errorMessage: 'Not in AppsInToss environment',
-    };
-  }
-
-  const sdk = getAppsInTossAdsSDK();
-  if (!sdk?.showAppsInTossAdMob) {
-    return {
-      type: 'error',
-      adType,
-      errorCode: 'SDK_NOT_AVAILABLE',
-      errorMessage: 'AppsInToss Ads SDK not available',
-    };
-  }
-
-  try {
-    const result = await sdk.showAppsInTossAdMob({
-      adGroupId,
-      adType,
-    });
-
-    if (result?.success) {
-      return {
-        type: 'success',
-        adType,
-        rewarded: adType === 'rewarded' ? result.rewarded : undefined,
-      };
+// 보상형 광고 로드 (event-based → Promise 래핑)
+export function loadRewardedAd(adGroupId: string): Promise<AdLoadResult> {
+  return new Promise((resolve) => {
+    try {
+      GoogleAdMob.loadAppsInTossAdMob({
+        options: { adGroupId },
+        onEvent: (event) => {
+          if (event.type === 'loaded') {
+            resolve({ type: 'success', adType: 'rewarded' });
+          }
+        },
+        onError: (error) => {
+          const msg = error instanceof Error ? error.message : String(error);
+          resolve({
+            type: 'error',
+            adType: 'rewarded',
+            errorCode: 'AD_LOAD_FAILED',
+            errorMessage: msg,
+          });
+        },
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      resolve({
+        type: 'error',
+        adType: 'rewarded',
+        errorCode: 'SDK_NOT_AVAILABLE',
+        errorMessage: msg,
+      });
     }
+  });
+}
 
-    if (result?.canceled) {
-      return {
-        type: 'canceled',
-        adType,
-        rewarded: false,
-      };
+// 보상형 광고 표시 (event-based → Promise 래핑, userEarnedReward 감지)
+export function showRewardedAd(adGroupId: string): Promise<AdShowResult> {
+  return new Promise((resolve) => {
+    let rewarded = false;
+    let resolved = false;
+
+    const safeResolve = (result: AdShowResult) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(result);
+    };
+
+    try {
+      GoogleAdMob.showAppsInTossAdMob({
+        options: { adGroupId },
+        onEvent: (event) => {
+          if (event.type === 'userEarnedReward') {
+            rewarded = true;
+          }
+          if (event.type === 'dismissed') {
+            safeResolve({
+              type: 'success',
+              adType: 'rewarded',
+              rewarded,
+            });
+          }
+          if (event.type === 'failedToShow') {
+            safeResolve({
+              type: 'error',
+              adType: 'rewarded',
+              errorCode: 'AD_SHOW_FAILED',
+              errorMessage: 'Ad failed to show',
+            });
+          }
+        },
+        onError: (error) => {
+          const msg = error instanceof Error ? error.message : String(error);
+          safeResolve({
+            type: 'error',
+            adType: 'rewarded',
+            errorCode: 'AD_SHOW_FAILED',
+            errorMessage: msg,
+          });
+        },
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      safeResolve({
+        type: 'error',
+        adType: 'rewarded',
+        errorCode: 'SDK_NOT_AVAILABLE',
+        errorMessage: msg,
+      });
     }
-
-    return {
-      type: 'error',
-      adType,
-      errorCode: 'AD_SHOW_FAILED',
-      errorMessage: result?.errorMessage || 'Failed to show ad',
-    };
-  } catch (error) {
-    console.error('[AppsInToss Ads] showAppsInTossAdMob error:', error);
-    return {
-      type: 'error',
-      adType,
-      errorCode: 'UNKNOWN_ERROR',
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
+  });
 }
 
 // 광고 로드 및 표시 (편의 함수)
 export async function loadAndShowRewardedAd(
-  adGroupId: AdGroupId
+  adGroupId: string
 ): Promise<AdShowResult> {
-  // 1. 광고 로드
-  const loadResult = await loadAppsInTossAdMob(adGroupId, 'rewarded');
+  const loadResult = await loadRewardedAd(adGroupId);
   if (loadResult.type === 'error') {
     return {
       type: 'error',
@@ -145,30 +121,5 @@ export async function loadAndShowRewardedAd(
     };
   }
 
-  // 2. 광고 표시
-  return showAppsInTossAdMob(adGroupId, 'rewarded');
-}
-
-// TypeScript 타입 정의
-interface AppsInTossAdsSDK {
-  loadAppsInTossAdMob?: (params: {
-    adGroupId: string;
-    adType: AdType;
-  }) => Promise<{ success: boolean; errorMessage?: string } | undefined>;
-
-  showAppsInTossAdMob?: (params: {
-    adGroupId: string;
-    adType: AdType;
-  }) => Promise<{
-    success: boolean;
-    canceled?: boolean;
-    rewarded?: boolean;
-    errorMessage?: string;
-  } | undefined>;
-}
-
-interface WindowWithAppsInTossAds {
-  AppsInToss?: {
-    ads?: AppsInTossAdsSDK;
-  };
+  return showRewardedAd(adGroupId);
 }

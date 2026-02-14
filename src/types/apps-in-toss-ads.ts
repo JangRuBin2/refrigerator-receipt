@@ -4,7 +4,7 @@
 // 광고 타입
 export type AdType = 'interstitial' | 'rewarded';
 
-// 광고 로드 결과
+// 광고 로드 결과 (our wrapper result)
 export interface AdLoadResult {
   type: 'success' | 'error';
   adType: AdType;
@@ -12,7 +12,7 @@ export interface AdLoadResult {
   errorMessage?: string;
 }
 
-// 광고 표시 결과
+// 광고 표시 결과 (our wrapper result)
 export interface AdShowResult {
   type: 'success' | 'error' | 'canceled';
   adType: AdType;
@@ -41,8 +41,8 @@ export const AD_GROUP_IDS = {
   TEST_INTERSTITIAL: 'ait-ad-test-interstitial-id',
   TEST_REWARDED: 'ait-ad-test-rewarded-id',
 
-  // 실제 광고 ID (환경변수에서 로드)
-  SCAN_REWARDED: process.env.NEXT_PUBLIC_TOSS_AD_SCAN_REWARDED || 'ait-ad-test-rewarded-id',
+  // 프로덕션 보상형 광고 ID (토스 콘솔에서 발급)
+  SCAN_REWARDED: 'ait.v2.live.a6680c6229624182',
 } as const;
 
 export type AdGroupId = typeof AD_GROUP_IDS[keyof typeof AD_GROUP_IDS];
