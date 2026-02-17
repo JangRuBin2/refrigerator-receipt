@@ -2,10 +2,11 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { User, Globe, Bell, Palette, Database, LogOut, UserX, ChevronRight, Moon, Sun } from 'lucide-react';
+import { User, Globe, Bell, Palette, Database, LogOut, UserX, ChevronRight, Moon, Sun, Crown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useStore } from '@/store/useStore';
+import { usePremium } from '@/hooks/usePremium';
 import { locales, localeNames, type Locale } from '@/i18n/routing';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -27,6 +28,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const locale = params.locale as string;
   const { settings, updateSettings, clearIngredients } = useStore();
+  const { isPremium, isTrialActive, trialDaysRemaining } = usePremium();
 
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -217,6 +219,49 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Subscription Section */}
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="mb-3 text-sm font-medium text-gray-500">
+              {t('settings.subscription')}
+            </h3>
+            <button
+              onClick={() => router.push(`/${locale}/pricing`)}
+              className="flex w-full items-center justify-between rounded-lg p-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              <div className="flex items-center gap-3">
+                <Crown className={cn(
+                  'h-5 w-5',
+                  isPremium ? 'text-amber-500' : 'text-gray-400'
+                )} />
+                <div>
+                  {isPremium ? (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{t('pricing.premiumPlan')}</span>
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        {t('pricing.premiumPlan')}
+                      </span>
+                    </div>
+                  ) : isTrialActive ? (
+                    <div>
+                      <span className="font-medium">{t('pricing.trialActive')}</span>
+                      <p className="text-sm text-primary-600 dark:text-primary-400">
+                        {t('pricing.trialDaysLeft', { days: trialDaysRemaining })}
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="font-medium">{t('settings.freePlan')}</span>
+                      <p className="text-sm text-gray-500">{t('settings.upgradePremium')}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            </button>
+          </CardContent>
+        </Card>
+
         {/* Language Settings */}
         <Card>
           <CardContent className="divide-y divide-gray-100 p-0 dark:divide-gray-700">
@@ -326,9 +371,34 @@ export default function SettingsPage() {
         {/* Version */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-              <span>{t('settings.version')}</span>
-              <span>1.0.0</span>
+            <h3 className="mb-3 text-sm font-medium text-gray-500">
+              {t('settings.about')}
+            </h3>
+            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex justify-between">
+                <span>{t('settings.version')}</span>
+                <span>1.0.0</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t('settings.businessName')}</span>
+                <span>인프리</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t('settings.representative')}</span>
+                <span>장루빈</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t('settings.businessNumber')}</span>
+                <span>790-39-01572</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{t('settings.contact')}</span>
+                <span>wkdfnqls2465@gmail.com</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="shrink-0">{t('settings.address')}</span>
+                <span className="text-right">대전광역시 유성구 대정로28번안길 80</span>
+              </div>
             </div>
           </CardContent>
         </Card>

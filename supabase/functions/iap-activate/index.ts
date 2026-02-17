@@ -96,8 +96,23 @@ Deno.serve(async (req) => {
 
     const now = new Date();
     const isYearly = sku.includes('yearly');
-    const expiresAt = new Date(now);
 
+    // 기존 구독이 아직 유효하면 만료일부터 연장, 아니면 지금부터 시작
+    const { data: existing } = await supabaseAdmin
+      .from('subscriptions')
+      .select('expires_at, plan')
+      .eq('user_id', user.id)
+      .single();
+
+    let baseDate = now;
+    if (existing?.plan === 'premium' && existing?.expires_at) {
+      const existingExpiry = new Date(existing.expires_at);
+      if (existingExpiry > now) {
+        baseDate = existingExpiry;
+      }
+    }
+
+    const expiresAt = new Date(baseDate);
     if (isYearly) {
       expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     } else {

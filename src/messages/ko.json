@@ -261,7 +261,10 @@
     "deleteAccountWarning": "회원 탈퇴 시 모든 데이터(냉장고 재료, 레시피, 구독 정보 등)가 영구적으로 삭제되며 복구할 수 없습니다.",
     "deleteAccountConfirm": "정말 탈퇴하시겠습니까?",
     "deleteAccountSuccess": "회원 탈퇴가 완료되었습니다",
-    "deleteAccountError": "회원 탈퇴에 실패했습니다"
+    "deleteAccountError": "회원 탈퇴에 실패했습니다",
+    "subscription": "구독",
+    "freePlan": "무료 플랜 이용 중",
+    "upgradePremium": "프리미엄 업그레이드"
   },
   "auth": {
     "login": "로그인",

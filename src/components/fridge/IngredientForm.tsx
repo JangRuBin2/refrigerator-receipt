@@ -22,6 +22,7 @@ export function IngredientForm({ onSuccess }: IngredientFormProps) {
   const { addIngredient } = useStore();
 
   const today = new Date().toISOString().split('T')[0];
+  const [isExpiryManual, setIsExpiryManual] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     category: 'vegetables' as Category,
@@ -36,7 +37,7 @@ export function IngredientForm({ onSuccess }: IngredientFormProps) {
     setFormData((prev) => ({
       ...prev,
       category,
-      expiryDate: calculateExpiryDate(prev.purchaseDate, category, prev.storageType),
+      expiryDate: isExpiryManual ? prev.expiryDate : calculateExpiryDate(prev.purchaseDate, category, prev.storageType),
     }));
   };
 
@@ -44,7 +45,7 @@ export function IngredientForm({ onSuccess }: IngredientFormProps) {
     setFormData((prev) => ({
       ...prev,
       storageType,
-      expiryDate: calculateExpiryDate(prev.purchaseDate, prev.category, storageType),
+      expiryDate: isExpiryManual ? prev.expiryDate : calculateExpiryDate(prev.purchaseDate, prev.category, storageType),
     }));
   };
 
@@ -64,6 +65,7 @@ export function IngredientForm({ onSuccess }: IngredientFormProps) {
     toast.success(t('common.success'));
 
     // Reset form
+    setIsExpiryManual(false);
     setFormData({
       name: '',
       category: 'vegetables',
@@ -137,7 +139,10 @@ export function IngredientForm({ onSuccess }: IngredientFormProps) {
           label={t('fridge.expiryDate')}
           type="date"
           value={formData.expiryDate}
-          onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+          onChange={(e) => {
+            setIsExpiryManual(true);
+            setFormData({ ...formData, expiryDate: e.target.value });
+          }}
         />
       </div>
 

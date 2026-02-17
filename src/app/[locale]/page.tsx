@@ -156,21 +156,24 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...spring.gentle, delay: 0.03 }}
           >
-            <div className="rounded-2xl bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-200 p-4 dark:from-primary-900/20 dark:to-blue-900/20 dark:border-primary-800">
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-primary-100 p-2 dark:bg-primary-800">
-                  <Crown className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-                </div>
-                <div className="flex-1">
-                  <p className="toss-body2 font-semibold text-primary-700 dark:text-primary-300">
-                    {t('pricing.trialActive')}
-                  </p>
-                  <p className="toss-caption text-primary-600 dark:text-primary-400">
-                    {t('pricing.trialDaysLeft', { days: trialDaysRemaining })}
-                  </p>
+            <Link href={`/${locale}/pricing`}>
+              <div className="rounded-2xl bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-200 p-4 dark:from-primary-900/20 dark:to-blue-900/20 dark:border-primary-800">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full bg-primary-100 p-2 dark:bg-primary-800">
+                    <Crown className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="toss-body2 font-semibold text-primary-700 dark:text-primary-300">
+                      {t('pricing.trialActive')}
+                    </p>
+                    <p className="toss-caption text-primary-600 dark:text-primary-400">
+                      {t('pricing.trialDaysLeft', { days: trialDaysRemaining })}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-primary-400" />
                 </div>
               </div>
-            </div>
+            </Link>
           </motion.section>
         )}
 

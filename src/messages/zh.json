@@ -221,7 +221,10 @@
     "deleteAccountWarning": "注销账户将永久删除所有数据（食材、食谱、订阅等），且无法恢复。",
     "deleteAccountConfirm": "确定要注销账户吗？",
     "deleteAccountSuccess": "账户已注销",
-    "deleteAccountError": "注销账户失败"
+    "deleteAccountError": "注销账户失败",
+    "subscription": "订阅",
+    "freePlan": "免费方案",
+    "upgradePremium": "升级至Premium"
   },
   "auth": {
     "login": "登录",

@@ -261,7 +261,10 @@
     "deleteAccountWarning": "Deleting your account will permanently remove all data (ingredients, recipes, subscriptions, etc.) and cannot be undone.",
     "deleteAccountConfirm": "Are you sure you want to delete your account?",
     "deleteAccountSuccess": "Your account has been deleted",
-    "deleteAccountError": "Failed to delete account"
+    "deleteAccountError": "Failed to delete account",
+    "subscription": "Subscription",
+    "freePlan": "Free Plan",
+    "upgradePremium": "Upgrade to Premium"
   },
   "auth": {
     "login": "Login",

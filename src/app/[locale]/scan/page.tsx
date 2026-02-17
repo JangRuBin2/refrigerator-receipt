@@ -24,6 +24,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 interface ExtendedScannedItem extends ScannedItem {
   confidence?: number;
   estimatedExpiryDays?: number;
+  expiryDate?: string;
 }
 
 const STEPS = ['upload', 'scanning', 'confirm'] as const;
@@ -120,6 +121,7 @@ export default function ScanPage() {
     try {
       const data = await scanReceipt(file, useAIVision);
 
+      const today = new Date().toISOString().split('T')[0];
       const items: ExtendedScannedItem[] = (data.items as {
         name: string;
         quantity: number;
@@ -127,12 +129,18 @@ export default function ScanPage() {
         category: string;
         confidence?: number;
         estimatedExpiryDays?: number;
-      }[]).map((item) => ({
-        ...item,
-        unit: item.unit as Unit,
-        category: item.category as Category,
-        selected: true,
-      }));
+      }[]).map((item) => {
+        const expiryDate = item.estimatedExpiryDays
+          ? new Date(Date.now() + item.estimatedExpiryDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          : calculateExpiryDate(today, (item.category as Category) || 'etc', 'refrigerated');
+        return {
+          ...item,
+          unit: item.unit as Unit,
+          category: item.category as Category,
+          selected: true,
+          expiryDate,
+        };
+      });
 
       setScannedItems(items);
       setScanMode(data.mode);
@@ -163,10 +171,6 @@ export default function ScanPage() {
     const today = new Date().toISOString().split('T')[0];
 
     selectedItems.forEach((item) => {
-      const expiryDate = item.estimatedExpiryDays
-        ? new Date(Date.now() + item.estimatedExpiryDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        : calculateExpiryDate(today, item.category || 'etc', 'refrigerated');
-
       addIngredient({
         name: item.name,
         category: item.category || 'etc',
@@ -174,7 +178,7 @@ export default function ScanPage() {
         unit: item.unit || 'ea',
         storageType: 'refrigerated' as StorageType,
         purchaseDate: today,
-        expiryDate,
+        expiryDate: item.expiryDate || calculateExpiryDate(today, item.category || 'etc', 'refrigerated'),
       });
     });
 
@@ -562,12 +566,15 @@ export default function ScanPage() {
                     />
                   </div>
 
-                  {item.estimatedExpiryDays && (
-                    <div className="flex items-center gap-1 toss-caption text-gray-500">
-                      <Clock className="h-3 w-3" />
-                      {t('scan.estimatedExpiry', { days: item.estimatedExpiryDays })}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3 shrink-0 text-gray-400" />
+                    <Input
+                      type="date"
+                      value={item.expiryDate || ''}
+                      onChange={(e) => updateItem(index, { expiryDate: e.target.value })}
+                      className="h-8 text-xs"
+                    />
+                  </div>
                 </div>
               </div>
             </motion.div>
