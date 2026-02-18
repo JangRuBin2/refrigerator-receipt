@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/client';
 import { callEdgeFunction } from './edge';
 import { scoreRecipes, type ScoredRecipe } from '@/lib/recommend/engine';
 import type { Json } from '@/types/supabase';
+import type { Recipe, Difficulty } from '@/types';
 
 function parseJsonStringArray(json: Json): string[] {
   if (!Array.isArray(json)) return [];
@@ -27,6 +28,35 @@ function getLocalizedString(json: Json, locale: string): string {
   }
   return '';
 }
+
+// DB 레시피를 프론트엔드 Recipe 타입으로 변환
+export interface DBRecipe {
+  id: string;
+  title: Record<string, string>;
+  description?: Record<string, string>;
+  image_url?: string;
+  cooking_time?: number;
+  difficulty?: string;
+  servings?: number;
+  ingredients?: { name: string; quantity?: string }[];
+  instructions?: Record<string, string[]>;
+  tags?: string[];
+}
+
+export const mapDBRecipeToRecipe = (dbRecipe: DBRecipe): Recipe => ({
+  id: dbRecipe.id,
+  title: dbRecipe.title || {},
+  description: dbRecipe.description || {},
+  imageUrl: dbRecipe.image_url,
+  cookingTime: dbRecipe.cooking_time || 0,
+  difficulty: (dbRecipe.difficulty as Difficulty) || 'easy',
+  ingredients: (dbRecipe.ingredients || []).map(ing => ({
+    name: ing.name,
+    quantity: parseFloat(ing.quantity || '0') || 0,
+    unit: 'g' as const,
+  })),
+  instructions: dbRecipe.instructions || {},
+});
 
 export async function getRecipes(options?: {
   limit?: number;

@@ -23,12 +23,20 @@ export function IngredientForm({ onSuccess }: IngredientFormProps) {
 
   const today = new Date().toISOString().split('T')[0];
   const [isExpiryManual, setIsExpiryManual] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    category: Category;
+    quantity: string;
+    unit: Unit;
+    storageType: StorageType;
+    purchaseDate: string;
+    expiryDate: string;
+  }>({
     name: '',
-    category: 'vegetables' as Category,
+    category: 'vegetables',
     quantity: '',
-    unit: 'g' as Unit,
-    storageType: 'refrigerated' as StorageType,
+    unit: 'g',
+    storageType: 'refrigerated',
     purchaseDate: today,
     expiryDate: calculateExpiryDate(today, 'vegetables', 'refrigerated'),
   });
@@ -91,7 +99,10 @@ export function IngredientForm({ onSuccess }: IngredientFormProps) {
       <Select
         label={t('fridge.category')}
         value={formData.category}
-        onChange={(e) => handleCategoryChange(e.target.value as Category)}
+        onChange={(e) => {
+          const val = e.target.value;
+          if (CATEGORIES.includes(val as Category)) handleCategoryChange(val as Category);
+        }}
         options={CATEGORIES.map((cat) => ({
           value: cat,
           label: t(`categories.${cat}`),
@@ -109,7 +120,10 @@ export function IngredientForm({ onSuccess }: IngredientFormProps) {
         <Select
           label={t('fridge.unit')}
           value={formData.unit}
-          onChange={(e) => setFormData({ ...formData, unit: e.target.value as Unit })}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (UNITS.includes(val as Unit)) setFormData({ ...formData, unit: val as Unit });
+          }}
           options={UNITS.map((unit) => ({
             value: unit,
             label: t(`units.${unit}`),
@@ -120,7 +134,10 @@ export function IngredientForm({ onSuccess }: IngredientFormProps) {
       <Select
         label={t('fridge.storageType')}
         value={formData.storageType}
-        onChange={(e) => handleStorageChange(e.target.value as StorageType)}
+        onChange={(e) => {
+          const val = e.target.value;
+          if (['refrigerated', 'frozen', 'room_temp'].includes(val)) handleStorageChange(val as StorageType);
+        }}
         options={[
           { value: 'refrigerated', label: t('fridge.refrigerated') },
           { value: 'frozen', label: t('fridge.frozen') },

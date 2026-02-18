@@ -34,7 +34,7 @@ export default function ScanPage() {
   const t = useTranslations();
   const params = useParams();
   const router = useRouter();
-  const locale = params.locale as string;
+  const locale = String(params.locale ?? 'ko');
   const { addIngredient } = useStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -76,7 +76,10 @@ export default function ScanPage() {
     // 이미지 미리보기 설정
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setPreviewImage(ev.target?.result as string);
+      const result = ev.target?.result;
+      if (typeof result === 'string') {
+        setPreviewImage(result);
+      }
     };
     reader.readAsDataURL(file);
 
@@ -122,21 +125,25 @@ export default function ScanPage() {
       const data = await scanReceipt(file, useAIVision);
 
       const today = new Date().toISOString().split('T')[0];
-      const items: ExtendedScannedItem[] = (data.items as {
-        name: string;
-        quantity: number;
-        unit: string;
-        category: string;
-        confidence?: number;
-        estimatedExpiryDays?: number;
-      }[]).map((item) => {
-        const expiryDate = item.estimatedExpiryDays
-          ? new Date(Date.now() + item.estimatedExpiryDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          : calculateExpiryDate(today, (item.category as Category) || 'etc', 'refrigerated');
+      const items: ExtendedScannedItem[] = data.items.map((item) => {
+        const raw = item as unknown as Record<string, unknown>;
+        const category = (CATEGORIES.includes(String(raw.category) as Category)
+          ? String(raw.category)
+          : 'etc') as Category;
+        const unit = (UNITS.includes(String(raw.unit) as Unit)
+          ? String(raw.unit)
+          : 'ea') as Unit;
+        const estimatedDays = typeof raw.estimatedExpiryDays === 'number' ? raw.estimatedExpiryDays : 0;
+        const expiryDate = estimatedDays > 0
+          ? new Date(Date.now() + estimatedDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          : calculateExpiryDate(today, category, 'refrigerated');
         return {
-          ...item,
-          unit: item.unit as Unit,
-          category: item.category as Category,
+          name: String(raw.name ?? ''),
+          quantity: typeof raw.quantity === 'number' ? raw.quantity : 1,
+          unit,
+          category,
+          confidence: typeof raw.confidence === 'number' ? raw.confidence : undefined,
+          estimatedExpiryDays: estimatedDays || undefined,
           selected: true,
           expiryDate,
         };
@@ -176,7 +183,7 @@ export default function ScanPage() {
         category: item.category || 'etc',
         quantity: item.quantity || 1,
         unit: item.unit || 'ea',
-        storageType: 'refrigerated' as StorageType,
+        storageType: 'refrigerated' satisfies StorageType,
         purchaseDate: today,
         expiryDate: item.expiryDate || calculateExpiryDate(today, item.category || 'etc', 'refrigerated'),
       });
@@ -549,18 +556,24 @@ export default function ScanPage() {
                     <Input
                       type="number"
                       value={item.quantity}
-                      onChange={(e) => updateItem(index, { quantity: parseFloat(e.target.value) })}
+                      onChange={(e) => updateItem(index, { quantity: parseFloat(e.target.value) || 1 })}
                       className="h-9"
                     />
                     <Select
                       value={item.unit}
-                      onChange={(e) => updateItem(index, { unit: e.target.value as Unit })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (UNITS.includes(val as Unit)) updateItem(index, { unit: val as Unit });
+                      }}
                       options={UNITS.map((u) => ({ value: u, label: t(`units.${u}`) }))}
                       className="h-9"
                     />
                     <Select
                       value={item.category}
-                      onChange={(e) => updateItem(index, { category: e.target.value as Category })}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (CATEGORIES.includes(val as Category)) updateItem(index, { category: val as Category });
+                      }}
                       options={CATEGORIES.map((c) => ({ value: c, label: t(`categories.${c}`) }))}
                       className="h-9"
                     />

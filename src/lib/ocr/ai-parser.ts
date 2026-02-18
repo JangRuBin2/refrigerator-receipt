@@ -97,8 +97,6 @@ ${rawText}
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Gemini API error:', errorText);
     throw new Error(`Gemini API error: ${response.status}`);
   }
 
@@ -158,8 +156,7 @@ function parseJsonResponse(text: string): AIParsedItem[] {
       category: item.category || 'etc',
       confidence: item.confidence || 0.7,
     }));
-  } catch (error) {
-    console.error('JSON parsing error:', error, 'Text:', text);
+  } catch {
     return [];
   }
 }
@@ -261,8 +258,6 @@ export async function analyzeReceiptImage(imageBase64: string): Promise<ImageAna
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Gemini Vision API error:', errorText);
     throw new Error(`Gemini Vision API error: ${response.status}`);
   }
 
@@ -312,8 +307,7 @@ export async function analyzeReceiptImage(imageBase64: string): Promise<ImageAna
       rawText: parsed.rawText || '',
       isValid: true,
     };
-  } catch (error) {
-    console.error('JSON parsing error:', error);
+  } catch {
     return { items: [], rawText: text, isValid: false, invalidReason: 'unreadable' };
   }
 }

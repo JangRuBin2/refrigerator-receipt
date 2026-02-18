@@ -49,7 +49,7 @@ async function getUsageInfo(supabase: SupabaseClient, userId: string) {
     .from('profiles')
     .select('is_premium, subscription_end_date')
     .eq('id', userId)
-    .single() as { data: ProfileRow | null };
+    .single<ProfileRow>();
 
   const isPremium = profile?.is_premium &&
     (!profile.subscription_end_date || new Date(profile.subscription_end_date) > new Date());
@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
         user_id: e.user_id,
         raw_text: e.metadata?.raw_text,
         parsed_items: e.metadata?.parsed_items,
-        status: (e.metadata?.status as string) || 'completed',
+        status: String(e.metadata?.status ?? 'completed'),
         created_at: e.created_at,
       }));
 
@@ -159,8 +159,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body = await req.json();
-    const { image, useAIVision = true } = body as { image: string; useAIVision?: boolean };
+    const body: { image?: string; useAIVision?: boolean } = await req.json();
+    const { image, useAIVision = true } = body;
 
     if (!image) {
       return new Response(
@@ -241,8 +241,8 @@ Deno.serve(async (req) => {
       .select('id')
       .single();
 
-    if (eventRecord) {
-      result.scanId = (eventRecord as { id: string }).id;
+    if (eventRecord?.id) {
+      result.scanId = eventRecord.id;
     }
 
     return new Response(
@@ -323,22 +323,28 @@ async function analyzeReceiptImage(imageBase64: string): Promise<AnalysisResult>
   }
 
   try {
-    const parsed = parseJsonFromText(text) as Record<string, unknown>;
+    const parsed = parseJsonFromText(text);
+    if (!parsed || typeof parsed !== 'object') {
+      return { items: [], rawText: text, isValid: false, invalidReason: 'unreadable' };
+    }
 
-    if (parsed.isValid === false) {
+    const result = parsed as Record<string, unknown>;
+
+    if (result.isValid === false) {
       return {
         items: [],
-        rawText: (parsed.rawText as string) || '',
+        rawText: String(result.rawText ?? ''),
         isValid: false,
-        invalidReason: (parsed.invalidReason as string) || 'not_receipt',
+        invalidReason: String(result.invalidReason ?? 'not_receipt'),
       };
     }
 
-    const items: ScannedItem[] = ((parsed.items as unknown[]) || []).map((item: Record<string, unknown>) => {
-      const name = (item.name as string) || '';
+    const rawItems = Array.isArray(result.items) ? result.items : [];
+    const items: ScannedItem[] = rawItems.map((item: Record<string, unknown>) => {
+      const name = String(item.name ?? '');
       const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
-      const rawCategory = (item.category as string) || 'etc';
-      const rawUnit = (item.unit as string) || 'ea';
+      const rawCategory = String(item.category ?? 'etc');
+      const rawUnit = String(item.unit ?? 'ea');
       const rawConfidence = typeof item.confidence === 'number' ? item.confidence : 0.7;
       const category = VALID_CATEGORIES.includes(rawCategory) ? rawCategory : 'etc';
       const unit = VALID_UNITS.includes(rawUnit) ? rawUnit : 'ea';
@@ -354,7 +360,7 @@ async function analyzeReceiptImage(imageBase64: string): Promise<AnalysisResult>
 
     return {
       items,
-      rawText: (parsed.rawText as string) || '',
+      rawText: String(result.rawText ?? ''),
       isValid: true,
     };
   } catch {
@@ -472,10 +478,7 @@ function base64UrlEncode(str: string): string {
 }
 
 function uint8ArrayToBase64Url(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
+  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
@@ -486,10 +489,7 @@ async function signRS256(input: string, privateKey: string): Promise<string> {
     .replace(/\s/g, '');
 
   const binaryString = atob(pemContents);
-  const binaryKey = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    binaryKey[i] = binaryString.charCodeAt(i);
-  }
+  const binaryKey = Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
 
   const cryptoKey = await crypto.subtle.importKey(
     'pkcs8',
@@ -542,11 +542,13 @@ ${rawText}
   return parsed
     .filter((item: Record<string, unknown>) => item?.name && typeof item.name === 'string')
     .map((item: Record<string, unknown>): ScannedItem => {
-      const category = VALID_CATEGORIES.includes(item.category as string) ? (item.category as string) : 'etc';
+      const rawCategory = String(item.category ?? 'etc');
+      const category = VALID_CATEGORIES.includes(rawCategory) ? rawCategory : 'etc';
+      const rawUnit = String(item.unit ?? 'ea');
       return {
-        name: item.name as string,
+        name: String(item.name),
         quantity: typeof item.quantity === 'number' ? item.quantity : 1,
-        unit: VALID_UNITS.includes(item.unit as string) ? (item.unit as string) : 'ea',
+        unit: VALID_UNITS.includes(rawUnit) ? rawUnit : 'ea',
         category,
         confidence: Math.max(0, Math.min(1, (typeof item.confidence === 'number' ? item.confidence : 0.7))),
         estimatedExpiryDays: DEFAULT_EXPIRY_DAYS[category] || 14,

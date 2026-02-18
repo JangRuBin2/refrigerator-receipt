@@ -19,7 +19,12 @@ export async function extractTextFromImage(imageBase64: string): Promise<string>
     throw new Error('Google Cloud credentials not configured');
   }
 
-  const parsedCredentials = JSON.parse(credentials);
+  let parsedCredentials: { client_email: string; private_key: string; token_uri: string };
+  try {
+    parsedCredentials = JSON.parse(credentials);
+  } catch {
+    throw new Error('Invalid Google Cloud credentials format');
+  }
   const accessToken = await getAccessToken(parsedCredentials);
 
   const response = await fetch(
@@ -52,8 +57,6 @@ export async function extractTextFromImage(imageBase64: string): Promise<string>
   );
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.error('Vision API error response:', errorBody);
     throw new Error(`Vision API error: ${response.status} ${response.statusText}`);
   }
 
@@ -104,8 +107,6 @@ async function getAccessToken(credentials: {
   });
 
   if (!tokenResponse.ok) {
-    const errorBody = await tokenResponse.text();
-    console.error('Token exchange error:', errorBody);
     throw new Error(`Failed to get access token: ${tokenResponse.status}`);
   }
 
@@ -120,10 +121,7 @@ function base64UrlEncode(str: string): string {
 }
 
 function uint8ArrayToBase64Url(bytes: Uint8Array): string {
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
+  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
@@ -135,10 +133,7 @@ async function signRS256(input: string, privateKey: string): Promise<string> {
     .replace(/\s/g, '');
 
   const binaryString = atob(pemContents);
-  const binaryKey = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    binaryKey[i] = binaryString.charCodeAt(i);
-  }
+  const binaryKey = Uint8Array.from(binaryString, (char) => char.charCodeAt(0));
 
   const cryptoKey = await crypto.subtle.importKey(
     'pkcs8',

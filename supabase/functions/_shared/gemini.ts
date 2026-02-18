@@ -103,5 +103,6 @@ export function parseJsonFromText(text: string): unknown {
     } catch { /* fall through */ }
   }
 
+  // Final fallback - will throw if not valid JSON
   return JSON.parse(jsonStr);
 }
