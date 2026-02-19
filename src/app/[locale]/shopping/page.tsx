@@ -25,6 +25,7 @@ import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { cn, extractErrorMessage } from '@/lib/utils';
+import { useStore } from '@/store/useStore';
 import type { Category, Unit, ShoppingItem } from '@/types/supabase';
 import {
   getShoppingList,
@@ -73,6 +74,8 @@ export default function ShoppingPage() {
   const [filter, setFilter] = useState<'all' | 'unchecked' | 'checked'>('all');
   const [error, setError] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
+  const [recommendError, setRecommendError] = useState(false);
+  const { ingredients } = useStore();
 
   // 목록 조회
   const fetchList = useCallback(async () => {
@@ -87,23 +90,32 @@ export default function ShoppingPage() {
     }
   }, [t]);
 
-  // AI 추천 조회
-  const fetchRecommendations = async () => {
+  // AI 추천 조회 - 냉장고 실제 재료 기반
+  const fetchRecommendations = useCallback(async () => {
     setRecommendLoading(true);
+    setRecommendError(false);
     try {
-      const data = await getShoppingRecommendations([]) as { recommendations?: RecommendedItem[] };
+      const ingredientNames = ingredients.map((i) => i.name);
+      const data = await getShoppingRecommendations(ingredientNames) as {
+        recommendations?: RecommendedItem[];
+        source?: string;
+      };
       setRecommendations(data.recommendations || []);
     } catch {
-      // AI 추천은 부가 기능이므로 실패해도 목록 사용에 영향 없음
+      setRecommendError(true);
+      setRecommendations([]);
     } finally {
       setRecommendLoading(false);
     }
-  };
+  }, [ingredients]);
 
   useEffect(() => {
     fetchList();
-    fetchRecommendations();
   }, [fetchList]);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, [fetchRecommendations]);
 
   // 아이템 추가
   const addItem = async (item: Partial<ShoppingItem>) => {
@@ -318,24 +330,46 @@ export default function ShoppingPage() {
         </div>
 
         {/* AI Recommendations */}
-        {recommendations.length > 0 && (
-          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-purple-600" />
-                  <span className="font-semibold">{t('shopping.aiRecommend')}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={fetchRecommendations}
-                  disabled={recommendLoading}
-                >
-                  <RefreshCw className={cn('h-4 w-4', recommendLoading && 'animate-spin')} />
-                </Button>
+        <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                <span className="font-semibold">{t('shopping.aiRecommend')}</span>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchRecommendations}
+                disabled={recommendLoading}
+              >
+                <RefreshCw className={cn('h-4 w-4', recommendLoading && 'animate-spin')} />
+              </Button>
+            </div>
 
+            {recommendLoading ? (
+              <div className="space-y-2">
+                {[...Array(3)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between rounded-lg bg-white/70 p-3 dark:bg-gray-800/70 animate-pulse"
+                  >
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-5 w-5 rounded bg-gray-200 dark:bg-gray-600" />
+                        <div className="h-4 w-20 rounded bg-gray-200 dark:bg-gray-600" />
+                        <div className="h-4 w-12 rounded bg-gray-200 dark:bg-gray-600" />
+                      </div>
+                      <div className="h-3 w-32 rounded bg-gray-200 dark:bg-gray-600" />
+                    </div>
+                    <div className="h-8 w-8 rounded bg-gray-200 dark:bg-gray-600" />
+                  </div>
+                ))}
+                <p className="text-xs text-purple-500 text-center pt-1">
+                  {t('shopping.aiLoading')}
+                </p>
+              </div>
+            ) : recommendations.length > 0 ? (
               <div className="space-y-2">
                 {recommendations.slice(0, 5).map((item, index) => (
                   <div
@@ -362,12 +396,30 @@ export default function ShoppingPage() {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                {t('shopping.aiDisclaimer')}
+            ) : recommendError ? (
+              <div className="text-center py-4">
+                <AlertTriangle className="mx-auto h-6 w-6 text-orange-400 mb-2" />
+                <p className="text-sm text-gray-500">{t('shopping.aiError')}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fetchRecommendations}
+                  className="mt-2"
+                >
+                  <RefreshCw className="mr-1 h-3 w-3" />
+                  {t('common.retry')}
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                {t('shopping.aiEmpty')}
               </p>
-            </CardContent>
-          </Card>
-        )}
+            )}
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              {t('shopping.aiDisclaimer')}
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Shopping List */}
         {totalItems === 0 ? (

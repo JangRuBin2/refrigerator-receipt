@@ -26,7 +26,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch user's current ingredients
+    // 클라이언트에서 보낸 재료 목록도 받기 (DB 조회 실패 시 폴백용)
+    const body = await req.json().catch(() => ({}));
+    const clientIngredients: string[] = (body as { ingredients?: string[] }).ingredients || [];
+
+    // DB에서 유저의 실제 냉장고 재료 조회
     const { data: ingredients, error: ingredientsError } = await supabase
       .from('ingredients')
       .select('name, category, quantity, unit, expiry_date, purchase_date')
@@ -35,7 +39,31 @@ Deno.serve(async (req) => {
 
     if (ingredientsError) throw ingredientsError;
 
-    // Fetch purchase history from event_logs
+    // DB 재료가 없으면 클라이언트에서 보낸 재료 사용
+    const ingredientList: Ingredient[] = (ingredients && ingredients.length > 0)
+      ? ingredients
+      : clientIngredients.map((name) => ({
+          name,
+          category: 'etc',
+          quantity: 1,
+          unit: 'ea',
+          expiry_date: '',
+          purchase_date: '',
+        }));
+
+    // 냉장고에 재료가 하나도 없는 경우
+    if (ingredientList.length === 0) {
+      return new Response(
+        JSON.stringify({
+          recommendations: [],
+          source: 'empty',
+          message: '냉장고에 등록된 재료가 없습니다. 재료를 먼저 등록해주세요.',
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // 구매 이력 조회
     const { data: scanEvents, error: scansError } = await supabase
       .from('event_logs')
       .select('metadata, created_at')
@@ -50,15 +78,14 @@ Deno.serve(async (req) => {
     if (!apiKey) {
       return new Response(
         JSON.stringify({
-          recommendations: getDefaultRecommendations(ingredients || []),
-          source: 'default',
+          error: 'AI 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.',
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const recommendations = await getAIRecommendations(
-      ingredients || [],
+      ingredientList,
       scanEvents || []
     );
 
@@ -68,7 +95,7 @@ Deno.serve(async (req) => {
     );
   } catch {
     return new Response(
-      JSON.stringify({ error: 'Failed to get recommendations' }),
+      JSON.stringify({ error: 'AI 추천을 가져오지 못했습니다. 다시 시도해주세요.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
@@ -81,9 +108,11 @@ async function getAIRecommendations(
   const currentIngredients = ingredients.map((i: Ingredient) => ({
     name: i.name,
     category: i.category,
-    daysUntilExpiry: Math.ceil(
-      (new Date(i.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    ),
+    daysUntilExpiry: i.expiry_date
+      ? Math.ceil(
+          (new Date(i.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
+      : null,
   }));
 
   const purchaseHistory: Record<string, number> = {};
@@ -103,7 +132,14 @@ async function getAIRecommendations(
     .slice(0, 10)
     .map(([name, count]) => ({ name, count }));
 
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+  const seasonMap: Record<number, string> = { 0: '겨울', 1: '겨울', 2: '봄', 3: '봄', 4: '봄', 5: '여름', 6: '여름', 7: '여름', 8: '가을', 9: '가을', 10: '가을', 11: '겨울' };
+  const season = seasonMap[today.getMonth()];
+
   const prompt = `당신은 스마트 장보기 도우미입니다.
+
+오늘 날짜: ${dateStr} (${season})
 
 사용자의 현재 냉장고 재료:
 ${JSON.stringify(currentIngredients, null, 2)}
@@ -114,10 +150,11 @@ ${JSON.stringify(frequentItems, null, 2)}
 위 정보를 바탕으로 사용자에게 필요할 것 같은 장보기 목록을 추천해주세요.
 
 추천 기준:
-1. 유통기한이 임박한 재료(3일 이내)는 대체 재료 필요
-2. 자주 구매하는데 현재 없는 재료
-3. 균형 잡힌 식단을 위한 기본 재료
-4. 계절에 맞는 신선 재료
+1. 현재 냉장고 재료와 함께 사용하면 좋은 식재료
+2. 유통기한이 임박한 재료(3일 이내)가 있으면 대체할 수 있는 재료
+3. 자주 구매하는데 현재 냉장고에 없는 재료
+4. ${season}철 제철 식재료 우선 추천
+5. 현재 재료로 만들 수 있는 요리에 부족한 재료
 
 JSON 배열로 응답:
 [
@@ -126,77 +163,30 @@ JSON 배열로 응답:
     "quantity": 숫자,
     "unit": "g" | "kg" | "ml" | "L" | "ea" | "pack" | "bottle" | "box" | "bunch",
     "category": "vegetables" | "fruits" | "meat" | "seafood" | "dairy" | "condiments" | "grains" | "beverages" | "snacks" | "etc",
-    "reason": "추천 이유"
+    "reason": "추천 이유 (현재 냉장고 재료와의 연관성 포함)"
   }
 ]
 
 5~8개 추천. JSON만 응답.`;
 
-  try {
-    const text = await callGemini(prompt, { temperature: 0.7, maxTokens: 2048 });
+  const text = await callGemini(prompt, { temperature: 0.8, maxTokens: 2048 });
 
-    if (!text) return getDefaultRecommendations(ingredients);
-
-    const parsed = parseJsonFromText(text);
-    if (!Array.isArray(parsed)) return getDefaultRecommendations(ingredients);
-
-    return parsed
-      .filter((item: Record<string, unknown>) => item?.name && typeof item.name === 'string')
-      .map((item: Record<string, unknown>): ShoppingRecommendation => ({
-        name: item.name as string,
-        quantity: (item.quantity as number) || 1,
-        unit: (item.unit as string) || 'ea',
-        category: (item.category as string) || 'etc',
-        reason: (item.reason as string) || '',
-      }));
-  } catch {
-    return getDefaultRecommendations(ingredients);
-  }
-}
-
-function getDefaultRecommendations(ingredients: Ingredient[]): ShoppingRecommendation[] {
-  const recommendations: ShoppingRecommendation[] = [];
-  const existingCategories = new Set(ingredients.map((i: Ingredient) => i.category));
-
-  const essentials = [
-    { name: '계란', category: 'dairy', condition: !ingredients.some((i: Ingredient) => i.name?.includes('계란') || i.name?.includes('달걀')) },
-    { name: '우유', category: 'dairy', condition: !ingredients.some((i: Ingredient) => i.name?.includes('우유')) },
-    { name: '양파', category: 'vegetables', condition: !ingredients.some((i: Ingredient) => i.name?.includes('양파')) },
-    { name: '대파', category: 'vegetables', condition: !ingredients.some((i: Ingredient) => i.name?.includes('파')) },
-    { name: '마늘', category: 'condiments', condition: !ingredients.some((i: Ingredient) => i.name?.includes('마늘')) },
-    { name: '쌀', category: 'grains', condition: !ingredients.some((i: Ingredient) => i.name?.includes('쌀')) },
-  ];
-
-  for (const item of essentials) {
-    if (item.condition && recommendations.length < 6) {
-      recommendations.push({
-        name: item.name,
-        quantity: 1,
-        unit: 'ea',
-        category: item.category,
-        reason: '필수 식재료',
-      });
-    }
+  if (!text) {
+    throw new Error('AI 응답이 비어있습니다.');
   }
 
-  const categoryDefaults = [
-    { category: 'vegetables', name: '당근', reason: '채소류 보충' },
-    { category: 'fruits', name: '사과', reason: '과일류 보충' },
-    { category: 'meat', name: '닭가슴살', reason: '단백질 보충' },
-    { category: 'seafood', name: '고등어', reason: '해산물 보충' },
-  ];
-
-  for (const item of categoryDefaults) {
-    if (!existingCategories.has(item.category) && recommendations.length < 8) {
-      recommendations.push({
-        name: item.name,
-        quantity: 1,
-        unit: 'ea',
-        category: item.category,
-        reason: item.reason,
-      });
-    }
+  const parsed = parseJsonFromText(text);
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error('AI 응답을 파싱할 수 없습니다.');
   }
 
-  return recommendations;
+  return parsed
+    .filter((item: Record<string, unknown>) => item?.name && typeof item.name === 'string')
+    .map((item: Record<string, unknown>): ShoppingRecommendation => ({
+      name: item.name as string,
+      quantity: (item.quantity as number) || 1,
+      unit: (item.unit as string) || 'ea',
+      category: (item.category as string) || 'etc',
+      reason: (item.reason as string) || '',
+    }));
 }
