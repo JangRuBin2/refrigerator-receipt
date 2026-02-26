@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { Shuffle, Sparkles, Clock, ChefHat, Loader2, RotateCcw, Search, ExternalLink, Crown, Wand2, Heart, Check } from 'lucide-react';
 
+import { z } from 'zod';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -18,16 +19,24 @@ import { getRecipes, getRandomRecipe, saveAiRecipe as saveAiRecipeApi, aiGenerat
 
 type Mode = 'select' | 'random' | 'taste' | 'ai';
 
-interface AIGeneratedRecipe {
-  title: string;
-  description: string;
-  cookingTime: number;
-  difficulty: 'easy' | 'medium' | 'hard';
-  servings: number;
-  ingredients: { name: string; quantity: string }[];
-  instructions: string[];
-  tips?: string;
-}
+const localizedStringSchema = z.record(z.string(), z.string()).catch({});
+const ingredientListSchema = z.array(z.object({ name: z.string(), quantity: z.string().optional() })).catch([]);
+const aiGenerateResponseSchema = z.object({
+  recipe: z.object({
+    title: z.string(),
+    description: z.string(),
+    cookingTime: z.number(),
+    difficulty: z.enum(['easy', 'medium', 'hard']),
+    servings: z.number(),
+    ingredients: z.array(z.object({ name: z.string(), quantity: z.string() })),
+    instructions: z.array(z.string()),
+    tips: z.string().optional(),
+  }).optional(),
+  freeTrial: z.object({ remainingCount: z.number(), limit: z.number() }).optional(),
+  error: z.string().optional(),
+});
+
+type AIGeneratedRecipe = NonNullable<z.infer<typeof aiGenerateResponseSchema>['recipe']>;
 
 interface RandomResult {
   id: string;
@@ -43,7 +52,7 @@ export default function RecommendPage() {
   const t = useTranslations();
   const params = useParams();
   const router = useRouter();
-  const locale = params.locale as string;
+  const locale = typeof params.locale === 'string' ? params.locale : 'ko';
   const { isPremium } = usePremium();
   const [freeTrialInfo, setFreeTrialInfo] = useState<{ remainingCount: number; limit: number } | null>(null);
   const { ingredients } = useStore();
@@ -75,9 +84,10 @@ export default function RecommendPage() {
     const fetchRecipeNames = async () => {
       try {
         const data = await getRecipes({ limit: 50 });
-        const names = data.recipes?.map((r: RandomResult) =>
-          r.title?.[locale] || r.title?.ko || r.title?.en || ''
-        ).filter(Boolean) || [];
+        const names = data.recipes?.map((r) => {
+          const title = localizedStringSchema.parse(r.title);
+          return title[locale] || title.ko || title.en || '';
+        }).filter(Boolean) || [];
         if (names.length > 0) {
           setRecipeNames(names);
         }
@@ -117,16 +127,28 @@ export default function RecommendPage() {
     }, 100);
 
     try {
-      const data = await getRandomRecipe() as unknown as RandomResult;
+      const raw = await getRandomRecipe();
 
       // 애니메이션이 끝날 때까지 대기
       await new Promise(resolve => setTimeout(resolve, maxAnim * 100 + 200));
       clearInterval(interval);
 
-      if (data) {
-        setRandomResult(data);
+      if (raw) {
+        const title = localizedStringSchema.parse(raw.title);
+        const description = localizedStringSchema.safeParse(raw.description);
+        const parsedIngredients = ingredientListSchema.parse(raw.ingredients);
+        const result: RandomResult = {
+          id: raw.id,
+          title,
+          description: description.success ? description.data : undefined,
+          cooking_time: raw.cooking_time ?? undefined,
+          difficulty: raw.difficulty ?? undefined,
+          ingredients: parsedIngredients,
+          tags: Array.isArray(raw.tags) ? raw.tags.filter((t): t is string => typeof t === 'string') : undefined,
+        };
+        setRandomResult(result);
         setRandomDisplayName(
-          data.title?.[locale] || data.title?.ko || ''
+          title[locale] || title.ko || ''
         );
       }
     } catch {
@@ -225,13 +247,14 @@ export default function RecommendPage() {
         preferences.cuisine = aiPreferences.cuisine;
       }
 
-      const data = await aiGenerateRecipe({
+      const raw = await aiGenerateRecipe({
         ingredients: ingredientNames,
         preferences: Object.keys(preferences).length > 0 ? preferences : undefined,
         locale,
-      }) as { recipe?: AIGeneratedRecipe; freeTrial?: { remainingCount: number; limit: number }; error?: string };
+      });
+      const data = aiGenerateResponseSchema.parse(raw);
 
-      setAiRecipe(data.recipe || null);
+      setAiRecipe(data.recipe ?? null);
 
       // 무료 체험 정보 업데이트
       if (data.freeTrial) {

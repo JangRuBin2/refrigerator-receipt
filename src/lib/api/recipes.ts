@@ -1,6 +1,32 @@
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/client';
 import { callEdgeFunction } from './edge';
 import { scoreRecipes, type ScoredRecipe } from '@/lib/recommend/engine';
+import type { Json } from '@/types/supabase';
+
+function parseJsonStringArray(json: Json): string[] {
+  if (!Array.isArray(json)) return [];
+  return json
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object' && 'name' in item) {
+        return typeof (item as Record<string, unknown>).name === 'string'
+          ? (item as Record<string, unknown>).name as string
+          : '';
+      }
+      return '';
+    })
+    .filter(Boolean);
+}
+
+function getLocalizedString(json: Json, locale: string): string {
+  if (typeof json === 'string') return json;
+  if (json && typeof json === 'object' && !Array.isArray(json)) {
+    const obj = json as Record<string, Json | undefined>;
+    return String(obj[locale] ?? obj.ko ?? obj.en ?? '');
+  }
+  return '';
+}
 
 export async function getRecipes(options?: {
   limit?: number;
@@ -19,9 +45,13 @@ export async function getRecipes(options?: {
     .select('*', { count: 'exact' });
 
   if (options?.search) {
-    query = query.or(
-      `title->ko.ilike.%${options.search}%,title->en.ilike.%${options.search}%`
-    );
+    // Sanitize: strip PostgREST special characters to prevent filter injection
+    const sanitized = options.search.replace(/[%_.,()\\]/g, '');
+    if (sanitized.length > 0) {
+      query = query.or(
+        `title->ko.ilike.%${sanitized}%,title->en.ilike.%${sanitized}%`
+      );
+    }
   }
 
   const { data, error, count } = await query
@@ -60,11 +90,7 @@ export async function getRecommendedRecipes(ingredientNames: string[]) {
   if (error) throw error;
 
   const scored = (data ?? []).map((recipe) => {
-    const recipeIngredients: string[] = Array.isArray(recipe.ingredients)
-      ? recipe.ingredients.map((i: { name?: string }) =>
-          typeof i === 'string' ? i : i?.name ?? ''
-        )
-      : [];
+    const recipeIngredients = parseJsonStringArray(recipe.ingredients);
 
     const matchCount = recipeIngredients.filter((ri) =>
       ingredientNames.some((name) =>
@@ -98,19 +124,19 @@ export async function saveAiRecipe(recipe: {
 
   const locale = recipe.locale || 'ko';
 
+  const difficultySchema = z.enum(['easy', 'medium', 'hard']).nullable().catch(null);
+
   const { data, error } = await supabase
     .from('recipes')
     .insert({
+      source: 'ai',
       title: { [locale]: recipe.title },
       description: { [locale]: recipe.description || '' },
       cooking_time: recipe.cookingTime,
-      difficulty: recipe.difficulty,
+      difficulty: difficultySchema.parse(recipe.difficulty),
       servings: recipe.servings,
-      ingredients: recipe.ingredients,
+      ingredients: recipe.ingredients as unknown as Json,
       instructions: { [locale]: recipe.instructions },
-      tips: recipe.tips ? { [locale]: recipe.tips } : null,
-      is_ai_generated: true,
-      created_by: user.id,
     })
     .select()
     .single();
@@ -146,7 +172,17 @@ export async function scoreByTaste(answers: Record<string, string>): Promise<Sco
   if (error) throw error;
   if (!recipes?.length) return [];
 
-  return scoreRecipes(recipes, answers).slice(0, 5);
+  const mapped = recipes.map((r) => ({
+    id: r.id,
+    title: r.title as unknown,
+    description: r.description as unknown,
+    cooking_time: r.cooking_time ?? undefined,
+    difficulty: r.difficulty ?? undefined,
+    ingredients: r.ingredients as unknown,
+    tags: r.tags ?? undefined,
+  }));
+
+  return scoreRecipes(mapped, answers).slice(0, 5);
 }
 
 export async function getRandomRecipe() {

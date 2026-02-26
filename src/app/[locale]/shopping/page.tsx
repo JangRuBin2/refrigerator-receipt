@@ -24,8 +24,10 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { z } from 'zod';
 import { cn, extractErrorMessage } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
+import { categorySchema, unitSchema } from '@/lib/validations';
 import type { Category, Unit, ShoppingItem } from '@/types/supabase';
 import {
   getShoppingList,
@@ -34,42 +36,42 @@ import {
   deleteShoppingItem as deleteShoppingItemApi,
   completeShoppingList,
   getShoppingRecommendations,
+  type ParsedShoppingList,
 } from '@/lib/api/shopping';
 
 const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
 const UNITS: Unit[] = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
 
-interface RecommendedItem {
-  name: string;
-  quantity: number;
-  unit: Unit;
-  category: Category;
-  reason: string;
-}
+const recommendedItemSchema = z.object({
+  name: z.string(),
+  quantity: z.number(),
+  unit: unitSchema,
+  category: categorySchema,
+  reason: z.string(),
+});
 
-interface ShoppingListData {
-  id: string;
-  name: string;
-  items: ShoppingItem[];
-  is_active: boolean;
-  created_at: string;
-}
+const recommendResponseSchema = z.object({
+  recommendations: z.array(recommendedItemSchema).optional().default([]),
+  source: z.string().optional(),
+});
+
+type RecommendedItem = z.infer<typeof recommendedItemSchema>;
 
 export default function ShoppingPage() {
   const t = useTranslations();
   const params = useParams();
-  const locale = params.locale as string;
+  const locale = typeof params.locale === 'string' ? params.locale : 'ko';
 
-  const [list, setList] = useState<ShoppingListData | null>(null);
+  const [list, setList] = useState<ParsedShoppingList | null>(null);
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<RecommendedItem[]>([]);
   const [recommendLoading, setRecommendLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newItem, setNewItem] = useState({
+  const [newItem, setNewItem] = useState<{ name: string; quantity: number; unit: Unit; category: Category }>({
     name: '',
     quantity: 1,
-    unit: 'ea' as Unit,
-    category: 'etc' as Category,
+    unit: 'ea',
+    category: 'etc',
   });
   const [filter, setFilter] = useState<'all' | 'unchecked' | 'checked'>('all');
   const [error, setError] = useState<string | null>(null);
@@ -96,11 +98,9 @@ export default function ShoppingPage() {
     setRecommendError(false);
     try {
       const ingredientNames = ingredients.map((i) => i.name);
-      const data = await getShoppingRecommendations(ingredientNames) as {
-        recommendations?: RecommendedItem[];
-        source?: string;
-      };
-      setRecommendations(data.recommendations || []);
+      const raw = await getShoppingRecommendations(ingredientNames);
+      const data = recommendResponseSchema.parse(raw);
+      setRecommendations(data.recommendations);
     } catch {
       setRecommendError(true);
       setRecommendations([]);
@@ -222,7 +222,7 @@ export default function ShoppingPage() {
     if (!acc[category]) acc[category] = [];
     acc[category].push(item);
     return acc;
-  }, {} as Record<string, ShoppingItem[]>);
+  }, {} as Record<string, ShoppingItem[]>); // reduce requires typed initial value
 
   const getCategoryIcon = (category: string) => {
     const icons: Record<string, string> = {
@@ -528,7 +528,7 @@ export default function ShoppingPage() {
               <label className="block text-sm font-medium mb-1">{t('fridge.unit')}</label>
               <Select
                 value={newItem.unit}
-                onChange={(e) => setNewItem(prev => ({ ...prev, unit: e.target.value as Unit }))}
+                onChange={(e) => setNewItem(prev => ({ ...prev, unit: unitSchema.parse(e.target.value) }))}
                 options={UNITS.map(u => ({ value: u, label: t(`units.${u}`) }))}
               />
             </div>
@@ -538,7 +538,7 @@ export default function ShoppingPage() {
             <label className="block text-sm font-medium mb-1">{t('fridge.category')}</label>
             <Select
               value={newItem.category}
-              onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value as Category }))}
+              onChange={(e) => setNewItem(prev => ({ ...prev, category: categorySchema.parse(e.target.value) }))}
               options={CATEGORIES.map(c => ({ value: c, label: t(`categories.${c}`) }))}
             />
           </div>

@@ -1,11 +1,13 @@
 import { createClient } from '@/lib/supabase/client';
 import { callEdgeFunction } from './edge';
+import { clearAllUserData } from '@/lib/auth-cleanup';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 
 export async function signOut() {
   const supabase = createClient();
   await supabase.auth.signOut();
+  clearAllUserData();
 }
 
 interface TossLoginResponse {
@@ -24,14 +26,15 @@ interface TossLoginResponse {
 }
 
 export async function tossLogin(authorizationCode: string, referrer: string): Promise<TossLoginResponse> {
-  // Ensure previous session is fully cleared before starting new login
+  // Ensure previous session and all user data are fully cleared before new login
   const supabase = createClient();
   const { data: { user: existingUser } } = await supabase.auth.getUser();
   if (existingUser) {
     await supabase.auth.signOut();
-    // Brief delay to let Supabase cleanup complete
     await new Promise((r) => setTimeout(r, 300));
   }
+  // Always clear previous user data to prevent cross-user data leakage
+  clearAllUserData();
 
   const response = await fetch(`${SUPABASE_URL}/functions/v1/auth-toss`, {
     method: 'POST',

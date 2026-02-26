@@ -20,7 +20,7 @@ export type EventType =
   | 'taste_recipe'
   | 'nutrition_analyze'
   | 'shopping_recommend';
-export type Plan = 'free' | 'premium';
+export type Plan = 'free' | 'trial' | 'premium';
 export type BillingCycle = 'monthly' | 'yearly';
 export type PaymentProvider = 'stripe' | 'toss' | 'google_play' | 'app_store';
 
@@ -327,8 +327,12 @@ export type Database = {
         ];
       };
     };
-    Views: Record<string, unknown>;
-    Functions: Record<string, unknown>;
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
     Enums: {
       category: Category;
       unit: Unit;
@@ -340,7 +344,9 @@ export type Database = {
       billing_cycle: BillingCycle;
       payment_provider: PaymentProvider;
     };
-    CompositeTypes: Record<string, unknown>;
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
 };
 

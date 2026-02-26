@@ -33,8 +33,8 @@ export async function getSubscription(): Promise<SubscriptionResponse> {
   return {
     isPremium: isPremium || isTrialActive,
     plan: subscription.plan as 'free' | 'trial' | 'premium',
-    billingCycle: subscription.billing_cycle,
-    expiresAt: subscription.expires_at,
+    billingCycle: subscription.billing_cycle ?? undefined,
+    expiresAt: subscription.expires_at ?? undefined,
     autoRenew: subscription.auto_renew,
     isTrial,
     isTrialActive,

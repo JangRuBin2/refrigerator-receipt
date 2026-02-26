@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { SubscriptionResponse } from '@/types/subscription';
 import { getSubscription as getSubscriptionApi } from '@/lib/api/subscription';
+import { createClient } from '@/lib/supabase/client';
 
 interface UsePremiumReturn {
   isPremium: boolean;
@@ -42,6 +43,7 @@ const PREMIUM_FEATURES: Record<PremiumFeature, boolean> = {
 // 캐시 시간 (1분 - trial 만료 감지 개선)
 const CACHE_DURATION = 1 * 60 * 1000;
 
+let cachedUserId: string | null = null;
 let cachedSubscription: SubscriptionResponse | null = null;
 let cacheTimestamp: number | null = null;
 
@@ -57,6 +59,17 @@ export function usePremium(): UsePremiumReturn {
       return;
     }
 
+    // User-scoped cache: invalidate if user changed
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    const currentUserId = session?.user?.id ?? null;
+
+    if (currentUserId !== cachedUserId) {
+      cachedSubscription = null;
+      cacheTimestamp = null;
+      cachedUserId = currentUserId;
+    }
+
     if (!force && cachedSubscription && cacheTimestamp) {
       const now = Date.now();
       if (now - cacheTimestamp < CACHE_DURATION) {
@@ -69,6 +82,7 @@ export function usePremium(): UsePremiumReturn {
     setIsLoading(true);
     try {
       const data = await getSubscriptionApi();
+      cachedUserId = currentUserId;
       cachedSubscription = data;
       cacheTimestamp = Date.now();
       setSubscription(data);
@@ -116,8 +130,9 @@ export function usePremium(): UsePremiumReturn {
   };
 }
 
-// 캐시 초기화 (로그아웃 시 사용)
+// 캐시 초기화 (로그아웃/로그인 시 사용)
 export function clearPremiumCache() {
+  cachedUserId = null;
   cachedSubscription = null;
   cacheTimestamp = null;
 }

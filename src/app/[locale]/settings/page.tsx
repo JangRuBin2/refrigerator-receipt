@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
 import { deleteAccount as deleteAccountApi } from '@/lib/api/auth';
+import { clearAllUserData } from '@/lib/auth-cleanup';
 
 interface UserProfile {
   id: string;
@@ -110,9 +111,10 @@ export default function SettingsPage() {
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    clearAllUserData();
     setUser(null);
     setShowLogoutModal(false);
-    router.refresh();
+    window.location.href = `/${locale}/login`;
   };
 
   const handleDeleteAccount = async () => {
@@ -122,7 +124,7 @@ export default function SettingsPage() {
       await deleteAccountApi();
       const supabase = createClient();
       await supabase.auth.signOut();
-      clearIngredients();
+      clearAllUserData();
       setUser(null);
       setShowDeleteAccountModal(false);
       window.location.href = `/${locale}/login`;

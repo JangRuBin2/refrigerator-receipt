@@ -7,6 +7,7 @@ import { ToastContainer } from '@/components/ui/Toast';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { DeepLinkHandler } from '@/components/layout/DeepLinkHandler';
 import { BackButtonHandler } from '@/components/layout/BackButtonHandler';
+import { PinchZoomPrevention } from '@/components/layout/PinchZoomPrevention';
 import { IngredientSyncProvider } from '@/components/layout/IngredientSyncProvider';
 import { WebApplicationJsonLd, OrganizationJsonLd } from '@/components/seo/JsonLd';
 import { Metadata } from 'next';
@@ -169,6 +170,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <DeepLinkHandler />
           <BackButtonHandler />
+          <PinchZoomPrevention />
           <IngredientSyncProvider />
           <div className="mx-auto min-h-screen max-w-lg bg-white shadow-lg dark:bg-gray-800">
             <main className="pb-20">

@@ -105,7 +105,9 @@
       "Bash(node scripts/gen-iap-images.mjs:*)",
       "WebFetch(domain:apps.apple.com)",
       "WebFetch(domain:play.google.com)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "WebFetch(domain:techchat-apps-in-toss.toss.im)",
+      "WebFetch(domain:tosspublic.notion.site)"
     ]
   }
 }

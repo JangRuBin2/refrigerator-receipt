@@ -26,7 +26,10 @@ function generateTossEmail(tossUserKey: string): string {
 }
 
 async function generateTossPassword(tossUserKey: string): Promise<string> {
-  const secret = Deno.env.get('TOSS_AUTH_SECRET') || 'default-toss-secret';
+  const secret = Deno.env.get('TOSS_AUTH_SECRET');
+  if (!secret) {
+    throw new Error('TOSS_AUTH_SECRET not configured');
+  }
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw',
@@ -145,7 +148,7 @@ async function getTossUserInfo(
     return { userKey: String(userKey) };
   }
 
-  return { error: data.error?.reason || data.error?.message || `Unexpected response: ${JSON.stringify(data).substring(0, 200)}` };
+  return { error: 'Failed to retrieve user info' };
 }
 
 Deno.serve(async (req) => {
@@ -154,39 +157,33 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { authorizationCode, referrer, tossUserKey: legacyKey } = body;
+    const { authorizationCode, referrer } = body;
 
-    // Support both new OAuth2 flow and legacy tossUserKey flow
-    let tossUserKey: string;
-
-    if (authorizationCode && referrer) {
-      // New flow: exchange authorizationCode for token, get userKey
-      const tokenResult = await exchangeCodeForToken(authorizationCode, referrer);
-      if ('error' in tokenResult) {
-        return new Response(
-          JSON.stringify({ success: false, error: `Token exchange: ${tokenResult.error}` }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const userResult = await getTossUserInfo(tokenResult.accessToken);
-      if ('error' in userResult) {
-        return new Response(
-          JSON.stringify({ success: false, error: `User info: ${userResult.error}` }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      tossUserKey = userResult.userKey;
-    } else if (legacyKey && typeof legacyKey === 'string') {
-      // Legacy flow: direct tossUserKey (for backward compatibility)
-      tossUserKey = legacyKey;
-    } else {
+    if (!authorizationCode || !referrer) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing authorizationCode/referrer or tossUserKey' }),
+        JSON.stringify({ success: false, error: 'Missing authorizationCode or referrer' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // OAuth2 flow: exchange authorizationCode for token, get userKey
+    const tokenResult = await exchangeCodeForToken(authorizationCode, referrer);
+    if ('error' in tokenResult) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Token exchange failed' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userResult = await getTossUserInfo(tokenResult.accessToken);
+    if ('error' in userResult) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to retrieve user info' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const tossUserKey = userResult.userKey;
 
     const supabaseAdmin = createAdminClient();
     const email = generateTossEmail(tossUserKey);
@@ -301,9 +298,8 @@ Deno.serve(async (req) => {
       { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Internal server error';
     return new Response(
-      JSON.stringify({ success: false, error: msg }),
+      JSON.stringify({ success: false, error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
