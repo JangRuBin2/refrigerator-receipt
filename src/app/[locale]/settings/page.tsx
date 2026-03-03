@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { User, Globe, Bell, Palette, Database, Info, LogOut, UserX, ChevronRight, Moon, Sun } from 'lucide-react';
+import { User, Globe, Bell, Palette, Database, LogOut, UserX, ChevronRight, Moon, Sun } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useStore } from '@/store/useStore';
@@ -323,37 +323,12 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* About */}
+        {/* Version */}
         <Card>
           <CardContent className="p-4">
-            <h3 className="mb-3 text-sm font-medium text-gray-500">
-              {t('settings.about')}
-            </h3>
-            <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <div className="flex justify-between">
-                <span>{t('settings.version')}</span>
-                <span>1.0.0</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t('settings.businessName')}</span>
-                <span>인프리</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t('settings.representative')}</span>
-                <span>장루빈</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t('settings.businessNumber')}</span>
-                <span>790-39-01572</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t('settings.contact')}</span>
-                <span>wkdfnqls2465@gmail.com</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="shrink-0">{t('settings.address')}</span>
-                <span className="text-right">대전광역시 유성구 대정로28번안길 80, 209동 1402호</span>
-              </div>
+            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+              <span>{t('settings.version')}</span>
+              <span>1.0.0</span>
             </div>
           </CardContent>
         </Card>
@@ -379,11 +354,6 @@ export default function SettingsPage() {
             </Button>
           </div>
         )}
-
-        {/* Copyright */}
-        <p className="py-4 text-center text-xs text-gray-400 dark:text-gray-500">
-          © {new Date().getFullYear()} MealKeeper. All rights reserved.
-        </p>
 
         {/* Language Modal */}
         <Modal

@@ -109,30 +109,3 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
-
-/** Icon button variant */
-export const IconButton = forwardRef<
-  HTMLButtonElement,
-  Omit<ButtonProps, 'children'> & { icon: React.ReactNode; label: string }
->(({ icon, label, className, size = 'md', ...props }, ref) => {
-  const sizeStyles = {
-    sm: 'h-11 w-11 min-h-[44px] min-w-[44px]', // min 44px for accessibility
-    md: 'h-11 w-11 min-h-[44px] min-w-[44px]',
-    lg: 'h-12 w-12',
-    xl: 'h-14 w-14',
-  };
-
-  return (
-    <Button
-      ref={ref}
-      variant="ghost"
-      className={cn('p-0', sizeStyles[size], className)}
-      aria-label={label}
-      {...props}
-    >
-      {icon}
-    </Button>
-  );
-});
-
-IconButton.displayName = 'IconButton';

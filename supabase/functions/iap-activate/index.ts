@@ -1,5 +1,51 @@
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient, createAdminClient } from '../_shared/supabase.ts';
+import { z } from 'https://esm.sh/zod@3.22.4';
+
+const IapActivateSchema = z.object({
+  orderId: z.string().min(1),
+  sku: z.string().min(1),
+  tossUserKey: z.string().nullable().optional(),
+});
+
+const APPS_IN_TOSS_API_URL = Deno.env.get('APPS_IN_TOSS_API_URL') || 'https://api.apps-in-toss.toss.im';
+
+async function verifyOrderWithToss(orderId: string, tossUserKey?: string | null): Promise<boolean> {
+  const certBase64 = Deno.env.get('APPS_IN_TOSS_MTLS_CERT');
+  const keyBase64 = Deno.env.get('APPS_IN_TOSS_MTLS_KEY');
+
+  if (!certBase64 || !keyBase64) {
+    // mTLS not configured - reject in production, allow in development
+    const isDev = Deno.env.get('ENVIRONMENT') === 'development';
+    return isDev;
+  }
+
+  try {
+    const cert = atob(certBase64);
+    const key = atob(keyBase64);
+
+    const response = await fetch(
+      `${APPS_IN_TOSS_API_URL}/api-partner/v1/apps-in-toss/order/get-order-status`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(tossUserKey ? { 'x-toss-user-key': tossUserKey } : {}),
+        },
+        body: JSON.stringify({ orderId }),
+        // @ts-ignore - Deno supports client parameter for mTLS
+        client: { certChain: cert, privateKey: key },
+      }
+    );
+
+    if (!response.ok) return false;
+
+    const data = await response.json();
+    return data.status === 'PAID' || data.status === 'COMPLETED';
+  } catch {
+    return false;
+  }
+}
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -25,16 +71,23 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { orderId, sku, tossUserKey } = body as {
-      orderId: string;
-      sku: string;
-      tossUserKey?: string | null;
-    };
+    const parsed = IapActivateSchema.safeParse(body);
 
-    if (!orderId || !sku) {
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing required fields: orderId, sku' }),
+        JSON.stringify({ success: false, error: 'Invalid request body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { orderId, sku, tossUserKey } = parsed.data;
+
+    // Verify purchase with Toss IAP API before activating
+    const isVerified = await verifyOrderWithToss(orderId, tossUserKey);
+    if (!isVerified) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Order verification failed' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

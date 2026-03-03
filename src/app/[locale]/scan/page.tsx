@@ -17,10 +17,8 @@ import { useAppsInTossAds } from '@/hooks/useAppsInTossAds';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
 import { scanReceipt } from '@/lib/api/scan';
-import type { ScannedItem, Category, Unit, StorageType } from '@/types';
-
-const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
-const UNITS: Unit[] = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
+import type { ScannedItem, StorageType } from '@/types';
+import { CATEGORIES, UNITS } from '@/lib/constants';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface ExtendedScannedItem extends ScannedItem {

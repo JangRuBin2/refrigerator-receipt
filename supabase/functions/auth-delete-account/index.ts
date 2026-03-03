@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     if (deleteError) {
       console.error('Failed to delete auth user:', deleteError.message);
       return new Response(
-        JSON.stringify({ error: `계정 삭제 실패: ${deleteError.message}` }),
+        JSON.stringify({ error: '계정 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('auth-delete-account error:', err);
     return new Response(
-      JSON.stringify({ error: `서버 오류: ${err instanceof Error ? err.message : String(err)}` }),
+      JSON.stringify({ error: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

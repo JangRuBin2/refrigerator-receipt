@@ -163,7 +163,7 @@ async function analyzeNutrition(ingredients: Ingredient[], period: string | null
   });
 
   // Total nutrition
-  const totalNutrition = ingredientNutrition.reduce((acc: Nutrition, ing: IngredientNutrition) => ({
+  const rawTotal = ingredientNutrition.reduce((acc: Nutrition, ing: IngredientNutrition) => ({
     calories: acc.calories + ing.nutrition.calories,
     protein: acc.protein + ing.nutrition.protein,
     carbs: acc.carbs + ing.nutrition.carbs,
@@ -172,11 +172,14 @@ async function analyzeNutrition(ingredients: Ingredient[], period: string | null
     sugar: acc.sugar + ing.nutrition.sugar,
   }), { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0 });
 
-  totalNutrition.protein = Math.round(totalNutrition.protein * 10) / 10;
-  totalNutrition.carbs = Math.round(totalNutrition.carbs * 10) / 10;
-  totalNutrition.fat = Math.round(totalNutrition.fat * 10) / 10;
-  totalNutrition.fiber = Math.round(totalNutrition.fiber * 10) / 10;
-  totalNutrition.sugar = Math.round(totalNutrition.sugar * 10) / 10;
+  const totalNutrition: Nutrition = {
+    calories: rawTotal.calories,
+    protein: Math.round(rawTotal.protein * 10) / 10,
+    carbs: Math.round(rawTotal.carbs * 10) / 10,
+    fat: Math.round(rawTotal.fat * 10) / 10,
+    fiber: Math.round(rawTotal.fiber * 10) / 10,
+    sugar: Math.round(rawTotal.sugar * 10) / 10,
+  };
 
   // Score
   const goodCategories = categoryBalance.filter(c => c.status === 'good').length;

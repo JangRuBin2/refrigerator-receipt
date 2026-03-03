@@ -98,7 +98,9 @@ export function parseJsonFromText(text: string): unknown {
   const objStart = jsonStr.indexOf('{');
   const objEnd = jsonStr.lastIndexOf('}');
   if (objStart !== -1 && objEnd !== -1) {
-    return JSON.parse(jsonStr.slice(objStart, objEnd + 1));
+    try {
+      return JSON.parse(jsonStr.slice(objStart, objEnd + 1));
+    } catch { /* fall through */ }
   }
 
   return JSON.parse(jsonStr);

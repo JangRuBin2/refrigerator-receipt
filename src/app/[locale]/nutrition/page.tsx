@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
+import { getCategoryIcon } from '@/lib/constants';
 import { analyzeNutrition, analyzePeriodNutrition } from '@/lib/api/nutrition';
 
 type ViewMode = 'current' | 'week' | 'month';
@@ -131,21 +132,6 @@ export default function NutritionPage() {
     return 'F';
   };
 
-  const getCategoryIcon = (category: string) => {
-    const icons: Record<string, string> = {
-      vegetables: '🥬',
-      fruits: '🍎',
-      meat: '🥩',
-      seafood: '🐟',
-      dairy: '🥛',
-      condiments: '🧂',
-      grains: '🌾',
-      beverages: '🥤',
-      snacks: '🍪',
-      etc: '📦',
-    };
-    return icons[category] || '📦';
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {

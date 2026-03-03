@@ -2,11 +2,7 @@ import { callEdgeFunction } from './edge';
 
 export async function scanReceipt(file: File, useAIVision: boolean = true) {
   const base64 = await fileToBase64(file);
-  return callEdgeFunction<{
-    items: unknown[];
-    mode: string;
-    usage?: { dailyLimit: number; used: number; remaining: number };
-  }>('receipts-scan', {
+  return callEdgeFunction('receipts-scan', {
     body: { image: base64, useAIVision },
   });
 }

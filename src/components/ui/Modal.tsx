@@ -24,6 +24,15 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -36,6 +45,9 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
 
       {/* Modal */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className={cn(
           'relative z-10 mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800',
           'max-h-[85vh] overflow-y-auto',

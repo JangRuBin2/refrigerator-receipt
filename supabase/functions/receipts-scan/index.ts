@@ -259,9 +259,9 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('receipts-scan error:', error);
     return new Response(
-      JSON.stringify({ error: errorMessage || '스캔 중 오류가 발생했습니다.' }),
+      JSON.stringify({ error: '스캔 중 오류가 발생했습니다. 다시 시도해주세요.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

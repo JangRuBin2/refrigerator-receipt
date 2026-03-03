@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, Suspense, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useSearchParams } from 'next/navigation';
 import { ChefHat, Clock, Heart, Shuffle, Check, X, Loader2, Search } from 'lucide-react';
@@ -15,6 +15,7 @@ import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import { PremiumGate } from '@/components/premium/PremiumGate';
 import { cn } from '@/lib/utils';
+import { getDifficultyColor } from '@/lib/constants';
 import { getRecipes } from '@/lib/api/recipes';
 import { searchRecipes as searchExternalRecipesApi } from '@/lib/api/recipes';
 import type { Recipe, RecipeIngredient, ExternalRecipe, Difficulty } from '@/types';
@@ -120,8 +121,8 @@ function RecipesContent() {
       const newHasMore = currentOffset + mappedRecipes.length < total;
       setHasMore(newHasMore);
       hasMoreRef.current = newHasMore;
-    } catch {
-      // error silently
+    } catch (err) {
+      console.error('Failed to fetch recipes:', err);
     } finally {
       setRecipesLoading(false);
       setLoadingMore(false);
@@ -165,7 +166,7 @@ function RecipesContent() {
   }, [fetchRecipes]);
 
   // Check ingredient availability for each recipe
-  const recipesWithAvailability = recipes.map((recipe) => {
+  const recipesWithAvailability = useMemo(() => recipes.map((recipe) => {
     const availableIngredients = recipe.ingredients.filter((ri) =>
       ingredients.some((i) => i.name.includes(ri.name) || ri.name.includes(i.name))
     );
@@ -182,7 +183,7 @@ function RecipesContent() {
         isAvailable: ingredients.some((i) => i.name.includes(ri.name) || ri.name.includes(i.name)),
       })),
     };
-  });
+  }), [recipes, ingredients, favoriteRecipeIds]);
 
   // Filter recipes
   const filteredRecipes = recipesWithAvailability.filter((recipe) => {
@@ -269,18 +270,6 @@ function RecipesContent() {
     return r.source === externalFilter;
   });
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'easy':
-        return 'bg-green-100 text-green-700';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'hard':
-        return 'bg-red-100 text-red-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
 
   // 유통기한 임박 재료 개수
   const expiringCount = ingredients.filter(i => {
@@ -424,6 +413,7 @@ function RecipesContent() {
                       toggleFavorite(recipe.id);
                     }}
                     className="rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    aria-label={recipe.isFavorite ? t('recipe.removeFromFavorites') : t('recipe.addToFavorites')}
                   >
                     <Heart
                       className={cn(

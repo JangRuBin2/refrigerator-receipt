@@ -41,13 +41,13 @@ export async function analyzeNutrition(input?: {
   ingredients?: string[];
   locale?: string;
 }) {
-  return callEdgeFunction<{ report: unknown }>('nutrition-analyze', {
+  return callEdgeFunction('nutrition-analyze', {
     body: input || {},
   });
 }
 
 export async function analyzePeriodNutrition(period: 'week' | 'month') {
-  return callEdgeFunction<{ report: unknown }>('nutrition-analyze', {
+  return callEdgeFunction('nutrition-analyze', {
     body: { period },
   });
 }

@@ -2,13 +2,13 @@ import { createClient } from '@/lib/supabase/client';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 
-export async function callEdgeFunction<T>(
+export async function callEdgeFunction(
   functionName: string,
   options: {
     method?: string;
     body?: unknown;
   } = {}
-): Promise<T> {
+): Promise<unknown> {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -42,7 +42,7 @@ export async function callEdgeFunction<T>(
   }
 
   try {
-    return JSON.parse(text) as T;
+    return JSON.parse(text);
   } catch {
     throw new Error(`서버 응답을 처리할 수 없습니다.`);
   }

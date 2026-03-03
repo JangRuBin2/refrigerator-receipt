@@ -32,19 +32,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import type { Category } from '@/types';
-
-const CATEGORY_EMOJI: Record<Category, string> = {
-  vegetables: '🥬',
-  fruits: '🍎',
-  meat: '🥩',
-  seafood: '🐟',
-  dairy: '🥛',
-  condiments: '🧂',
-  grains: '🌾',
-  beverages: '🥤',
-  snacks: '🍪',
-  etc: '📦',
-};
+import { CATEGORY_EMOJI } from '@/lib/constants';
 
 const STORAGE_CONFIG = [
   { key: 'refrigerated' as const, icon: Refrigerator, color: 'bg-blue-500', lightBg: 'bg-blue-50 dark:bg-blue-900/20' },

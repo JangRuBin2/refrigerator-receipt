@@ -3,6 +3,7 @@ import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { Footer } from '@/components/layout/Footer';
 import { ToastContainer } from '@/components/ui/Toast';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { DeepLinkHandler } from '@/components/layout/DeepLinkHandler';
@@ -173,8 +174,9 @@ export default async function LocaleLayout({
           <PinchZoomPrevention />
           <IngredientSyncProvider />
           <div className="mx-auto min-h-screen max-w-lg bg-white shadow-lg dark:bg-gray-800">
-            <main className="pb-20">
+            <main>
               <AuthGuard>{children}</AuthGuard>
+              <Footer />
             </main>
             <BottomNav locale={locale} />
           </div>

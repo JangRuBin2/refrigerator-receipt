@@ -78,13 +78,13 @@ export async function iapActivate(params: {
   sku: string;
   tossUserKey: string | null;
 }) {
-  return callEdgeFunction<{ success: boolean }>('iap-activate', {
+  return callEdgeFunction('iap-activate', {
     body: params,
   });
 }
 
 export async function getIapStatus() {
-  return callEdgeFunction<{ isPremium: boolean }>('iap-status', {
+  return callEdgeFunction('iap-status', {
     method: 'POST',
     body: {},
   });

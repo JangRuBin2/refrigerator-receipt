@@ -1,7 +1,13 @@
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
+import { z } from 'https://esm.sh/zod@3.22.4';
 
 const APPS_IN_TOSS_API_URL = Deno.env.get('APPS_IN_TOSS_API_URL') || 'https://api.apps-in-toss.toss.im';
+
+const IapStatusSchema = z.object({
+  orderId: z.string().min(1),
+  tossUserKey: z.string().min(1),
+});
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -27,17 +33,16 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { orderId, tossUserKey } = body as {
-      orderId: string;
-      tossUserKey: string;
-    };
+    const parsed = IapStatusSchema.safeParse(body);
 
-    if (!orderId || !tossUserKey) {
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Missing required fields' }),
+        JSON.stringify({ success: false, error: 'Invalid request body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const { orderId, tossUserKey } = parsed.data;
 
     // Call Toss API with mTLS
     const status = await getOrderStatus(orderId, tossUserKey);

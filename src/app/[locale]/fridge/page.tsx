@@ -17,7 +17,8 @@ import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { getDaysUntilExpiry, getExpiryColor, calculateExpiryDate, cn } from '@/lib/utils';
 import { spring, listItem } from '@/lib/animations';
-import type { Ingredient, StorageType, Category, Unit } from '@/types';
+import type { Ingredient, StorageType } from '@/types';
+import { CATEGORIES, UNITS } from '@/lib/constants';
 
 const STORAGE_TYPES: { type: StorageType | 'all'; icon: typeof Package }[] = [
   { type: 'all', icon: Package },
@@ -25,9 +26,6 @@ const STORAGE_TYPES: { type: StorageType | 'all'; icon: typeof Package }[] = [
   { type: 'frozen', icon: Snowflake },
   { type: 'room_temp', icon: Sun },
 ];
-
-const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
-const UNITS: Unit[] = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
 
 export default function FridgePage() {
   const t = useTranslations();
@@ -64,14 +62,11 @@ export default function FridgePage() {
     }))
     .sort((a, b) => a.daysLeft - b.daysLeft);
 
-  // Group by category
-  const groupedIngredients = filteredIngredients.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
-    }
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<Category, typeof filteredIngredients>);
+  // Group by category (immutable pattern)
+  const groupedIngredients = filteredIngredients.reduce<Record<string, typeof filteredIngredients>>((acc, item) => ({
+    ...acc,
+    [item.category]: [...(acc[item.category] || []), item],
+  }), {});
 
   const handleOpenSheet = (item?: Ingredient) => {
     if (item) {
@@ -172,6 +167,7 @@ export default function FridgePage() {
             <button
               onClick={() => setSearchQuery('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label={t('common.close')}
             >
               <X className="h-4 w-4 text-gray-400" />
             </button>
@@ -265,6 +261,7 @@ export default function FridgePage() {
                             whileTap={{ scale: 0.9 }}
                             onClick={() => handleOpenSheet(item)}
                             className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+                            aria-label={t('common.edit')}
                           >
                             <Edit2 className="h-4 w-4" />
                           </motion.button>
@@ -272,6 +269,7 @@ export default function FridgePage() {
                             whileTap={{ scale: 0.9 }}
                             onClick={() => handleDelete(item.id)}
                             className="rounded-full p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                            aria-label={t('common.delete')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </motion.button>

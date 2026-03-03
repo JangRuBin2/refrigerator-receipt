@@ -29,6 +29,7 @@ import { cn, extractErrorMessage } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
 import { categorySchema, unitSchema } from '@/lib/validations';
 import type { Category, Unit, ShoppingItem } from '@/types/supabase';
+import { CATEGORIES, UNITS, getCategoryIcon } from '@/lib/constants';
 import {
   getShoppingList,
   addShoppingItems,
@@ -38,9 +39,6 @@ import {
   getShoppingRecommendations,
   type ParsedShoppingList,
 } from '@/lib/api/shopping';
-
-const CATEGORIES: Category[] = ['vegetables', 'fruits', 'meat', 'seafood', 'dairy', 'condiments', 'grains', 'beverages', 'snacks', 'etc'];
-const UNITS: Unit[] = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch'];
 
 const recommendedItemSchema = z.object({
   name: z.string(),
@@ -164,8 +162,8 @@ export default function ShoppingPage() {
 
     try {
       await updateShoppingItem(list.id, itemId, { checked });
-    } catch {
-      // 실패 시 롤백
+    } catch (err) {
+      console.error('Failed to toggle check:', err);
       fetchList();
     }
   };
@@ -185,8 +183,8 @@ export default function ShoppingPage() {
 
     try {
       await deleteShoppingItemApi(list.id, itemId);
-    } catch {
-      // 실패 시 롤백
+    } catch (err) {
+      console.error('Failed to delete item:', err);
       fetchList();
     }
   };
@@ -197,10 +195,9 @@ export default function ShoppingPage() {
 
     try {
       await completeShoppingList(list.id);
-      // 새 목록 생성됨
       fetchList();
-    } catch {
-      // Error completing list - fail silently
+    } catch (err) {
+      console.error('Failed to complete list:', err);
     }
   };
 
@@ -216,29 +213,15 @@ export default function ShoppingPage() {
   const checkedItems = list?.items.filter(i => i.checked).length || 0;
   const progress = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
 
-  // 카테고리별 그룹핑
-  const groupedItems = filteredItems.reduce((acc, item) => {
+  // 카테고리별 그룹핑 (immutable pattern)
+  const groupedItems = filteredItems.reduce<Record<string, ShoppingItem[]>>((acc, item) => {
     const category = item.category || 'etc';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(item);
-    return acc;
-  }, {} as Record<string, ShoppingItem[]>); // reduce requires typed initial value
-
-  const getCategoryIcon = (category: string) => {
-    const icons: Record<string, string> = {
-      vegetables: '🥬',
-      fruits: '🍎',
-      meat: '🥩',
-      seafood: '🐟',
-      dairy: '🥛',
-      condiments: '🧂',
-      grains: '🌾',
-      beverages: '🥤',
-      snacks: '🍪',
-      etc: '📦',
+    return {
+      ...acc,
+      [category]: [...(acc[category] || []), item],
     };
-    return icons[category] || '📦';
-  };
+  }, {});
+
 
   if (loading) {
     return (

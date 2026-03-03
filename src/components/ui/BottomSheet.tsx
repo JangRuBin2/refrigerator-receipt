@@ -48,6 +48,15 @@ export function BottomSheet({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && dismissible) onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, dismissible, onClose]);
+
   const handleDragEnd = useCallback(
     (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
       if (dismissible && info.offset.y > DISMISS_THRESHOLD) {
@@ -75,6 +84,9 @@ export function BottomSheet({
 
           {/* Sheet */}
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}

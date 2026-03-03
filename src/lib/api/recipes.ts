@@ -62,22 +62,6 @@ export async function getRecipes(options?: {
   return { recipes: data, total: count, limit, offset };
 }
 
-export async function getRandomRecipes(count: number = 5) {
-  const supabase = createClient();
-
-  const { data: total } = await supabase
-    .from('recipes')
-    .select('id', { count: 'exact', head: true });
-
-  const { data, error } = await supabase
-    .from('recipes')
-    .select('*')
-    .limit(count);
-
-  if (error) throw error;
-  return data;
-}
-
 export async function getRecommendedRecipes(ingredientNames: string[]) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -85,7 +69,7 @@ export async function getRecommendedRecipes(ingredientNames: string[]) {
 
   const { data, error } = await supabase
     .from('recipes')
-    .select('*');
+    .select('id, title, description, cooking_time, difficulty, ingredients, tags');
 
   if (error) throw error;
 
@@ -158,7 +142,7 @@ export async function aiGenerateRecipe(input: {
 }
 
 export async function searchRecipes(query: string, locale?: string) {
-  return callEdgeFunction<{ results: unknown[] }>('recipes-search', {
+  return callEdgeFunction('recipes-search', {
     body: { query, locale },
   });
 }

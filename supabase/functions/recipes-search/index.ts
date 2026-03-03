@@ -159,8 +159,9 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    console.error('recipes-search error:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Search failed' }),
+      JSON.stringify({ error: '검색 중 오류가 발생했습니다. 다시 시도해주세요.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

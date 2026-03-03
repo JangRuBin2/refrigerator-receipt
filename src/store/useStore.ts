@@ -146,7 +146,13 @@ export const useStore = create<FridgeStore>()(
       },
       updateSettings: (newSettings) =>
         set((state) => ({
-          settings: { ...state.settings, ...newSettings },
+          settings: {
+            ...state.settings,
+            ...newSettings,
+            notifications: newSettings.notifications
+              ? { ...state.settings.notifications, ...newSettings.notifications }
+              : state.settings.notifications,
+          },
         })),
     }),
     {
