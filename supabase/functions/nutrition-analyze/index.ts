@@ -78,7 +78,8 @@ Deno.serve(async (req) => {
       } else {
         startDate.setMonth(now.getMonth() - 1);
       }
-      query = query.gte('purchase_date', startDate.toISOString().split('T')[0]);
+      const dateStr = startDate.toISOString().split('T')[0];
+      query = query.or(`purchase_date.gte.${dateStr},and(purchase_date.is.null,created_at.gte.${dateStr})`);
     }
 
     const { data: ingredients, error } = await query;

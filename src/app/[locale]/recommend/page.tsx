@@ -16,6 +16,7 @@ import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import { useStore } from '@/store/useStore';
 import { getRecipes, getRandomRecipe, saveAiRecipe as saveAiRecipeApi, aiGenerateRecipe, scoreByTaste } from '@/lib/api/recipes';
+import { addFavorite } from '@/lib/api/favorites';
 
 type Mode = 'select' | 'random' | 'taste' | 'ai';
 
@@ -55,7 +56,7 @@ export default function RecommendPage() {
   const locale = typeof params.locale === 'string' ? params.locale : 'ko';
   const { isPremium } = usePremium();
   const [freeTrialInfo, setFreeTrialInfo] = useState<{ remainingCount: number; limit: number } | null>(null);
-  const { ingredients } = useStore();
+  const { ingredients, toggleFavorite } = useStore();
 
   const [mode, setMode] = useState<Mode>('select');
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -279,7 +280,11 @@ export default function RecommendPage() {
 
     setAiSaving(true);
     try {
-      await saveAiRecipeApi({ ...aiRecipe, locale });
+      const saved = await saveAiRecipeApi({ ...aiRecipe, locale });
+      if (saved?.id) {
+        await addFavorite(saved.id);
+        toggleFavorite(saved.id);
+      }
       setAiSaved(true);
     } catch {
       setAiError('저장에 실패했습니다');
@@ -820,7 +825,7 @@ export default function RecommendPage() {
                     <ol className="list-inside list-decimal space-y-2 text-sm">
                       {aiRecipe.instructions.map((step, idx) => (
                         <li key={idx} className="text-gray-600 dark:text-gray-400">
-                          {step}
+                          {step.replace(/^\d+\.\s*/, '')}
                         </li>
                       ))}
                     </ol>

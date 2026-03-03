@@ -157,6 +157,7 @@ ${constraints || '- 특별한 조건 없음'}
 2. 없는 재료는 일반적인 조미료(소금, 후추, 식용유 등)만 추가 가능
 3. 실제로 만들 수 있는 현실적인 레시피를 제공하세요
 4. 응답은 ${language}로 작성하세요
+5. instructions 배열의 각 항목에 번호를 붙이지 마세요 (예: "1." 없이 내용만 작성)
 
 ## 응답 형식 (반드시 아래 JSON 형식으로만 응답)
 \`\`\`json
@@ -167,7 +168,7 @@ ${constraints || '- 특별한 조건 없음'}
   "difficulty": "easy|medium|hard",
   "servings": 인분(숫자),
   "ingredients": [{"name": "재료명", "quantity": "양"}],
-  "instructions": ["1단계", "2단계"],
+  "instructions": ["재료를 손질합니다", "팬에 볶습니다"],
   "tips": "요리 팁"
 }
 \`\`\`
