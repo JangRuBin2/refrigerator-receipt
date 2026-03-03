@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { usePremium, type PremiumFeature } from '@/hooks/usePremium';
 import { createClient } from '@/lib/supabase/client';
 import { PremiumModal } from './PremiumModal';
@@ -13,6 +13,7 @@ interface PremiumGateProps {
 
 export function PremiumGate({ feature, children }: PremiumGateProps) {
   const params = useParams();
+  const router = useRouter();
   const locale = params.locale as string;
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -20,19 +21,24 @@ export function PremiumGate({ feature, children }: PremiumGateProps) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
 
-      if (!session) {
-        window.location.href = `/${locale}/login/`;
-        return;
+        if (!session) {
+          router.replace(`/${locale}/login`);
+          return;
+        }
+
+        setIsAuthenticated(true);
+      } catch {
+        router.replace(`/${locale}/login`);
+      } finally {
+        setIsAuthChecking(false);
       }
-
-      setIsAuthenticated(true);
-      setIsAuthChecking(false);
     };
     checkAuth();
-  }, [locale]);
+  }, [locale, router]);
 
   if (isAuthChecking || !isAuthenticated) {
     return (
