@@ -8,14 +8,51 @@ interface GeminiContentPart {
   };
 }
 
-export async function callGemini(prompt: string, options?: {
+// OpenAPI 3.0 subset supported by Gemini responseSchema
+export type GeminiSchema = {
+  type: 'object' | 'array' | 'string' | 'number' | 'integer' | 'boolean';
+  properties?: Record<string, GeminiSchema>;
+  items?: GeminiSchema;
+  required?: string[];
+  enum?: string[];
+  description?: string;
+  nullable?: boolean;
+};
+
+interface GeminiOptions {
   model?: string;
   maxTokens?: number;
   temperature?: number;
-}): Promise<string> {
+  jsonMode?: boolean;
+  responseSchema?: GeminiSchema;
+}
+
+interface GeminiImageOptions extends GeminiOptions {
+  mimeType?: string;
+}
+
+function buildGenerationConfig(options?: GeminiOptions): Record<string, unknown> {
+  const config: Record<string, unknown> = {
+    maxOutputTokens: options?.maxTokens ?? 4096,
+    temperature: options?.temperature ?? 0.7,
+  };
+
+  if (options?.jsonMode || options?.responseSchema) {
+    config.responseMimeType = 'application/json';
+  }
+
+  if (options?.responseSchema) {
+    config.responseSchema = options.responseSchema;
+  }
+
+  return config;
+}
+
+export async function callGemini(
+  prompt: string,
+  options?: GeminiOptions
+): Promise<string> {
   const model = options?.model ?? 'gemini-2.0-flash';
-  const maxTokens = options?.maxTokens ?? 4096;
-  const temperature = options?.temperature ?? 0.7;
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY()}`,
@@ -24,7 +61,7 @@ export async function callGemini(prompt: string, options?: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: maxTokens, temperature },
+        generationConfig: buildGenerationConfig(options),
       }),
     }
   );
@@ -40,16 +77,9 @@ export async function callGemini(prompt: string, options?: {
 export async function callGeminiWithImage(
   prompt: string,
   imageBase64: string,
-  options?: {
-    model?: string;
-    maxTokens?: number;
-    temperature?: number;
-    mimeType?: string;
-  }
+  options?: GeminiImageOptions
 ): Promise<string> {
   const model = options?.model ?? 'gemini-2.0-flash';
-  const maxTokens = options?.maxTokens ?? 4096;
-  const temperature = options?.temperature ?? 0.1;
   const mimeType = options?.mimeType ?? 'image/jpeg';
 
   const parts: GeminiContentPart[] = [
@@ -64,7 +94,10 @@ export async function callGeminiWithImage(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts }],
-        generationConfig: { maxOutputTokens: maxTokens, temperature },
+        generationConfig: buildGenerationConfig({
+          ...options,
+          temperature: options?.temperature ?? 0.1,
+        }),
       }),
     }
   );
@@ -85,21 +118,26 @@ export function parseJsonFromText(text: string): unknown {
     jsonStr = jsonMatch[1].trim();
   }
 
-  // Try array
-  const arrayStart = jsonStr.indexOf('[');
-  const arrayEnd = jsonStr.lastIndexOf(']');
-  if (arrayStart !== -1 && arrayEnd !== -1) {
-    try {
-      return JSON.parse(jsonStr.slice(arrayStart, arrayEnd + 1));
-    } catch { /* fall through */ }
-  }
+  // Try full string first (preserves outer object structure)
+  try {
+    return JSON.parse(jsonStr);
+  } catch { /* fall through */ }
 
-  // Try object
+  // Try object extraction (prioritize over array to avoid extracting inner arrays)
   const objStart = jsonStr.indexOf('{');
   const objEnd = jsonStr.lastIndexOf('}');
   if (objStart !== -1 && objEnd !== -1) {
     try {
       return JSON.parse(jsonStr.slice(objStart, objEnd + 1));
+    } catch { /* fall through */ }
+  }
+
+  // Try array extraction
+  const arrayStart = jsonStr.indexOf('[');
+  const arrayEnd = jsonStr.lastIndexOf(']');
+  if (arrayStart !== -1 && arrayEnd !== -1) {
+    try {
+      return JSON.parse(jsonStr.slice(arrayStart, arrayEnd + 1));
     } catch { /* fall through */ }
   }
 

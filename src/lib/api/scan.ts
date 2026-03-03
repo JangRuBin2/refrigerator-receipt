@@ -19,8 +19,9 @@ interface ScanResponse {
 
 export async function scanReceipt(file: File, useAIVision: boolean = true) {
   const base64 = await fileToBase64(file);
+  const mimeType = file.type || 'image/jpeg';
   return callEdgeFunction('receipts-scan', {
-    body: { image: base64, useAIVision },
+    body: { image: base64, useAIVision, mimeType },
   });
 }
 

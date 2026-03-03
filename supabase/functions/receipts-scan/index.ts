@@ -1,6 +1,7 @@
 import { corsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { callGemini, callGeminiWithImage, parseJsonFromText } from '../_shared/gemini.ts';
+import type { GeminiSchema } from '../_shared/gemini.ts';
 import type { SupabaseClient, ScannedItem, ScanResult } from '../_shared/types.ts';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -15,6 +16,47 @@ const VALID_UNITS = ['g', 'kg', 'ml', 'L', 'ea', 'pack', 'bottle', 'box', 'bunch
 const DEFAULT_EXPIRY_DAYS: Record<string, number> = {
   vegetables: 7, fruits: 7, meat: 3, seafood: 2, dairy: 7,
   condiments: 180, grains: 90, beverages: 30, snacks: 60, etc: 14,
+};
+
+// Gemini responseSchema: 영수증 이미지 분석 응답 구조 강제
+const RECEIPT_IMAGE_SCHEMA: GeminiSchema = {
+  type: 'object',
+  properties: {
+    isValid: { type: 'boolean', description: '영수증/식재료 이미지 여부' },
+    invalidReason: { type: 'string', enum: ['not_receipt', 'unreadable', 'no_food_items'], description: '무효 사유' },
+    rawText: { type: 'string', description: '인식된 전체 텍스트' },
+    items: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: '식재료명 (한국어, 브랜드명 제외)' },
+          quantity: { type: 'number', description: '수량' },
+          unit: { type: 'string', enum: VALID_UNITS as unknown as string[] },
+          category: { type: 'string', enum: VALID_CATEGORIES as unknown as string[] },
+          confidence: { type: 'number', description: '인식 신뢰도 0.0~1.0' },
+        },
+        required: ['name', 'quantity', 'unit', 'category'],
+      },
+    },
+  },
+  required: ['isValid', 'items'],
+};
+
+// Gemini responseSchema: 영수증 텍스트 파싱 응답 구조 강제
+const RECEIPT_TEXT_SCHEMA: GeminiSchema = {
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      name: { type: 'string', description: '식재료명 (한국어, 브랜드명 제외)' },
+      quantity: { type: 'number', description: '수량' },
+      unit: { type: 'string', enum: VALID_UNITS as unknown as string[] },
+      category: { type: 'string', enum: VALID_CATEGORIES as unknown as string[] },
+      confidence: { type: 'number', description: '인식 신뢰도 0.0~1.0' },
+    },
+    required: ['name', 'quantity', 'unit', 'category'],
+  },
 };
 
 // Receipt indicator patterns
@@ -159,8 +201,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body: { image?: string; useAIVision?: boolean } = await req.json();
-    const { image, useAIVision = true } = body;
+    const body: { image?: string; useAIVision?: boolean; mimeType?: string } = await req.json();
+    const { image, useAIVision = true, mimeType } = body;
 
     if (!image) {
       return new Response(
@@ -186,7 +228,7 @@ Deno.serve(async (req) => {
     if (useAIVision && geminiKey) {
       // AI Vision mode: Gemini analyzes image directly
       try {
-        const analysisResult = await analyzeReceiptImage(image);
+        const analysisResult = await analyzeReceiptImage(image, mimeType);
 
         if (!analysisResult.isValid) {
           const errorMessages: Record<string, string> = {
@@ -276,7 +318,7 @@ interface AnalysisResult {
   invalidReason?: string;
 }
 
-async function analyzeReceiptImage(imageBase64: string): Promise<AnalysisResult> {
+async function analyzeReceiptImage(imageBase64: string, mimeType?: string): Promise<AnalysisResult> {
   const prompt = `이 이미지를 분석해주세요.
 
 **먼저 이미지가 다음 중 하나인지 판단하세요:**
@@ -316,6 +358,8 @@ async function analyzeReceiptImage(imageBase64: string): Promise<AnalysisResult>
   const text = await callGeminiWithImage(prompt, imageBase64, {
     maxTokens: 4096,
     temperature: 0.1,
+    mimeType: mimeType || 'image/jpeg',
+    responseSchema: RECEIPT_IMAGE_SCHEMA,
   });
 
   if (!text) {
@@ -326,6 +370,30 @@ async function analyzeReceiptImage(imageBase64: string): Promise<AnalysisResult>
     const parsed = parseJsonFromText(text);
     if (!parsed || typeof parsed !== 'object') {
       return { items: [], rawText: text, isValid: false, invalidReason: 'unreadable' };
+    }
+
+    // Handle case where parseJsonFromText returns just the items array
+    if (Array.isArray(parsed)) {
+      const items: ScannedItem[] = parsed
+        .filter((item: Record<string, unknown>) => item?.name && typeof item.name === 'string')
+        .map((item: Record<string, unknown>) => {
+          const name = String(item.name ?? '');
+          const quantity = typeof item.quantity === 'number' ? item.quantity : 1;
+          const rawCategory = String(item.category ?? 'etc');
+          const rawUnit = String(item.unit ?? 'ea');
+          const rawConfidence = typeof item.confidence === 'number' ? item.confidence : 0.7;
+          const category = VALID_CATEGORIES.includes(rawCategory) ? rawCategory : 'etc';
+          const unit = VALID_UNITS.includes(rawUnit) ? rawUnit : 'ea';
+          return {
+            name,
+            quantity,
+            unit,
+            category,
+            confidence: Math.max(0, Math.min(1, rawConfidence)),
+            estimatedExpiryDays: DEFAULT_EXPIRY_DAYS[category] || 14,
+          };
+        });
+      return { items, rawText: '', isValid: items.length > 0 };
     }
 
     const result = parsed as Record<string, unknown>;
@@ -532,7 +600,7 @@ ${rawText}
 
 규칙: 식재료/식품만 추출, 브랜드명 제거, JSON만 응답`;
 
-  const text = await callGemini(prompt, { temperature: 0.1, maxTokens: 2048 });
+  const text = await callGemini(prompt, { temperature: 0.1, maxTokens: 2048, responseSchema: RECEIPT_TEXT_SCHEMA });
 
   if (!text) return [];
 
