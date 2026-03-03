@@ -175,8 +175,10 @@
     "confirmItems": "确认食材",
     "addToFridge": "添加到冰箱",
     "retry": "重新扫描",
-    "aiVisionMode": "AI Vision 模式",
-    "aiVisionDescription": "AI直接分析收据，识别更准确",
+    "aiVisionMode": "AI模式",
+    "aiVisionDescription": "AI直接分析食材照片（非收据）",
+    "reviewItemsNotice": "请检查食材",
+    "reviewItemsDescription": "请取消勾选或删除非食材项目（日用品、服装等）",
     "estimatedExpiry": "预计保质期: {days}天",
     "fileTooLarge": "图片太大了。请上传10MB以下的图片。",
     "premiumUnlimited": "高级版 - 无限扫描",
@@ -224,7 +226,8 @@
     "deleteAccountError": "注销账户失败",
     "subscription": "订阅",
     "freePlan": "免费方案",
-    "upgradePremium": "升级至Premium"
+    "upgradePremium": "升级至Premium",
+    "manualRenewNotice": "订阅不会自动续费，请在到期前重新购买。"
   },
   "auth": {
     "login": "登录",

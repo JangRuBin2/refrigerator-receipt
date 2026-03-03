@@ -18,31 +18,6 @@ const DEFAULT_EXPIRY_DAYS: Record<string, number> = {
   condiments: 180, grains: 90, beverages: 30, snacks: 60, etc: 14,
 };
 
-// Gemini responseSchema: 영수증 이미지 분석 응답 구조 강제
-const RECEIPT_IMAGE_SCHEMA: GeminiSchema = {
-  type: 'object',
-  properties: {
-    isValid: { type: 'boolean', description: '영수증/식재료 이미지 여부' },
-    invalidReason: { type: 'string', enum: ['not_receipt', 'unreadable', 'no_food_items'], description: '무효 사유' },
-    rawText: { type: 'string', description: '인식된 전체 텍스트' },
-    items: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', description: '식재료명 (한국어, 브랜드명 제외)' },
-          quantity: { type: 'number', description: '수량' },
-          unit: { type: 'string', enum: VALID_UNITS as unknown as string[] },
-          category: { type: 'string', enum: VALID_CATEGORIES as unknown as string[] },
-          confidence: { type: 'number', description: '인식 신뢰도 0.0~1.0' },
-        },
-        required: ['name', 'quantity', 'unit', 'category'],
-      },
-    },
-  },
-  required: ['isValid', 'items'],
-};
-
 // Gemini responseSchema: 영수증 텍스트 파싱 응답 구조 강제
 const RECEIPT_TEXT_SCHEMA: GeminiSchema = {
   type: 'array',
@@ -202,7 +177,7 @@ Deno.serve(async (req) => {
     }
 
     const body: { image?: string; useAIVision?: boolean; mimeType?: string } = await req.json();
-    const { image, useAIVision = true, mimeType } = body;
+    const { image, useAIVision = false, mimeType } = body;
 
     if (!image) {
       return new Response(
@@ -221,45 +196,81 @@ Deno.serve(async (req) => {
     }
 
     const geminiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
-    const visionCredentials = Deno.env.get('GOOGLE_CLOUD_CREDENTIALS_JSON');
+    const rawVisionCredentials = Deno.env.get('GOOGLE_CLOUD_CREDENTIALS_JSON');
+
+    // Validate Vision credentials JSON format upfront
+    let visionCredentials: string | undefined;
+    if (rawVisionCredentials) {
+      try {
+        const parsed = JSON.parse(rawVisionCredentials);
+        if (parsed && typeof parsed === 'object' && parsed.client_email && parsed.private_key) {
+          visionCredentials = rawVisionCredentials;
+        } else {
+          console.error('GOOGLE_CLOUD_CREDENTIALS_JSON: missing required fields (client_email, private_key)');
+        }
+      } catch (e) {
+        console.error('GOOGLE_CLOUD_CREDENTIALS_JSON is not valid JSON:', (e as Error).message);
+      }
+    }
 
     let result: ScanResult;
 
-    if (useAIVision && geminiKey) {
-      // AI Vision mode: Gemini analyzes image directly
-      try {
-        const analysisResult = await analyzeReceiptImage(image, mimeType);
-
-        if (!analysisResult.isValid) {
-          const errorMessages: Record<string, string> = {
-            not_receipt: '영수증이나 식재료 사진이 아닙니다.',
-            no_food_items: '이미지에서 식재료를 찾을 수 없습니다.',
-            unreadable: '이미지를 인식할 수 없습니다.',
-          };
-          return new Response(
-            JSON.stringify({ error: errorMessages[analysisResult.invalidReason || 'not_receipt'] }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        if (analysisResult.items.length === 0) {
-          return new Response(
-            JSON.stringify({ error: '영수증에서 식재료를 찾을 수 없습니다.' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        result = {
-          items: analysisResult.items,
-          rawText: analysisResult.rawText,
-          mode: 'ai-vision',
-        };
-      } catch {
-        // Fallback to OCR
-        result = await processWithOCR(image, visionCredentials, geminiKey);
+    if (useAIVision) {
+      // AI 모드: Gemini가 이미지 직접 분석 (영수증 아닌 식재료 사진용)
+      if (!geminiKey) {
+        return new Response(
+          JSON.stringify({ error: 'AI Vision 서비스가 설정되지 않았습니다.' }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
-    } else if (!useAIVision && visionCredentials) {
+
+      const analysisResult = await analyzeReceiptImage(image, mimeType);
+
+      if (!analysisResult.isValid) {
+        return new Response(
+          JSON.stringify({ error: '영수증이나 식재료 사진이 아닙니다.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (analysisResult.items.length === 0) {
+        return new Response(
+          JSON.stringify({ error: '이미지에서 식재료를 찾을 수 없습니다.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      result = {
+        items: analysisResult.items,
+        rawText: analysisResult.rawText,
+        mode: 'ai-vision',
+      };
+    } else if (visionCredentials) {
+      // OCR 모드 (기본): Google Cloud Vision OCR → Gemini 식재료 필터 → 규칙 기반 fallback
       result = await processWithOCR(image, visionCredentials, geminiKey);
+    } else if (geminiKey) {
+      // OCR credentials 없음 → Gemini 이미지 직접 분석으로 fallback
+      const analysisResult = await analyzeReceiptImage(image, mimeType);
+
+      if (!analysisResult.isValid) {
+        return new Response(
+          JSON.stringify({ error: '영수증이나 식재료 사진이 아닙니다.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (analysisResult.items.length === 0) {
+        return new Response(
+          JSON.stringify({ error: '영수증에서 식재료를 찾을 수 없습니다.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      result = {
+        items: analysisResult.items,
+        rawText: analysisResult.rawText,
+        mode: 'ai-vision',
+      };
     } else {
       return new Response(
         JSON.stringify({ error: 'OCR 서비스가 설정되지 않았습니다.' }),
@@ -319,52 +330,30 @@ interface AnalysisResult {
 }
 
 async function analyzeReceiptImage(imageBase64: string, mimeType?: string): Promise<AnalysisResult> {
-  const prompt = `이 이미지를 분석해주세요.
+  const prompt = `한국 마트/편의점 영수증 또는 식재료 사진 분석. 식품만 추출, 생활용품 제외.
+브랜드명→식재료명 변환(예: "농심올리브짜파게"→"짜파게티", "노브랜드굿밀크우"→"우유").
+가공식품/과자/음료/라면/조미료 모두 포함. 분류 애매하면 category:"etc".
+unit: g|kg|ml|L|ea|pack|bottle|box|bunch
+category: vegetables|fruits|meat|seafood|dairy|condiments|grains|beverages|snacks|etc
 
-**먼저 이미지가 다음 중 하나인지 판단하세요:**
-1. 영수증 (마트, 편의점, 식당 등의 구매 영수증)
-2. 식재료/식품 사진 (냉장고 내부, 장본 식재료 등)
-
-**이미지가 영수증이나 식재료 사진이 아닌 경우:**
-{"isValid": false, "invalidReason": "not_receipt", "rawText": "", "items": []}
-
-**이미지가 너무 흐리거나 인식이 불가능한 경우:**
-{"isValid": false, "invalidReason": "unreadable", "rawText": "", "items": []}
-
-**영수증이나 식재료 사진이지만 식품 항목이 없는 경우:**
-{"isValid": false, "invalidReason": "no_food_items", "rawText": "인식된 텍스트", "items": []}
-
-**영수증이나 식재료 사진이고 식품 항목이 있는 경우:**
-{
-  "isValid": true,
-  "rawText": "인식된 전체 텍스트",
-  "items": [
-    {
-      "name": "식재료명 (한국어)",
-      "quantity": 숫자,
-      "unit": "g" | "kg" | "ml" | "L" | "ea" | "pack" | "bottle" | "box" | "bunch",
-      "category": "vegetables" | "fruits" | "meat" | "seafood" | "dairy" | "condiments" | "grains" | "beverages" | "snacks" | "etc",
-      "confidence": 0.0 ~ 1.0
-    }
-  ]
-}
-
-규칙:
-1. 식재료/식품만 추출 (생활용품, 화장품, 문구류 등 제외)
-2. 브랜드명 제거, 실제 식재료명만
-3. 수량 정보가 없으면 quantity: 1, unit: "ea"
-4. JSON만 응답`;
+영수증 아니면: {"isValid":false,"invalidReason":"not_receipt","items":[]}
+영수증이면: {"isValid":true,"rawText":"텍스트","items":[{"name":"이름","quantity":1,"unit":"ea","category":"etc","confidence":0.9}]}`;
 
   const text = await callGeminiWithImage(prompt, imageBase64, {
     maxTokens: 4096,
-    temperature: 0.1,
+    temperature: 0.2,
     mimeType: mimeType || 'image/jpeg',
-    responseSchema: RECEIPT_IMAGE_SCHEMA,
+    jsonMode: true,
   });
 
   if (!text) {
     return { items: [], rawText: '', isValid: false, invalidReason: 'unreadable' };
   }
+
+  return parseAnalysisResponse(text);
+}
+
+function parseAnalysisResponse(text: string): AnalysisResult {
 
   try {
     const parsed = parseJsonFromText(text);
@@ -576,29 +565,20 @@ async function signRS256(input: string, privateKey: string): Promise<string> {
   return uint8ArrayToBase64Url(new Uint8Array(signature));
 }
 
-// AI receipt text parsing
+// OCR text → Gemini: filter food items only, remove non-food (household goods, etc.)
 async function parseReceiptWithAI(rawText: string): Promise<ScannedItem[]> {
-  const prompt = `당신은 영수증 텍스트에서 식재료/식품만 추출하는 전문가입니다.
+  const prompt = `영수증 OCR 텍스트에서 식재료/식품만 추출. 생활용품·의류·잡화 등 비식품 제외.
+브랜드명→식재료명 변환(예: "농심올리브짜파게"→"짜파게티", "노브랜드굿밀크우"→"우유").
+가공식품/과자/음료/라면/조미료 모두 포함. 분류 애매하면 category:"etc".
 
-다음 영수증 텍스트에서 식재료와 식품 항목만 추출해주세요.
-
-영수증 텍스트:
+영수증:
 """
 ${rawText}
 """
 
-각 항목에 대해 JSON 배열 형식으로 응답:
-[
-  {
-    "name": "식재료 이름",
-    "quantity": 숫자,
-    "unit": "g" | "kg" | "ml" | "L" | "ea" | "pack" | "bottle" | "box" | "bunch",
-    "category": "vegetables" | "fruits" | "meat" | "seafood" | "dairy" | "condiments" | "grains" | "beverages" | "snacks" | "etc",
-    "confidence": 0.0 ~ 1.0
-  }
-]
-
-규칙: 식재료/식품만 추출, 브랜드명 제거, JSON만 응답`;
+JSON 배열 응답: [{"name":"이름","quantity":1,"unit":"ea","category":"etc","confidence":0.9}]
+unit: g|kg|ml|L|ea|pack|bottle|box|bunch
+category: vegetables|fruits|meat|seafood|dairy|condiments|grains|beverages|snacks|etc`;
 
   const text = await callGemini(prompt, { temperature: 0.1, maxTokens: 2048, responseSchema: RECEIPT_TEXT_SCHEMA });
 

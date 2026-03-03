@@ -215,8 +215,10 @@
     "confirmItems": "Confirm Items",
     "addToFridge": "Add to Fridge",
     "retry": "Scan Again",
-    "aiVisionMode": "AI Vision Mode",
-    "aiVisionDescription": "AI analyzes your receipt directly for more accurate recognition",
+    "aiVisionMode": "AI Mode",
+    "aiVisionDescription": "AI directly analyzes food photos (not receipts)",
+    "reviewItemsNotice": "Please review items",
+    "reviewItemsDescription": "Uncheck or remove non-food items (household goods, clothing, etc.)",
     "estimatedExpiry": "Est. expiry: {days} days",
     "fileTooLarge": "The image is too large. Please upload an image under 10MB.",
     "premiumUnlimited": "Premium - Unlimited scans",
@@ -275,7 +277,8 @@
     "billingMonthly": "Monthly",
     "billingYearly": "Annual",
     "premiumFeatures": "Premium Services",
-    "managePlan": "Manage Plan"
+    "managePlan": "Manage Plan",
+    "manualRenewNotice": "Subscription does not auto-renew. Please repurchase before expiry."
   },
   "auth": {
     "login": "Login",

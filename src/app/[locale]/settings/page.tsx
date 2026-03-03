@@ -589,14 +589,8 @@ export default function SettingsPage() {
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">{t('settings.autoRenew')}</span>
-                  <span className={cn(
-                    'font-medium',
-                    subscription?.autoRenew ? 'text-green-600 dark:text-green-400' : 'text-gray-500'
-                  )}>
-                    {subscription?.autoRenew ? t('settings.autoRenewOn') : t('settings.autoRenewOff')}
-                  </span>
+                <div className="mt-2 rounded bg-amber-100/60 px-2 py-1.5 text-xs text-amber-700 dark:bg-amber-800/30 dark:text-amber-400">
+                  {t('settings.manualRenewNotice')}
                 </div>
               </div>
             </div>

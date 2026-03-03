@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Camera, Upload, Check, RefreshCw, Sparkles, Clock, ChevronRight, Crown, PlayCircle } from 'lucide-react';
+import { Camera, Upload, Check, RefreshCw, Clock, ChevronRight, Crown, PlayCircle, AlertTriangle } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -16,9 +16,10 @@ import { usePremium } from '@/hooks/usePremium';
 import { useAppsInTossAds } from '@/hooks/useAppsInTossAds';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
-import { scanReceipt } from '@/lib/api/scan';
+import { scanReceipt, getLastScanDebugInfo, type ScanDebugInfo } from '@/lib/api/scan';
 import type { ScannedItem, StorageType } from '@/types';
 import { CATEGORIES, UNITS } from '@/lib/constants';
+import { Bug, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface ExtendedScannedItem extends ScannedItem {
@@ -50,9 +51,11 @@ export default function ScanPage() {
   const [scannedItems, setScannedItems] = useState<ExtendedScannedItem[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState<string>('');
-  const [useAIVision, setUseAIVision] = useState(true);
+  const [useAIVision, setUseAIVision] = useState(false);
   const [isResultSheetOpen, setIsResultSheetOpen] = useState(false);
   const [isWatchingAd, setIsWatchingAd] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<ScanDebugInfo | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
   // 파일 선택 후 광고 시청 대기 시 임시 저장
   const pendingFileRef = useRef<File | null>(null);
 
@@ -120,12 +123,20 @@ export default function ScanPage() {
 
   const startScanning = async (file: File) => {
     setStep('scanning');
+    setDebugInfo(null);
 
     try {
       const data = await scanReceipt(file, useAIVision);
 
+      // 디버그 정보 캡처
+      const scanDebug = getLastScanDebugInfo();
+      if (scanDebug) setDebugInfo(scanDebug);
+
+      const response = data as Record<string, unknown>;
+      const rawItems = Array.isArray(response.items) ? response.items : [];
+
       const today = new Date().toISOString().split('T')[0];
-      const items: ExtendedScannedItem[] = data.items.map((item) => {
+      const items: ExtendedScannedItem[] = rawItems.map((item) => {
         const raw = item as unknown as Record<string, unknown>;
         const category = (CATEGORIES.includes(String(raw.category) as Category)
           ? String(raw.category)
@@ -150,10 +161,15 @@ export default function ScanPage() {
       });
 
       setScannedItems(items);
-      setScanMode(data.mode);
+      setScanMode(String(response.mode ?? ''));
       setStep('confirm');
       setIsResultSheetOpen(true);
     } catch (err) {
+      // 디버그 정보 캡처 (에러 시에도)
+      const scanDebug = getLastScanDebugInfo();
+      if (scanDebug) setDebugInfo(scanDebug);
+      setShowDebug(true);
+
       toast.error(err instanceof Error ? err.message : 'Scan failed');
       setStep('upload');
     }
@@ -207,19 +223,6 @@ export default function ScanPage() {
     if (confidence >= 0.8) return 'bg-green-500';
     if (confidence >= 0.6) return 'bg-yellow-500';
     return 'bg-red-500';
-  };
-
-  const getModeInfo = (mode: string) => {
-    switch (mode) {
-      case 'ai-vision':
-        return { label: 'AI Vision', color: 'text-purple-600 bg-purple-50 dark:bg-purple-900/20', isDemo: false };
-      case 'ai':
-        return { label: 'AI', color: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20', isDemo: false };
-      case 'ocr':
-        return { label: 'OCR', color: 'text-green-600 bg-green-50 dark:bg-green-900/20', isDemo: false };
-      default:
-        return { label: 'Demo', color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20', isDemo: true };
-    }
   };
 
   return (
@@ -283,35 +286,31 @@ export default function ScanPage() {
                 </div>
               )}
 
-              {/* AI Vision Toggle */}
+              {/* AI 모드 토글 */}
               <div className="toss-card">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-toss-sm">
-                    <div className="rounded-xl bg-purple-100 p-2 dark:bg-purple-900/30">
-                      <Sparkles className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="toss-body1 font-medium">{t('scan.aiVisionMode')}</p>
-                      <p className="toss-caption">{t('scan.aiVisionDescription')}</p>
-                    </div>
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div>
+                    <p className="toss-body2 font-medium">{t('scan.aiVisionMode')}</p>
+                    <p className="toss-caption text-gray-500">{t('scan.aiVisionDescription')}</p>
                   </div>
                   <button
-                    onClick={() => setUseAIVision(!useAIVision)}
+                    type="button"
                     role="switch"
                     aria-checked={useAIVision}
+                    onClick={() => setUseAIVision((v) => !v)}
                     className={cn(
-                      'relative h-[31px] w-[51px] flex-shrink-0 rounded-full transition-colors duration-200',
-                      useAIVision ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'
+                      'relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors',
+                      useAIVision ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
                     )}
                   >
                     <span
                       className={cn(
-                        'absolute left-[2px] top-[2px] h-[27px] w-[27px] rounded-full bg-white shadow-md transition-transform duration-200',
-                        useAIVision && 'translate-x-5'
+                        'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform mt-0.5',
+                        useAIVision ? 'translate-x-[22px]' : 'translate-x-0.5'
                       )}
                     />
                   </button>
-                </div>
+                </label>
               </div>
 
               {/* Upload Area */}
@@ -423,12 +422,6 @@ export default function ScanPage() {
               </div>
 
               <p className="toss-h3 mt-toss-lg">{t('scan.scanning')}</p>
-              {useAIVision && (
-                <p className="toss-caption mt-toss-xs flex items-center gap-1 text-purple-600">
-                  <Sparkles className="h-4 w-4" />
-                  AI Vision analyzing...
-                </p>
-              )}
             </motion.div>
           )}
 
@@ -440,22 +433,20 @@ export default function ScanPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={spring.gentle}
             >
-              {/* Mode Badge */}
-              {(() => {
-                const modeInfo = getModeInfo(scanMode);
-                return (
-                  <div className={cn('toss-card mb-toss-md', modeInfo.color)}>
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      <span className="toss-body2 font-medium">
-                        {modeInfo.isDemo
-                          ? 'Demo mode - Configure API for real scanning'
-                          : `Analyzed with ${modeInfo.label}`}
-                      </span>
-                    </div>
+              {/* 올바르지 않은 항목 안내 */}
+              <div className="toss-card mb-toss-md border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
+                <div className="flex items-start gap-toss-sm">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
+                  <div>
+                    <p className="toss-body2 font-medium text-yellow-800 dark:text-yellow-300">
+                      {t('scan.reviewItemsNotice')}
+                    </p>
+                    <p className="toss-caption text-yellow-700 dark:text-yellow-400">
+                      {t('scan.reviewItemsDescription')}
+                    </p>
                   </div>
-                );
-              })()}
+                </div>
+              </div>
 
               {/* Preview Image */}
               {previewImage && (
@@ -607,6 +598,113 @@ export default function ScanPage() {
           </Button>
         </BottomSheetActions>
       </BottomSheet>
+
+      {/* Debug Panel */}
+      {debugInfo && (
+        <div className="fixed bottom-16 left-0 right-0 z-50 mx-auto max-w-lg">
+          <div className="mx-2 rounded-t-xl border border-red-200 bg-red-50 shadow-lg dark:border-red-800 dark:bg-red-950">
+            <button
+              onClick={() => setShowDebug(!showDebug)}
+              className="flex w-full items-center justify-between px-4 py-2"
+            >
+              <div className="flex items-center gap-2">
+                <Bug className="h-4 w-4 text-red-600" />
+                <span className="text-sm font-bold text-red-700">
+                  Scan Debug {debugInfo.error ? '(ERROR)' : '(OK)'}
+                </span>
+              </div>
+              {showDebug ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+            </button>
+
+            {showDebug && (
+              <div className="max-h-[50vh] overflow-y-auto px-4 pb-4">
+                <button
+                  onClick={() => {
+                    const text = JSON.stringify(debugInfo, null, 2);
+                    navigator.clipboard?.writeText(text);
+                    toast.success('Debug info copied');
+                  }}
+                  className="mb-2 flex items-center gap-1 rounded bg-red-200 px-2 py-1 text-xs dark:bg-red-800"
+                >
+                  <Copy className="h-3 w-3" />
+                  Copy All
+                </button>
+
+                <div className="space-y-2 text-xs font-mono">
+                  {/* File Info */}
+                  <Section title="File Info">
+                    <Row label="Name" value={debugInfo.fileInfo.name} />
+                    <Row label="Original" value={`${(debugInfo.fileInfo.size / 1024).toFixed(1)} KB`} />
+                    {debugInfo.compression && (
+                      <>
+                        <Row label="Compressed" value={`${(debugInfo.compression.compressedSize / 1024).toFixed(1)} KB (${debugInfo.compression.ratio} saved)`} />
+                      </>
+                    )}
+                    <Row label="MimeType" value={debugInfo.mimeType} />
+                    <Row label="Base64" value={`${debugInfo.base64Length.toLocaleString()} chars`} />
+                    <Row label="AI Vision" value={debugInfo.useAIVision ? 'ON' : 'OFF'} />
+                  </Section>
+
+                  {/* Edge Function Info */}
+                  {debugInfo.edgeDebug && (
+                    <Section title="Edge Function">
+                      <Row label="URL" value={debugInfo.edgeDebug.url} />
+                      <Row label="Session" value={debugInfo.edgeDebug.hasSession ? 'YES' : 'NO'} />
+                      <Row label="Token" value={debugInfo.edgeDebug.tokenPreview} />
+                      <Row label="Status" value={debugInfo.edgeDebug.status !== null ? `${debugInfo.edgeDebug.status} ${debugInfo.edgeDebug.statusText}` : '(no response)'} />
+                      <Row label="Duration" value={`${debugInfo.edgeDebug.durationMs}ms`} />
+                      <Row label="Time" value={debugInfo.edgeDebug.timestamp} />
+                    </Section>
+                  )}
+
+                  {/* Error */}
+                  {debugInfo.error && (
+                    <Section title="Error">
+                      <p className="break-all text-red-700 dark:text-red-400">{debugInfo.error}</p>
+                    </Section>
+                  )}
+
+                  {/* Response Body */}
+                  {debugInfo.edgeDebug?.responseBody && (
+                    <Section title="Response Body">
+                      <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all rounded bg-white p-2 dark:bg-gray-900">
+                        {debugInfo.edgeDebug.responseBody}
+                      </pre>
+                    </Section>
+                  )}
+
+                  {/* Result */}
+                  {debugInfo.result != null && (
+                    <Section title="Parsed Result">
+                      <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all rounded bg-white p-2 dark:bg-gray-900">
+                        {JSON.stringify(debugInfo.result, null, 2)}
+                      </pre>
+                    </Section>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded bg-white/60 p-2 dark:bg-gray-900/60">
+      <p className="mb-1 font-bold text-red-800 dark:text-red-300">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-2">
+      <span className="shrink-0 text-gray-500">{label}:</span>
+      <span className="break-all text-gray-800 dark:text-gray-200">{value}</span>
     </div>
   );
 }

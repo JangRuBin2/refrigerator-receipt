@@ -215,8 +215,10 @@
     "confirmItems": "재료 확인",
     "addToFridge": "냉장고에 추가",
     "retry": "다시 스캔",
-    "aiVisionMode": "AI Vision 모드",
-    "aiVisionDescription": "AI가 영수증을 직접 분석하여 더 정확하게 인식합니다",
+    "aiVisionMode": "AI 모드",
+    "aiVisionDescription": "영수증이 아닌 식재료 사진을 직접 AI로 분석합니다",
+    "reviewItemsNotice": "항목을 확인해주세요",
+    "reviewItemsDescription": "식재료가 아닌 항목(생활용품, 의류 등)은 체크 해제하거나 삭제해주세요",
     "estimatedExpiry": "예상 유통기한: {days}일",
     "fileTooLarge": "이미지 용량이 너무 큽니다. 10MB 이하의 이미지를 업로드해주세요.",
     "premiumUnlimited": "프리미엄 회원 - 무제한 스캔",
@@ -275,7 +277,8 @@
     "billingMonthly": "월간 구독",
     "billingYearly": "연간 구독",
     "premiumFeatures": "프리미엄 서비스 목록",
-    "managePlan": "요금제 관리"
+    "managePlan": "요금제 관리",
+    "manualRenewNotice": "구독 만료 시 자동 갱신되지 않습니다. 만료 전 재구매해주세요."
   },
   "auth": {
     "login": "로그인",

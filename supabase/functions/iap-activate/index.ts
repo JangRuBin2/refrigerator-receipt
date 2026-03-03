@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
         plan: 'premium',
         billing_cycle: isYearly ? 'yearly' : 'monthly',
         expires_at: expiresAt.toISOString(),
-        auto_renew: true,
+        auto_renew: false,
         toss_order_id: orderId,
         ...(tossUserKey ? { toss_user_key: tossUserKey } : {}),
         updated_at: now.toISOString(),
