@@ -16,7 +16,7 @@ interface PremiumModalProps {
   variant?: PremiumModalVariant;
 }
 
-const featureIcons: Record<PremiumFeature, React.ReactNode> = {
+export const featureIcons: Record<PremiumFeature, React.ReactNode> = {
   receipt_scan: <Camera className="h-6 w-6" />,
   external_recipe_search: <Search className="h-6 w-6" />,
   ai_recipe: <Sparkles className="h-6 w-6" />,
@@ -26,7 +26,7 @@ const featureIcons: Record<PremiumFeature, React.ReactNode> = {
   recipe_browsing: <UtensilsCrossed className="h-6 w-6" />,
 };
 
-const featureKeys: Record<PremiumFeature, string> = {
+export const featureKeys: Record<PremiumFeature, string> = {
   receipt_scan: 'unlimitedScan',
   external_recipe_search: 'externalSearch',
   ai_recipe: 'aiRecipe',

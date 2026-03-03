@@ -264,7 +264,18 @@
     "deleteAccountError": "Failed to delete account",
     "subscription": "Subscription",
     "freePlan": "Free Plan",
-    "upgradePremium": "Upgrade to Premium"
+    "upgradePremium": "Upgrade to Premium",
+    "premiumServices": "Active Premium Services",
+    "subscriptionStatus": "Subscription Status",
+    "planName": "Plan",
+    "expiresAt": "Expires",
+    "autoRenew": "Auto-renewal",
+    "autoRenewOn": "Active",
+    "autoRenewOff": "Disabled",
+    "billingMonthly": "Monthly",
+    "billingYearly": "Annual",
+    "premiumFeatures": "Premium Services",
+    "managePlan": "Manage Plan"
   },
   "auth": {
     "login": "Login",

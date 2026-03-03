@@ -264,7 +264,18 @@
     "deleteAccountError": "회원 탈퇴에 실패했습니다",
     "subscription": "구독",
     "freePlan": "무료 플랜 이용 중",
-    "upgradePremium": "프리미엄 업그레이드"
+    "upgradePremium": "프리미엄 업그레이드",
+    "premiumServices": "이용 중인 프리미엄 서비스",
+    "subscriptionStatus": "구독 상태",
+    "planName": "플랜",
+    "expiresAt": "만료일",
+    "autoRenew": "자동 갱신",
+    "autoRenewOn": "사용 중",
+    "autoRenewOff": "해제됨",
+    "billingMonthly": "월간 구독",
+    "billingYearly": "연간 구독",
+    "premiumFeatures": "프리미엄 서비스 목록",
+    "managePlan": "요금제 관리"
   },
   "auth": {
     "login": "로그인",
