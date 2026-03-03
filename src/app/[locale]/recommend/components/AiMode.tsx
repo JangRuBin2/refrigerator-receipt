@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Wand2, ChefHat, Clock, Loader2, RotateCcw, Crown, Heart, Check, Search, ExternalLink } from 'lucide-react';
+import { Wand2, ChefHat, Clock, Loader2, RotateCcw, Crown, Heart, Check, Search, ExternalLink, Share2 } from 'lucide-react';
 import { z } from 'zod';
 
 import { Card, CardContent } from '@/components/ui/Card';
@@ -15,6 +15,8 @@ import { getDifficultyColor, getDifficultyLabel } from '@/lib/constants';
 import { aiGenerateRecipe, saveAiRecipe as saveAiRecipeApi } from '@/lib/api/recipes';
 import { addFavorite } from '@/lib/api/favorites';
 import { useStore } from '@/store/useStore';
+import { useShare } from '@/hooks/useShare';
+import { toast } from '@/store/useToastStore';
 
 const aiGenerateResponseSchema = z.object({
   recipe: z.object({
@@ -59,11 +61,46 @@ export function AiMode({ locale, isPremium, onBack, onFreeTrialUpdate }: AiModeP
   });
   const [aiSaving, setAiSaving] = useState(false);
   const [aiSaved, setAiSaved] = useState(false);
+  const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
+  const { share, canNativeShare } = useShare();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() =>
+    new Set(ingredients.map(i => i.id))
+  );
+
+  const allSelected = useMemo(
+    () => ingredients.length > 0 && ingredients.every(i => selectedIds.has(i.id)),
+    [ingredients, selectedIds]
+  );
+
+  const selectedCount = useMemo(
+    () => ingredients.filter(i => selectedIds.has(i.id)).length,
+    [ingredients, selectedIds]
+  );
+
+  const toggleIngredient = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(ingredients.map(i => i.id)));
+    }
+  };
 
   const getLocalizedDifficultyLabel = (d?: string) => getDifficultyLabel(d, locale);
 
   const generateAiRecipe = async () => {
-    if (ingredients.length === 0) return;
+    if (selectedCount === 0) return;
 
     setAiLoading(true);
     setAiError('');
@@ -71,7 +108,9 @@ export function AiMode({ locale, isPremium, onBack, onFreeTrialUpdate }: AiModeP
     setAiSaved(false);
 
     try {
-      const ingredientNames = ingredients.map(i => i.name);
+      const ingredientNames = ingredients
+        .filter(i => selectedIds.has(i.id))
+        .map(i => i.name);
       const preferences: Record<string, unknown> = {};
 
       if (aiPreferences.cookingTime) {
@@ -108,6 +147,7 @@ export function AiMode({ locale, isPremium, onBack, onFreeTrialUpdate }: AiModeP
     setAiError('');
     setAiPreferences({ cookingTime: '', difficulty: '', cuisine: '' });
     setAiSaved(false);
+    setSavedRecipeId(null);
   };
 
   const saveRecipe = async () => {
@@ -119,12 +159,24 @@ export function AiMode({ locale, isPremium, onBack, onFreeTrialUpdate }: AiModeP
       if (saved?.id) {
         await addFavorite(saved.id);
         toggleFavorite(saved.id);
+        setSavedRecipeId(saved.id);
       }
       setAiSaved(true);
     } catch {
       setAiError(t('recommend.saveError'));
     } finally {
       setAiSaving(false);
+    }
+  };
+
+  const handleShare = async (recipeId: string) => {
+    const shareUrl = `${window.location.origin}/${locale}/recipe/?id=${recipeId}`;
+    const shared = await share({
+      title: aiRecipe?.title,
+      url: shareUrl,
+    });
+    if (shared && !canNativeShare) {
+      toast.success(t('share.linkCopied'));
     }
   };
 
@@ -173,23 +225,49 @@ export function AiMode({ locale, isPremium, onBack, onFreeTrialUpdate }: AiModeP
             </div>
           ) : (
             <>
-              {/* My Ingredients */}
+              {/* My Ingredients - Selectable */}
               <div className="mb-4 rounded-lg bg-white p-4 dark:bg-gray-800">
-                <p className="mb-2 text-sm font-medium text-gray-500">
-                  {t('recommend.myIngredients', { count: ingredients.length })}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {ingredients.slice(0, 10).map((ing) => (
-                    <Badge key={ing.id} variant="default" className="text-xs">
-                      {ing.name}
-                    </Badge>
-                  ))}
-                  {ingredients.length > 10 && (
-                    <Badge variant="default" className="text-xs">
-                      +{ingredients.length - 10}
-                    </Badge>
-                  )}
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-medium text-gray-500">
+                    {t('recommend.myIngredients', { count: ingredients.length })}
+                    <span className="ml-1 text-emerald-600 dark:text-emerald-400">
+                      ({t('recommend.selectedCount', { selected: selectedCount, total: ingredients.length })})
+                    </span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={toggleAll}
+                    className="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                  >
+                    {allSelected ? t('recommend.deselectAll') : t('recommend.selectAll')}
+                  </button>
                 </div>
+                <p className="mb-2 text-xs text-gray-400">{t('recommend.selectIngredients')}</p>
+                <div className="max-h-32 overflow-y-auto">
+                  <div className="flex flex-wrap gap-1.5">
+                    {ingredients.map((ing) => {
+                      const isSelected = selectedIds.has(ing.id);
+                      return (
+                        <button
+                          key={ing.id}
+                          type="button"
+                          onClick={() => toggleIngredient(ing.id)}
+                          className={cn(
+                            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+                            isSelected
+                              ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-400 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-600'
+                              : 'bg-gray-100 text-gray-400 line-through dark:bg-gray-700 dark:text-gray-500'
+                          )}
+                        >
+                          {ing.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {selectedCount === 0 && (
+                  <p className="mt-2 text-xs text-red-500">{t('recommend.noIngredientsSelected')}</p>
+                )}
               </div>
 
               {/* Preferences */}
@@ -237,7 +315,7 @@ export function AiMode({ locale, isPremium, onBack, onFreeTrialUpdate }: AiModeP
               {/* Generate Button */}
               <Button
                 onClick={generateAiRecipe}
-                disabled={aiLoading}
+                disabled={aiLoading || selectedCount === 0}
                 className="w-full"
                 size="lg"
               >
@@ -357,6 +435,16 @@ export function AiMode({ locale, isPremium, onBack, onFreeTrialUpdate }: AiModeP
                 {t('recommend.searchYoutube')}
                 <ExternalLink className="h-3 w-3" />
               </a>
+              {aiSaved && savedRecipeId && (
+                <Button
+                  onClick={() => handleShare(savedRecipeId)}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Share2 className="mr-1.5 h-4 w-4" />
+                  {t('share.shareRecipe')}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

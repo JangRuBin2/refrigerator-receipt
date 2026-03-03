@@ -380,6 +380,19 @@
     "statusHigh": "过量",
     "noData": "没有可分析的食材"
   },
+  "share": {
+    "shareRecipe": "分享食谱",
+    "linkCopied": "链接已复制",
+    "ctaTitle": "在MealKeeper发现更多食谱",
+    "ctaDescription": "AI根据冰箱食材为您定制食谱",
+    "ctaButton": "开始使用",
+    "saveRecipe": "保存此食谱",
+    "saved": "已保存",
+    "notFound": "未找到食谱",
+    "notFoundDescription": "食谱已被删除或链接无效",
+    "sharedRecipe": "分享的食谱",
+    "goHome": "返回首页"
+  },
   "terms": {
     "title": "MealKeeper 服务条款",
     "article1": {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
-const PUBLIC_PATHS = ['/login', '/terms'];
+const PUBLIC_PATHS = ['/login', '/terms', '/recipe'];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((path) => {

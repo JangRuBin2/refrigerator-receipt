@@ -380,6 +380,19 @@
     "statusHigh": "過剰",
     "noData": "分析する食材がありません"
   },
+  "share": {
+    "shareRecipe": "レシピを共有",
+    "linkCopied": "リンクがコピーされました",
+    "ctaTitle": "MealKeeperでもっとレシピを見つけよう",
+    "ctaDescription": "AIが冷蔵庫の食材からオリジナルレシピを作ります",
+    "ctaButton": "始める",
+    "saveRecipe": "このレシピを保存",
+    "saved": "保存済み",
+    "notFound": "レシピが見つかりません",
+    "notFoundDescription": "削除されたか、無効なリンクです",
+    "sharedRecipe": "共有レシピ",
+    "goHome": "ホームへ"
+  },
   "terms": {
     "title": "MealKeeper 利用規約",
     "article1": {

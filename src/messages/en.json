@@ -170,15 +170,15 @@
     "goToFridge": "Go to Fridge",
     "myIngredients": "My Ingredients ({count})",
     "preferences": "Preferences (optional)",
-    "cookingTimeLabel": "Cooking Time",
+    "cookingTimeLabel": "Cooking Time (optional)",
     "quick": "Under 15 min",
     "medium": "Under 30 min",
     "long": "Over 60 min",
-    "difficultyLabel": "Difficulty",
+    "difficultyLabel": "Difficulty (optional)",
     "easy": "Easy",
     "normal": "Medium",
     "hard": "Hard",
-    "cuisineLabel": "Cuisine",
+    "cuisineLabel": "Cuisine (optional)",
     "korean": "Korean",
     "chinese": "Chinese",
     "japanese": "Japanese",
@@ -197,7 +197,12 @@
     "backToSelect": "Back",
     "previous": "Previous",
     "aiGenerateError": "Failed to generate AI recipe",
-    "saveError": "Failed to save"
+    "saveError": "Failed to save",
+    "selectIngredients": "Tap ingredients to select/deselect",
+    "selectedCount": "{selected}/{total} selected",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "noIngredientsSelected": "Please select at least 1 ingredient"
   },
   "scan": {
     "title": "Scan Receipt",
@@ -414,6 +419,19 @@
     "statusLow": "Low",
     "statusHigh": "High",
     "noData": "No ingredients to analyze"
+  },
+  "share": {
+    "shareRecipe": "Share Recipe",
+    "linkCopied": "Link copied to clipboard",
+    "ctaTitle": "Discover more recipes on MealKeeper",
+    "ctaDescription": "AI creates custom recipes from your fridge ingredients",
+    "ctaButton": "Get Started",
+    "saveRecipe": "Save this recipe",
+    "saved": "Saved",
+    "notFound": "Recipe not found",
+    "notFoundDescription": "This recipe may have been deleted or the link is invalid",
+    "sharedRecipe": "Shared Recipe",
+    "goHome": "Go Home"
   },
   "terms": {
     "title": "MealKeeper Terms of Service",
