@@ -29,7 +29,7 @@ export default function RecommendPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="space-y-4 p-4 pb-24">
+      <div className="space-y-4 p-4 pb-8">
         {mode === 'select' && (
           <ModeSelector
             isPremium={isPremium}

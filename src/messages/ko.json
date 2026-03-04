@@ -27,7 +27,6 @@
   },
   "home": {
     "welcome": "안녕하세요!",
-    "welcomeUser": "안녕하세요, {name}님!",
     "scanReceipt": "영수증 스캔하기",
     "scanDescription": "영수증을 촬영하면 자동으로 재료가 등록됩니다",
     "expiringItems": "유통기한 임박",
@@ -141,7 +140,9 @@
     "apiNotConfigured": "검색 API가 설정되지 않았습니다",
     "searchPlaceholder": "직접 검색어 입력...",
     "randomStrategy": "랜덤 재료",
-    "expiringStrategy": "임박 재료"
+    "expiringStrategy": "임박 재료",
+    "loadMore": "더 보기",
+    "allLoaded": "총 {count}개 레시피를 모두 불러왔습니다"
   },
   "recommend": {
     "title": "메뉴 추천",

@@ -142,7 +142,7 @@ export function RecipeContent() {
   const instructions = getLocalizedArray(recipe.instructions, locale);
 
   return (
-    <div className="mx-auto max-w-lg space-y-4 p-4 pb-32">
+    <div className="mx-auto max-w-lg space-y-4 p-4 pb-8">
       {/* Header */}
       <div className="flex items-center gap-2">
         <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">

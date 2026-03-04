@@ -205,7 +205,7 @@ export default function FridgePage() {
         </div>
       </div>
 
-      <div className="p-toss-md pt-0 pb-24 space-y-toss-md">
+      <div className="p-toss-md pt-0 pb-8 space-y-toss-md">
         {/* Ingredients List */}
         {filteredIngredients.length === 0 ? (
           <motion.div

@@ -194,7 +194,7 @@ export default function SettingsPage() {
     <div className="min-h-screen">
 
 
-      <div className="space-y-4 p-4 pb-24">
+      <div className="space-y-4 p-4 pb-8">
         {/* Section: Account */}
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
           {t('settings.sectionAccount')}

@@ -27,7 +27,6 @@
   },
   "home": {
     "welcome": "こんにちは！",
-    "welcomeUser": "こんにちは、{name}さん！",
     "scanReceipt": "レシートをスキャン",
     "scanDescription": "レシートを撮影すると自動的に食材が登録されます",
     "expiringItems": "賞味期限間近",
@@ -141,7 +140,9 @@
     "apiNotConfigured": "検索APIが設定されていません",
     "searchPlaceholder": "検索キーワードを入力...",
     "randomStrategy": "ランダム",
-    "expiringStrategy": "期限間近"
+    "expiringStrategy": "期限間近",
+    "loadMore": "もっと見る",
+    "allLoaded": "全{count}件のレシピを読み込みました"
   },
   "recommend": {
     "title": "メニュー推薦",

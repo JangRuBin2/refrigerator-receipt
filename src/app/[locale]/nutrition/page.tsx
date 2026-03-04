@@ -196,7 +196,7 @@ export default function NutritionPage() {
 
   return (
     <PremiumGate feature="nutrition_analysis">
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-8">
 
       <div className="space-y-4 p-4">
         {/* View Mode Tabs */}

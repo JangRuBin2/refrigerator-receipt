@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Wand2, Crown, ChefHat, Loader2, RotateCcw, Clock, Search, ExternalLink, Heart, Check } from 'lucide-react';
+import { Wand2, Crown, ChefHat, Loader2, RotateCcw, Clock, Search, ExternalLink, Heart, Check, Share2 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -11,8 +11,12 @@ import { Badge } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
+import { toast } from '@/store/useToastStore';
 import { aiGenerateRecipe, saveAiRecipe as saveAiRecipeApi } from '@/lib/api/recipes';
+import { addFavorite } from '@/lib/api/favorites';
+import { captureElementAsImage, shareImage } from '@/lib/shareImage';
 import type { AIGeneratedRecipe } from './types';
+import { RecipeShareCard } from './RecipeShareCard';
 import { getSearchUrl, getDifficultyLabel, getDifficultyColor } from './utils';
 
 interface AiRecipeModeProps {
@@ -30,7 +34,42 @@ const DIFFICULTY_VALUES: Difficulty[] = ['', 'easy', 'medium', 'hard'];
 export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
   const t = useTranslations();
   const router = useRouter();
-  const { ingredients } = useStore();
+  const { ingredients, toggleFavorite } = useStore();
+  const shareCardRef = useRef<HTMLDivElement>(null);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(ingredients.map(i => i.id))
+  );
+
+  const allSelected = useMemo(
+    () => ingredients.length > 0 && ingredients.every(i => selectedIds.has(i.id)),
+    [ingredients, selectedIds]
+  );
+
+  const selectedCount = useMemo(
+    () => ingredients.filter(i => selectedIds.has(i.id)).length,
+    [ingredients, selectedIds]
+  );
+
+  const toggleIngredient = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(ingredients.map(i => i.id)));
+    }
+  };
 
   const [recipe, setRecipe] = useState<AIGeneratedRecipe | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,17 +81,23 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const addDebug = (msg: string) => setDebugLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
   const generate = useCallback(async () => {
-    if (ingredients.length === 0) return;
+    if (selectedCount === 0) return;
 
     setLoading(true);
     setError('');
     setRecipe(null);
     setSaved(false);
+    setSavedRecipeId(null);
 
     try {
-      const ingredientNames = ingredients.map(i => i.name);
+      const ingredientNames = ingredients
+        .filter(i => selectedIds.has(i.id))
+        .map(i => i.name);
       const prefs: Record<string, unknown> = {};
 
       if (preferences.cookingTime) prefs.cookingTime = preferences.cookingTime;
@@ -71,7 +116,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
     } finally {
       setLoading(false);
     }
-  }, [ingredients, locale, preferences]);
+  }, [ingredients, selectedIds, selectedCount, locale, preferences]);
 
   const reset = useCallback(() => {
     setRecipe(null);
@@ -81,18 +126,79 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
   }, []);
 
   const save = useCallback(async () => {
-    if (!recipe || saving || saved) return;
+    if (!recipe || saving || saved) {
+      addDebug(`save blocked: recipe=${!!recipe}, saving=${saving}, saved=${saved}`);
+      return;
+    }
 
     setSaving(true);
+    addDebug('save: start');
     try {
-      await saveAiRecipeApi({ ...recipe, locale });
-      setSaved(true);
-    } catch {
-      setError(t('recommend.saveError'));
+      const result = await saveAiRecipeApi({ ...recipe, locale });
+      addDebug(`saveAiRecipeApi result: id=${result?.id}`);
+      if (result?.id) {
+        await addFavorite(result.id);
+        addDebug(`addFavorite done: ${result.id}`);
+        toggleFavorite(result.id);
+        setSavedRecipeId(result.id);
+        setSaved(true);
+        toast.success(t('recommend.saved'));
+        addDebug('save: SUCCESS');
+      } else {
+        addDebug('save: result.id is falsy');
+        toast.error(t('recommend.saveError'));
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      addDebug(`save ERROR: ${msg}`);
+      toast.error(t('recommend.saveError'));
     } finally {
       setSaving(false);
     }
-  }, [recipe, saving, saved, locale]);
+  }, [recipe, saving, saved, locale, toggleFavorite]);
+
+  const handleShare = useCallback(async () => {
+    if (!recipe || !shareCardRef.current) return;
+    addDebug('handleShare: capturing image');
+
+    // 저장 안 된 레시피면 자동 저장
+    if (!saved && !saving) {
+      try {
+        setSaving(true);
+        addDebug('handleShare: auto-saving');
+        const result = await saveAiRecipeApi({ ...recipe, locale });
+        if (result?.id) {
+          await addFavorite(result.id);
+          toggleFavorite(result.id);
+          setSavedRecipeId(result.id);
+          setSaved(true);
+          addDebug(`handleShare: auto-save SUCCESS id=${result.id}`);
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        addDebug(`handleShare auto-save ERROR: ${msg}`);
+      } finally {
+        setSaving(false);
+      }
+    }
+
+    try {
+      const file = await captureElementAsImage(
+        shareCardRef.current,
+        `mealkeeper-${recipe.title.slice(0, 20)}.png`
+      );
+      addDebug(`image captured: ${(file.size / 1024).toFixed(1)}KB`);
+      const shared = await shareImage(file, recipe.title);
+      if (shared) {
+        toast.success(t('share.linkCopied'));
+      }
+      addDebug('share done');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      addDebug(`share image ERROR: ${msg}`);
+      toast.error(t('recommend.saveError'));
+    }
+  }, [recipe, saved, saving, locale, toggleFavorite]);
 
   const handleCookingTimeChange = (value: string) => {
     const valid = COOKING_TIME_VALUES.includes(value as CookingTime);
@@ -144,17 +250,49 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
             </div>
           ) : (
             <>
-              {/* My Ingredients */}
+              {/* My Ingredients - Selectable */}
               <div className="mb-4 rounded-lg bg-white p-4 dark:bg-gray-800">
-                <p className="mb-2 text-sm font-medium text-gray-500">{t('recommend.myIngredients', { count: ingredients.length })}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {ingredients.slice(0, 10).map((ing) => (
-                    <Badge key={ing.id} variant="default" className="text-xs">{ing.name}</Badge>
-                  ))}
-                  {ingredients.length > 10 && (
-                    <Badge variant="default" className="text-xs">+{ingredients.length - 10}</Badge>
-                  )}
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-medium text-gray-500">
+                    {t('recommend.myIngredients', { count: ingredients.length })}
+                    <span className="ml-1 text-emerald-600 dark:text-emerald-400">
+                      ({t('recommend.selectedCount', { selected: selectedCount, total: ingredients.length })})
+                    </span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={toggleAll}
+                    className="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                  >
+                    {allSelected ? t('recommend.deselectAll') : t('recommend.selectAll')}
+                  </button>
                 </div>
+                <p className="mb-2 text-xs text-gray-400">{t('recommend.selectIngredients')}</p>
+                <div className="max-h-32 overflow-y-auto">
+                  <div className="flex flex-wrap gap-1.5">
+                    {ingredients.map((ing) => {
+                      const isSelected = selectedIds.has(ing.id);
+                      return (
+                        <button
+                          key={ing.id}
+                          type="button"
+                          onClick={() => toggleIngredient(ing.id)}
+                          className={cn(
+                            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+                            isSelected
+                              ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-400 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-600'
+                              : 'bg-gray-100 text-gray-400 line-through dark:bg-gray-700 dark:text-gray-500'
+                          )}
+                        >
+                          {ing.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {selectedCount === 0 && (
+                  <p className="mt-2 text-xs text-red-500">{t('recommend.noIngredientsSelected')}</p>
+                )}
               </div>
 
               {/* Preferences */}
@@ -198,7 +336,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
               </div>
 
               {/* Generate Button */}
-              <Button onClick={generate} disabled={loading} className="w-full" size="lg">
+              <Button onClick={generate} disabled={loading || selectedCount === 0} className="w-full" size="lg">
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -217,6 +355,9 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
           {error && <p className="mt-3 text-center text-sm text-red-500">{error}</p>}
         </CardContent>
       </Card>
+
+      {/* Hidden share card for image capture */}
+      {recipe && <RecipeShareCard ref={shareCardRef} recipe={recipe} locale={locale} />}
 
       {/* AI Generated Recipe */}
       {recipe && (
@@ -279,23 +420,33 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
             </p>
 
             {/* Action Buttons */}
-            <div className="mt-4 flex items-center gap-3">
-              <Button
-                onClick={save}
-                disabled={saving || saved}
-                variant={saved ? 'primary' : 'outline'}
-                size="sm"
-                className={cn(saved && 'bg-red-500 hover:bg-red-500 text-white')}
-              >
-                {saving ? (
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                ) : saved ? (
-                  <Check className="mr-1.5 h-4 w-4" />
-                ) : (
-                  <Heart className="mr-1.5 h-4 w-4" />
-                )}
-                {saved ? t('recommend.saved') : t('recommend.saveToFavorites')}
-              </Button>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={save}
+                  disabled={saving || saved}
+                  variant={saved ? 'primary' : 'outline'}
+                  size="sm"
+                  className={cn(saved && 'bg-red-500 hover:bg-red-500 text-white')}
+                >
+                  {saving ? (
+                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  ) : saved ? (
+                    <Check className="mr-1.5 h-4 w-4" />
+                  ) : (
+                    <Heart className="mr-1.5 h-4 w-4" />
+                  )}
+                  {saved ? t('recommend.saved') : t('recommend.saveToFavorites')}
+                </Button>
+                <Button
+                  onClick={handleShare}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Share2 className="mr-1.5 h-4 w-4" />
+                  {t('share.shareRecipe')}
+                </Button>
+              </div>
               <a
                 href={getSearchUrl(recipe.title, locale)}
                 target="_blank"
@@ -306,6 +457,24 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
                 {t('recommend.searchYoutube')}
                 <ExternalLink className="h-3 w-3" />
               </a>
+            </div>
+
+            {/* Debug Panel */}
+            <div className="mt-3 rounded-lg border-2 border-yellow-400 bg-yellow-50 p-3 dark:bg-yellow-900/20">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-xs font-bold text-yellow-700">DEBUG</span>
+                <button type="button" onClick={() => setDebugLog([])} className="text-xs text-yellow-600 underline">Clear</button>
+              </div>
+              <p className="text-[10px] text-gray-500">
+                saved={String(saved)} | savedRecipeId={savedRecipeId ?? 'null'} | saving={String(saving)}
+              </p>
+              {debugLog.length > 0 && (
+                <div className="mt-1 max-h-40 overflow-y-auto">
+                  {debugLog.map((log, idx) => (
+                    <p key={idx} className="break-all text-[10px] text-yellow-800 dark:text-yellow-300">{log}</p>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

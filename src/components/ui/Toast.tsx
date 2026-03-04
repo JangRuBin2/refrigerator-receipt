@@ -151,7 +151,7 @@ export const ToastContainer = () => {
   const { toasts } = useToastStore();
 
   return (
-    <div className="fixed bottom-20 inset-x-0 z-50 flex flex-col items-center gap-2 px-4 pointer-events-none pb-safe">
+    <div className="fixed bottom-6 inset-x-0 z-50 flex flex-col items-center gap-2 px-4 pointer-events-none pb-safe">
       <AnimatePresence mode="popLayout">
         {toasts.map((toast) => (
           <div key={toast.id} className="pointer-events-auto">

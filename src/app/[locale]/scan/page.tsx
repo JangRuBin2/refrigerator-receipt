@@ -234,7 +234,7 @@ export default function ScanPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
-      <div className="p-toss-md pb-24">
+      <div className="p-toss-md pb-8">
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-2 mb-toss-lg">
           {STEPS.map((s, index) => (

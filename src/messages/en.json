@@ -27,7 +27,6 @@
   },
   "home": {
     "welcome": "Hello!",
-    "welcomeUser": "Hello, {name}!",
     "scanReceipt": "Scan Receipt",
     "scanDescription": "Take a photo of your receipt to automatically add ingredients",
     "expiringItems": "Expiring Soon",
@@ -141,7 +140,9 @@
     "apiNotConfigured": "Search API is not configured",
     "searchPlaceholder": "Enter search keywords...",
     "randomStrategy": "Random",
-    "expiringStrategy": "Expiring Soon"
+    "expiringStrategy": "Expiring Soon",
+    "loadMore": "Load More",
+    "allLoaded": "All {count} recipes loaded"
   },
   "recommend": {
     "title": "Menu Recommend",

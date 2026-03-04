@@ -21,7 +21,7 @@ export default function FridgeAddPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
 
-      <div className="p-toss-md pb-24">
+      <div className="p-toss-md pb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

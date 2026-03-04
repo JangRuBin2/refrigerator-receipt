@@ -2,7 +2,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
-import { BottomNav } from '@/components/layout/BottomNav';
+import { FabMenu } from '@/components/layout/FabMenu';
 import { Footer } from '@/components/layout/Footer';
 import { ToastContainer } from '@/components/ui/Toast';
 import { AuthGuard } from '@/components/layout/AuthGuard';
@@ -178,7 +178,7 @@ export default async function LocaleLayout({
               <AuthGuard>{children}</AuthGuard>
               <Footer />
             </main>
-            <BottomNav locale={locale} />
+            <FabMenu locale={locale} />
           </div>
           <ToastContainer />
         </NextIntlClientProvider>

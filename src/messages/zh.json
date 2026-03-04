@@ -27,7 +27,6 @@
   },
   "home": {
     "welcome": "你好！",
-    "welcomeUser": "{name}，你好！",
     "scanReceipt": "扫描收据",
     "scanDescription": "拍摄收据照片，自动添加食材",
     "expiringItems": "即将过期",
@@ -141,7 +140,9 @@
     "apiNotConfigured": "搜索API未配置",
     "searchPlaceholder": "输入搜索关键词...",
     "randomStrategy": "随机食材",
-    "expiringStrategy": "即将过期"
+    "expiringStrategy": "即将过期",
+    "loadMore": "加载更多",
+    "allLoaded": "已加载全部{count}个食谱"
   },
   "recommend": {
     "title": "菜单推荐",
