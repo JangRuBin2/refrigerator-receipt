@@ -42,8 +42,10 @@ interface AiModeProps {
   onFreeTrialUpdate: (info: { remainingCount: number; limit: number }) => void;
 }
 
-function getSearchUrl(name: string) {
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' 레시피')}`;
+const SEARCH_KEYWORDS: Record<string, string> = { ko: '레시피', en: 'recipe', ja: 'レシピ', zh: '食谱' };
+
+function getSearchUrl(name: string, locale: string = 'ko') {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' ' + (SEARCH_KEYWORDS[locale] || SEARCH_KEYWORDS.ko))}`;
 }
 
 export function AiMode({ locale, isPremium, onBack, onFreeTrialUpdate }: AiModeProps) {
@@ -426,7 +428,7 @@ export function AiMode({ locale, isPremium, onBack, onFreeTrialUpdate }: AiModeP
                 {aiSaved ? t('recommend.saved') : t('recommend.saveToFavorites')}
               </Button>
               <a
-                href={getSearchUrl(aiRecipe.title)}
+                href={getSearchUrl(aiRecipe.title, locale)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"

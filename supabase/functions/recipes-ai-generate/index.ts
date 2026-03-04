@@ -1,4 +1,4 @@
-import { corsHeaders, handleCors } from '../_shared/cors.ts';
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { callGemini, parseJsonFromText } from '../_shared/gemini.ts';
 import { checkAccess } from '../_shared/free-trial.ts';
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
           error: '무료 체험 횟수를 모두 사용했습니다. 프리미엄으로 업그레이드해주세요.',
           freeTrial: access.freeTrial,
         }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     if (!geminiKey) {
       return new Response(
         JSON.stringify({ error: 'AI service not configured' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 503, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     if (!ingredients || ingredients.length === 0) {
       return new Response(
         JSON.stringify({ error: 'Ingredients required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     if (!generatedText) {
       return new Response(
         JSON.stringify({ error: 'No response from AI' }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 502, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     if (!recipe) {
       return new Response(
         JSON.stringify({ error: 'Failed to parse recipe' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -107,12 +107,12 @@ Deno.serve(async (req) => {
         freeTrial: updatedAccess.freeTrial,
         isPremium: updatedAccess.isPremium,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   } catch {
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

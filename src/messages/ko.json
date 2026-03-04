@@ -27,6 +27,7 @@
   },
   "home": {
     "welcome": "안녕하세요!",
+    "welcomeUser": "안녕하세요, {name}님!",
     "scanReceipt": "영수증 스캔하기",
     "scanDescription": "영수증을 촬영하면 자동으로 재료가 등록됩니다",
     "expiringItems": "유통기한 임박",
@@ -129,6 +130,7 @@
     "matchRate": "재료 일치율",
     "noRecipes": "추천할 레시피가 없습니다",
     "externalRecommend": "외부 레시피 추천",
+    "externalSearchDesc": "YouTube, Google에서 레시피를 검색할 수 있는 기능이 곧 추가됩니다.",
     "searchByIngredients": "내 재료로 검색",
     "searching": "레시피 검색 중...",
     "youtube": "YouTube",
@@ -202,7 +204,8 @@
     "selectedCount": "{selected}/{total}개 선택",
     "selectAll": "전체 선택",
     "deselectAll": "전체 해제",
-    "noIngredientsSelected": "재료를 1개 이상 선택해주세요"
+    "noIngredientsSelected": "재료를 1개 이상 선택해주세요",
+    "searchKeyword": "레시피"
   },
   "scan": {
     "title": "영수증 스캔",
@@ -213,6 +216,7 @@
     "foundItems": "{count}개의 재료를 찾았습니다",
     "noItems": "재료를 찾지 못했습니다",
     "confirmItems": "재료 확인",
+    "selectedCount": "{count}개 항목 선택됨",
     "addToFridge": "냉장고에 추가",
     "retry": "다시 스캔",
     "aiVisionMode": "AI 모드",
@@ -226,7 +230,28 @@
     "adRequiredDescription": "프리미엄 회원은 광고 없이 바로 스캔합니다",
     "adRequired": "스캔하려면 광고를 시청해주세요",
     "watchingAd": "광고 준비 중...",
-    "adWatchingDescription": "광고가 끝나면 자동으로 스캔이 시작됩니다"
+    "adWatchingDescription": "광고가 끝나면 자동으로 스캔이 시작됩니다",
+    "guide": {
+      "title": "스캔 가이드",
+      "good": "올바른 예",
+      "bad": "잘못된 예",
+      "tipFullReceipt": "영수증 전체가 보이게",
+      "tipBrightPlace": "밝은 곳에서 촬영",
+      "tipFlatSurface": "평평한 곳에 펴서",
+      "tipPartialOnly": "일부만 찍힘",
+      "tipBlurryDark": "흐릿하거나 어두움",
+      "tipCrumpledTilted": "구겨짐 / 기울어짐"
+    },
+    "failure": {
+      "title": "스캔 실패",
+      "errorReason": "실패 원인",
+      "tipsTitle": "스캔 팁",
+      "tipCheckReceipt": "영수증이 맞는지 확인해주세요",
+      "tipClearText": "글씨가 선명하게 보이는지 확인해주세요",
+      "tipBrightEnv": "밝은 환경에서 다시 촬영해주세요",
+      "retryCapture": "다시 촬영하기",
+      "manualAdd": "직접 등록하기"
+    }
   },
   "settings": {
     "title": "설정",
@@ -278,7 +303,15 @@
     "billingYearly": "연간 구독",
     "premiumFeatures": "프리미엄 서비스 목록",
     "managePlan": "요금제 관리",
-    "manualRenewNotice": "구독 만료 시 자동 갱신되지 않습니다. 만료 전 재구매해주세요."
+    "manualRenewNotice": "구독 만료 시 자동 갱신되지 않습니다. 만료 전 재구매해주세요.",
+    "guestUser": "게스트 사용자",
+    "autoDeleteExpired": "만료 식재료 자동 삭제",
+    "autoDeleteExpiredDesc": "앱 시작 시 유통기한이 지난 식재료를 자동으로 삭제합니다",
+    "expiredCleanupDone": "만료된 식재료 {count}개가 삭제되었습니다",
+    "sectionAccount": "계정",
+    "sectionPreferences": "환경설정",
+    "sectionSubscription": "구독",
+    "sectionAppInfo": "앱 정보"
   },
   "auth": {
     "login": "로그인",
@@ -392,6 +425,15 @@
       "monthlyNet": "월 +14,020원"
     }
   },
+  "checkout": {
+    "discount": "할인",
+    "orderSummary": "결제 요약",
+    "totalAmount": "총 결제 금액",
+    "checkingPayment": "결제 환경 확인 중...",
+    "payAmount": "{amount} 결제하기",
+    "tossPay": "토스페이로 결제됩니다",
+    "goBack": "뒤로 가기"
+  },
   "features": {
     "scan": "영수증 스캔",
     "expiry": "유통기한 알림",
@@ -432,6 +474,12 @@
     "aiRecommendations": "AI 영양 추천",
     "aiDisclaimer": "AI가 생성한 콘텐츠입니다. 참고용으로만 활용하세요.",
     "ingredientDetails": "재료별 영양 정보",
+    "current": "현재 상태",
+    "weekly": "주간",
+    "monthly": "월간",
+    "weeklyScore": "주간 영양 점수",
+    "monthlyScore": "월간 영양 점수",
+    "periodAnalysis": "최근 {days}일 구매/추가 기반 분석",
     "statusGood": "적정",
     "statusLow": "부족",
     "statusHigh": "과다",

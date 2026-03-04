@@ -1,4 +1,4 @@
-import { corsHeaders, handleCors } from '../_shared/cors.ts';
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 import { createAdminClient } from '../_shared/supabase.ts';
 
 // Deno unstable mTLS API types (not available in standard type definitions)
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
     if (!authorizationCode || !referrer) {
       return new Response(
         JSON.stringify({ success: false, error: 'Missing authorizationCode or referrer' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
     if ('error' in tokenResult) {
       return new Response(
         JSON.stringify({ success: false, error: 'Token exchange failed' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
     if ('error' in userResult) {
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to retrieve user info' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
           },
           user: { id: signInData.user?.id, email: signInData.user?.email },
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       if (signUpError) {
         return new Response(
           JSON.stringify({ success: false, error: 'Failed to create user' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
 
@@ -246,7 +246,7 @@ Deno.serve(async (req) => {
       if (newSignInError || !newSignInData?.session) {
         return new Response(
           JSON.stringify({ success: false, error: 'Failed to sign in new user' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
 
@@ -289,18 +289,18 @@ Deno.serve(async (req) => {
           user: { id: newSignInData.user?.id, email: newSignInData.user?.email },
           isNewUser: true,
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response(
       JSON.stringify({ success: false, error: signInError?.message || 'Authentication failed' }),
-      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   } catch (err) {
     return new Response(
       JSON.stringify({ success: false, error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -22,8 +22,10 @@ function getTitle(title: Record<string, string>, locale: string) {
   return title[locale] || title.ko || title.en || '';
 }
 
-function getSearchUrl(name: string) {
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' 레시피')}`;
+const SEARCH_KEYWORDS: Record<string, string> = { ko: '레시피', en: 'recipe', ja: 'レシピ', zh: '食谱' };
+
+function getSearchUrl(name: string, locale: string = 'ko') {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' ' + (SEARCH_KEYWORDS[locale] || SEARCH_KEYWORDS.ko))}`;
 }
 
 export function TasteMode({ locale, onBack }: TasteModeProps) {
@@ -112,7 +114,7 @@ export function TasteMode({ locale, onBack }: TasteModeProps) {
                               {recipe.cooking_time && (
                                 <span className="flex items-center gap-1 text-xs text-gray-500">
                                   <Clock className="h-3 w-3" />
-                                  {recipe.cooking_time}분
+                                  {t('recommend.cookingTime', { time: recipe.cooking_time })}
                                 </span>
                               )}
                               {recipe.difficulty && (
@@ -123,7 +125,7 @@ export function TasteMode({ locale, onBack }: TasteModeProps) {
                             </div>
                           </div>
                           <a
-                            href={getSearchUrl(getTitle(recipe.title, locale))}
+                            href={getSearchUrl(getTitle(recipe.title, locale), locale)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="rounded-full p-2 text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700"

@@ -22,7 +22,7 @@ export function ExternalSearchSection() {
           </Badge>
         </div>
         <p className="mt-2 text-sm text-gray-400">
-          YouTube, Google에서 레시피를 검색할 수 있는 기능이 곧 추가됩니다.
+          {t('recipe.externalSearchDesc')}
         </p>
       </CardContent>
     </Card>

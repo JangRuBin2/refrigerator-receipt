@@ -46,3 +46,14 @@ export const AD_GROUP_IDS = {
 } as const;
 
 export type AdGroupId = typeof AD_GROUP_IDS[keyof typeof AD_GROUP_IDS];
+
+// 배너 광고 ID 상수
+export const BANNER_AD_IDS = {
+  // 테스트용 ID (개발 중에만 사용)
+  TEST_BANNER: 'ait-ad-test-banner-id',
+
+  // 프로덕션 배너 광고 ID
+  HOME_BANNER: 'ait.v2.live.9c28c530c14a4b96',
+} as const;
+
+export type BannerAdId = typeof BANNER_AD_IDS[keyof typeof BANNER_AD_IDS];

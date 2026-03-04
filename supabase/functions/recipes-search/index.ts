@@ -1,4 +1,4 @@
-import { corsHeaders, handleCors } from '../_shared/cors.ts';
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { checkAccess } from '../_shared/free-trial.ts';
 import { SearchResult, IngredientNameExpiry, YouTubeSearchItem, GoogleSearchItem } from '../_shared/types.ts';
@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
           error: '무료 체험 횟수를 모두 사용했습니다.',
           freeTrial: access.freeTrial,
         }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
           apiStatus: { youtube: false, google: false },
           results: [],
         }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 503, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
             apiStatus: { youtube: youtubeConfigured, google: googleConfigured },
             results: [],
           }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
 
@@ -156,13 +156,13 @@ Deno.serve(async (req) => {
         freeTrial: updatedAccess.freeTrial,
         isPremium: updatedAccess.isPremium,
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('recipes-search error:', error);
     return new Response(
       JSON.stringify({ error: '검색 중 오류가 발생했습니다. 다시 시도해주세요.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

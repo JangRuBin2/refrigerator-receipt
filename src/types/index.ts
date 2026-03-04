@@ -55,6 +55,7 @@ export interface UserSettings {
     enabled: boolean;
     expiryAlertDays: number;
   };
+  autoDeleteExpired: boolean;
 }
 
 export interface ExternalRecipe {

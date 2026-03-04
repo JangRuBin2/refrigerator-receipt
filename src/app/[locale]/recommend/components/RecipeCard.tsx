@@ -28,8 +28,10 @@ function getTitle(title: Record<string, string>, locale: string) {
   return title[locale] || title.ko || title.en || '';
 }
 
-function getSearchUrl(name: string) {
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' 레시피')}`;
+const SEARCH_KEYWORDS: Record<string, string> = { ko: '레시피', en: 'recipe', ja: 'レシピ', zh: '食谱' };
+
+function getSearchUrl(name: string, locale: string = 'ko') {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' ' + (SEARCH_KEYWORDS[locale] || SEARCH_KEYWORDS.ko))}`;
 }
 
 export function RecipeCard({ recipe, locale, isBest = false }: RecipeCardProps) {
@@ -88,7 +90,7 @@ export function RecipeCard({ recipe, locale, isBest = false }: RecipeCardProps) 
         )}
 
         <a
-          href={getSearchUrl(title)}
+          href={getSearchUrl(title, locale)}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"

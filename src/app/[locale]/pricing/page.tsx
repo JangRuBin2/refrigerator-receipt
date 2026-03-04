@@ -61,7 +61,7 @@ export default function PricingPage() {
     {
       icon: Search,
       title: t('pricing.feature.externalSearch'),
-      description: 'YouTube, Google에서 레시피 검색',
+      description: t('pricing.feature.externalSearch'),
       color: 'text-red-500',
     },
   ];
@@ -166,7 +166,7 @@ export default function PricingPage() {
                 className="w-full"
                 onClick={() => router.push(`/${locale}/checkout?plan=yearly`)}
               >
-                {t('pricing.subscribeYearly')} (30% 할인)
+                {t('pricing.subscribeYearly')} (30% {t('checkout.discount')})
               </Button>
             </div>
           </CardContent>
@@ -175,7 +175,7 @@ export default function PricingPage() {
         {/* Premium Features Showcase */}
         <div className="space-y-4">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            프리미엄 전용 기능
+            {t('pricing.premiumRequired')}
           </h3>
           {premiumFeatures.map((feature, i) => (
             <Card
@@ -250,16 +250,16 @@ export default function PricingPage() {
         <Card className="bg-gradient-to-r from-primary-500 to-primary-600 text-white">
           <CardContent className="p-6 text-center">
             <Crown className="mx-auto h-10 w-10" />
-            <h3 className="mt-3 text-xl font-bold">지금 프리미엄 시작하기</h3>
+            <h3 className="mt-3 text-xl font-bold">{t('pricing.startPremium')}</h3>
             <p className="mt-2 text-sm text-white/80">
-              AI 맞춤 레시피, 영양 분석, 스마트 장보기까지
+              {t('pricing.feature.aiRecipeDesc')}
             </p>
             <Button
               variant="secondary"
               className="mt-4 bg-white text-primary-600 hover:bg-gray-100"
               onClick={() => router.push(`/${locale}/checkout?plan=yearly`)}
             >
-              연간 구독으로 30% 절약
+              {t('pricing.subscribeYearly')} (30% {t('checkout.discount')})
             </Button>
           </CardContent>
         </Card>

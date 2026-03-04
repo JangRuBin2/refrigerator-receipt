@@ -211,7 +211,7 @@ export default function NutritionPage() {
             )}
           >
             <Activity className="h-4 w-4" />
-            현재 상태
+            {t('nutrition.current')}
           </button>
           <button
             onClick={() => setViewMode('week')}
@@ -223,7 +223,7 @@ export default function NutritionPage() {
             )}
           >
             <Calendar className="h-4 w-4" />
-            주간
+            {t('nutrition.weekly')}
           </button>
           <button
             onClick={() => setViewMode('month')}
@@ -235,7 +235,7 @@ export default function NutritionPage() {
             )}
           >
             <BarChart3 className="h-4 w-4" />
-            월간
+            {t('nutrition.monthly')}
           </button>
         </div>
 
@@ -258,7 +258,7 @@ export default function NutritionPage() {
                     <p className="text-white/80 text-sm">
                       {viewMode === 'current'
                         ? t('nutrition.balanceScore')
-                        : viewMode === 'week' ? '주간 영양 점수' : '월간 영양 점수'}
+                        : viewMode === 'week' ? t('nutrition.weeklyScore') : t('nutrition.monthlyScore')}
                     </p>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className="text-5xl font-bold">{report.score}</span>
@@ -277,7 +277,7 @@ export default function NutritionPage() {
 
                 {viewMode !== 'current' && (
                   <p className="text-sm text-white/60 mt-2">
-                    최근 {viewMode === 'week' ? '7일' : '30일'} 구매/추가 기반 분석
+                    {t('nutrition.periodAnalysis', { days: viewMode === 'week' ? '7' : '30' })}
                   </p>
                 )}
 

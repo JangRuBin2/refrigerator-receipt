@@ -7,8 +7,11 @@ import { Badge } from '@/components/ui/Badge';
 import { getDaysUntilExpiry } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
 import { usePremium } from '@/hooks/usePremium';
+import { createClient } from '@/lib/supabase/client';
+import { useExpiredCleanup } from '@/hooks/useExpiredCleanup';
 import { TrialWelcomeModal } from '@/components/premium/TrialWelcomeModal';
 import { TrialExpiringModal, isTrialExpiringDismissedToday } from '@/components/premium/TrialExpiringModal';
+import { BannerAd } from '@/components/ads/BannerAd';
 import { spring, listContainer, listItem } from '@/lib/animations';
 import {
   AlertTriangle,
@@ -17,7 +20,6 @@ import {
   ChevronRight,
   Crown,
   Heart,
-  Lock,
   Package,
   Plus,
   Refrigerator,
@@ -42,11 +44,42 @@ const STORAGE_CONFIG = [
 
 export default function HomePage() {
   const t = useTranslations();
+  useExpiredCleanup();
   const params = useParams();
   const locale = params.locale as string;
   const searchParams = useSearchParams();
   const { ingredients, favoriteRecipeIds } = useStore();
   const { isPremium, isLoading: premiumLoading, isTrialActive, isTrialExpired, trialDaysRemaining } = usePremium();
+
+  // Fetch user name for greeting
+  const [userName, setUserName] = useState<string | null>(null);
+  useEffect(() => {
+    const fetchName = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const name = user.user_metadata?.full_name || user.user_metadata?.name;
+        if (name) {
+          setUserName(name);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+        if (profile?.name) {
+          setUserName(profile.name);
+        }
+      } catch {
+        // Ignore - show default greeting
+      }
+    };
+    fetchName();
+  }, []);
 
   // Welcome modal for new users
   const [showWelcome, setShowWelcome] = useState(false);
@@ -143,7 +176,9 @@ export default function HomePage() {
           className="pt-toss-sm"
         >
           <p className="toss-caption">{dateString}</p>
-          <h1 className="toss-h1 mt-toss-xs">{t('home.welcome')}</h1>
+          <h1 className="toss-h1 mt-toss-xs">
+            {userName ? t('home.welcomeUser', { name: userName }) : t('home.welcome')}
+          </h1>
           <p className="toss-body2 mt-toss-xs text-primary-600 dark:text-primary-400">
             {t('common.appName')}
           </p>
@@ -436,6 +471,9 @@ export default function HomePage() {
           </div>
         </motion.section>
 
+        {/* Banner Ad (free users only) */}
+        <BannerAd className="my-2" />
+
         {/* Storage Breakdown */}
         {hasIngredients && (
           <motion.section
@@ -611,11 +649,7 @@ export default function HomePage() {
                 <h3 className="toss-body1 font-semibold">{t('nutrition.title')}</h3>
                 <p className="toss-caption">{t('home.nutritionDescription')}</p>
               </div>
-              {!isPremium ? (
-                <Lock className="h-5 w-5 text-gray-400" />
-              ) : (
-                <ChevronRight className="h-5 w-5 text-gray-400" />
-              )}
+              <ChevronRight className="h-5 w-5 text-gray-400" />
             </motion.div>
           </Link>
 
@@ -631,11 +665,7 @@ export default function HomePage() {
                 <h3 className="toss-body1 font-semibold">{t('shopping.title')}</h3>
                 <p className="toss-caption">{t('home.shoppingDescription')}</p>
               </div>
-              {!isPremium ? (
-                <Lock className="h-5 w-5 text-gray-400" />
-              ) : (
-                <ChevronRight className="h-5 w-5 text-gray-400" />
-              )}
+              <ChevronRight className="h-5 w-5 text-gray-400" />
             </motion.div>
           </Link>
 

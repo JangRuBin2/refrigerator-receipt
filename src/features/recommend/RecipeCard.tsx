@@ -72,7 +72,7 @@ export function RecipeCard({ recipe, locale, isBest = false }: RecipeCardProps) 
         )}
 
         <a
-          href={getSearchUrl(title)}
+          href={getSearchUrl(title, locale)}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-4 flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"

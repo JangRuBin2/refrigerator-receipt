@@ -1,4 +1,4 @@
-import { corsHeaders, handleCors } from '../_shared/cors.ts';
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { callGemini, callGeminiWithImage, parseJsonFromText } from '../_shared/gemini.ts';
 import type { GeminiSchema } from '../_shared/gemini.ts';
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
             canWatchAd: false,
           },
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
           currentCount: usage.used,
           isPremium: usage.isPremium,
         }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 429, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
     if (!image) {
       return new Response(
         JSON.stringify({ error: 'No image provided' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
     if (estimatedSize > MAX_FILE_SIZE) {
       return new Response(
         JSON.stringify({ error: '이미지 용량이 너무 큽니다. 10MB 이하의 이미지를 업로드해주세요.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
       if (!geminiKey) {
         return new Response(
           JSON.stringify({ error: 'AI Vision 서비스가 설정되지 않았습니다.' }),
-          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 503, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
 
@@ -229,14 +229,14 @@ Deno.serve(async (req) => {
       if (!analysisResult.isValid) {
         return new Response(
           JSON.stringify({ error: '영수증이나 식재료 사진이 아닙니다.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
 
       if (analysisResult.items.length === 0) {
         return new Response(
           JSON.stringify({ error: '이미지에서 식재료를 찾을 수 없습니다.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
 
@@ -255,14 +255,14 @@ Deno.serve(async (req) => {
       if (!analysisResult.isValid) {
         return new Response(
           JSON.stringify({ error: '영수증이나 식재료 사진이 아닙니다.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
 
       if (analysisResult.items.length === 0) {
         return new Response(
           JSON.stringify({ error: '영수증에서 식재료를 찾을 수 없습니다.' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
 
@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
     } else {
       return new Response(
         JSON.stringify({ error: 'OCR 서비스가 설정되지 않았습니다.' }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 503, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -309,13 +309,13 @@ Deno.serve(async (req) => {
           isPremium: usage.isPremium,
         },
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('receipts-scan error:', error);
     return new Response(
       JSON.stringify({ error: '스캔 중 오류가 발생했습니다. 다시 시도해주세요.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

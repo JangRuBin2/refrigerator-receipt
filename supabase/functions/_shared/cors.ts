@@ -1,15 +1,15 @@
 const ALLOWED_ORIGINS = [
   'https://refrigerator-receipt.vercel.app',
   'https://mealkeeper.app',
+  'https://acorn.apps.tossmini.com',
+  'https://acorn.private-apps.tossmini.com',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3000',
 ];
 
 function getAllowedOrigin(req: Request): string {
   const origin = req.headers.get('Origin') || '';
-  const isDev = Deno.env.get('ENVIRONMENT') === 'development';
-
-  if (isDev && (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1'))) {
-    return origin;
-  }
 
   if (ALLOWED_ORIGINS.includes(origin)) {
     return origin;

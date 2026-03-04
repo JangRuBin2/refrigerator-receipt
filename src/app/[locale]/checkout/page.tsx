@@ -180,7 +180,7 @@ function CheckoutContent() {
                 </Badge>
               )}
               <p className="text-sm font-medium text-gray-500">
-                {plan === 'monthly' ? '월간' : '연간'}
+                {plan === 'monthly' ? t('settings.billingMonthly') : t('settings.billingYearly')}
               </p>
               <p className="mt-1 text-xl font-bold">
                 {plans[plan].price}
@@ -188,7 +188,7 @@ function CheckoutContent() {
               </p>
               {plan === 'yearly' && (
                 <p className="mt-1 text-xs text-green-600">
-                  {plans[plan].discount} 할인
+                  {plans[plan].discount} {t('checkout.discount')}
                 </p>
               )}
               {selectedPlan === plan && (
@@ -207,7 +207,7 @@ function CheckoutContent() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Crown className="h-5 w-5 text-yellow-500" />
-              프리미엄 혜택
+              {t('pricing.premiumBenefits')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -289,7 +289,7 @@ function CheckoutContent() {
                 <Sparkles className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-semibold">AI 맞춤 레시피</h3>
+                <h3 className="font-semibold">{t('recommend.aiMode')}</h3>
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                   {t('pricing.feature.aiRecipeDesc')}
                 </p>
@@ -301,12 +301,12 @@ function CheckoutContent() {
         {/* Order Summary */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">결제 요약</CardTitle>
+            <CardTitle className="text-base">{t('checkout.orderSummary')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">
-                Premium {selectedPlan === 'monthly' ? '월간' : '연간'}
+                Premium {selectedPlan === 'monthly' ? t('settings.billingMonthly') : t('settings.billingYearly')}
               </span>
               <span className="font-medium">{plans[selectedPlan].total}</span>
             </div>
@@ -321,7 +321,7 @@ function CheckoutContent() {
                 if (discount > 0) {
                   return (
                     <div className="flex justify-between text-sm text-green-600">
-                      <span>할인</span>
+                      <span>{t('checkout.discount')}</span>
                       <span>-₩{discount.toLocaleString()}</span>
                     </div>
                   );
@@ -331,12 +331,12 @@ function CheckoutContent() {
             })()}
             <div className="border-t pt-3">
               <div className="flex justify-between font-semibold">
-                <span>총 결제 금액</span>
+                <span>{t('checkout.totalAmount')}</span>
                 <span className="text-primary-600">{plans[selectedPlan].total}</span>
               </div>
               {selectedPlan === 'yearly' && (
                 <p className="mt-1 text-right text-xs text-gray-500">
-                  (월 {plans[selectedPlan].price})
+                  ({plans[selectedPlan].price}/{t('pricing.month')})
                 </p>
               )}
             </div>
@@ -385,7 +385,7 @@ function CheckoutContent() {
         {isAppsInTossLoading && (
           <div className="flex items-center justify-center gap-2 py-4">
             <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-            <span className="text-sm text-gray-500">결제 환경 확인 중...</span>
+            <span className="text-sm text-gray-500">{t('checkout.checkingPayment')}</span>
           </div>
         )}
 
@@ -405,7 +405,7 @@ function CheckoutContent() {
             ) : (
               <>
                 <Crown className="mr-2 h-5 w-5" />
-                {plans[selectedPlan].total} 결제하기
+                {t('checkout.payAmount', { amount: plans[selectedPlan].total })}
               </>
             )}
           </Button>
@@ -416,7 +416,7 @@ function CheckoutContent() {
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
               </svg>
-              토스페이로 결제됩니다
+              {t('checkout.tossPay')}
             </div>
           )}
 
@@ -435,7 +435,7 @@ function CheckoutContent() {
           className="w-full"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          뒤로 가기
+          {t('checkout.goBack')}
         </Button>
       </div>
     </div>

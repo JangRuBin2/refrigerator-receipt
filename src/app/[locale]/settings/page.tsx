@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { User, Globe, Bell, Palette, Database, LogOut, UserX, ChevronRight, Moon, Sun, Crown, Check } from 'lucide-react';
+import { User, Globe, Bell, Palette, Database, LogOut, UserX, ChevronRight, Moon, Sun, Crown, Check, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { BottomSheet } from '@/components/ui/BottomSheet';
@@ -195,12 +195,14 @@ export default function SettingsPage() {
 
 
       <div className="space-y-4 p-4 pb-24">
-        {/* Profile Section */}
+        {/* Section: Account */}
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+          {t('settings.sectionAccount')}
+        </p>
+
+        {/* Profile */}
         <Card>
           <CardContent className="p-4">
-            <h3 className="mb-3 text-sm font-medium text-gray-500">
-              {t('settings.profile')}
-            </h3>
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100 text-2xl dark:bg-primary-900 overflow-hidden">
                 {user?.avatar_url ? (
@@ -210,7 +212,7 @@ export default function SettingsPage() {
                 )}
               </div>
               <div>
-                <p className="font-medium">{user?.name || 'Guest User'}</p>
+                <p className="font-medium">{user?.name || t('settings.guestUser')}</p>
                 <p className="text-sm text-gray-500">{user?.email || 'guest@example.com'}</p>
               </div>
             </div>
@@ -222,63 +224,36 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Subscription Section */}
-        <Card>
-          <CardContent className="p-4">
-            <h3 className="mb-3 text-sm font-medium text-gray-500">
-              {t('settings.subscription')}
-            </h3>
-            <button
-              onClick={() => {
-                if (isPremium) {
-                  setShowPremiumSheet(true);
-                } else {
-                  router.push(`/${locale}/pricing`);
-                }
-              }}
-              className="flex w-full items-center justify-between rounded-lg p-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+        {/* Logout & Delete Account */}
+        {user && (
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowLogoutModal(true)}
             >
-              <div className="flex items-center gap-3">
-                <Crown className={cn(
-                  'h-5 w-5',
-                  isPremium ? 'text-amber-500' : 'text-gray-400'
-                )} />
-                <div>
-                  {isPremium ? (
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{t('pricing.premiumPlan')}</span>
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                        {t('pricing.premiumPlan')}
-                      </span>
-                    </div>
-                  ) : isTrialActive ? (
-                    <div>
-                      <span className="font-medium">{t('pricing.trialActive')}</span>
-                      <p className="text-sm text-primary-600 dark:text-primary-400">
-                        {t('pricing.trialDaysLeft', { days: trialDaysRemaining })}
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <span className="font-medium">{t('settings.freePlan')}</span>
-                      <p className="text-sm text-gray-500">{t('settings.upgradePremium')}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <ChevronRight className="h-4 w-4 text-gray-400" />
-            </button>
-          </CardContent>
-        </Card>
+              <LogOut className="mr-2 h-4 w-4" />
+              {t('settings.logout')}
+            </Button>
+            <Button
+              variant="danger"
+              className="w-full"
+              onClick={() => setShowDeleteAccountModal(true)}
+            >
+              <UserX className="mr-2 h-4 w-4" />
+              {t('settings.deleteAccount')}
+            </Button>
+          </div>
+        )}
+
+        {/* Section: Preferences */}
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 pt-2">
+          {t('settings.sectionPreferences')}
+        </p>
 
         {/* Language Settings */}
         <Card>
-          <CardContent className="divide-y divide-gray-100 p-0 dark:divide-gray-700">
-            <div className="p-4">
-              <h3 className="text-sm font-medium text-gray-500">
-                {t('settings.language')}
-              </h3>
-            </div>
+          <CardContent className="p-4">
             <SettingsItem
               icon={Globe}
               label={t('settings.selectLanguage')}
@@ -325,49 +300,90 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Notification Settings */}
+        {/* Auto Delete Expired */}
         <Card>
           <CardContent className="p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <h3 className="text-sm font-medium text-gray-500">
-                {t('settings.notifications')}
-              </h3>
-              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700">
-                {t('common.comingSoon')}
-              </span>
-            </div>
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 opacity-60 dark:bg-gray-700">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Bell className="h-5 w-5 text-gray-500" />
-                <span>{t('settings.expiryAlert')}</span>
+                <Trash2 className="h-5 w-5 text-gray-500" />
+                <div>
+                  <span className="font-medium">{t('settings.autoDeleteExpired')}</span>
+                  <p className="text-xs text-gray-500">{t('settings.autoDeleteExpiredDesc')}</p>
+                </div>
               </div>
-              <div
+              <button
+                onClick={() => updateSettings({ autoDeleteExpired: !settings.autoDeleteExpired })}
                 className={cn(
-                  'relative h-6 w-11 rounded-full cursor-not-allowed',
-                  'bg-gray-300 dark:bg-gray-600'
+                  'relative h-6 w-11 rounded-full transition-colors',
+                  settings.autoDeleteExpired
+                    ? 'bg-primary-500'
+                    : 'bg-gray-300 dark:bg-gray-600'
                 )}
               >
                 <span
-                  className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white"
+                  className={cn(
+                    'absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform',
+                    settings.autoDeleteExpired ? 'left-[22px]' : 'left-0.5'
+                  )}
                 />
-              </div>
+              </button>
             </div>
-            <p className="mt-2 text-sm text-gray-400">
-              {t('settings.alertDaysDescription', {
-                days: settings.notifications.expiryAlertDays,
-              })}
-            </p>
+          </CardContent>
+        </Card>
+
+        {/* Section: Subscription */}
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 pt-2">
+          {t('settings.sectionSubscription')}
+        </p>
+
+        <Card>
+          <CardContent className="p-4">
+            <button
+              onClick={() => {
+                if (isPremium) {
+                  setShowPremiumSheet(true);
+                } else {
+                  router.push(`/${locale}/pricing`);
+                }
+              }}
+              className="flex w-full items-center justify-between rounded-lg p-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              <div className="flex items-center gap-3">
+                <Crown className={cn(
+                  'h-5 w-5',
+                  isPremium ? 'text-amber-500' : 'text-gray-400'
+                )} />
+                <div>
+                  {isPremium ? (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{t('pricing.premiumPlan')}</span>
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                        {t('pricing.premiumPlan')}
+                      </span>
+                    </div>
+                  ) : isTrialActive ? (
+                    <div>
+                      <span className="font-medium">{t('pricing.trialActive')}</span>
+                      <p className="text-sm text-primary-600 dark:text-primary-400">
+                        {t('pricing.trialDaysLeft', { days: trialDaysRemaining })}
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="font-medium">{t('settings.freePlan')}</span>
+                      <p className="text-sm text-gray-500">{t('settings.upgradePremium')}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            </button>
           </CardContent>
         </Card>
 
         {/* Data Management */}
         <Card>
-          <CardContent className="divide-y divide-gray-100 p-0 dark:divide-gray-700">
-            <div className="p-4">
-              <h3 className="text-sm font-medium text-gray-500">
-                {t('settings.data')}
-              </h3>
-            </div>
+          <CardContent className="p-4">
             <SettingsItem
               icon={Database}
               label={t('settings.deleteAll')}
@@ -377,12 +393,13 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Version */}
+        {/* Section: App Info */}
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 pt-2">
+          {t('settings.sectionAppInfo')}
+        </p>
+
         <Card>
           <CardContent className="p-4">
-            <h3 className="mb-3 text-sm font-medium text-gray-500">
-              {t('settings.about')}
-            </h3>
             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex justify-between">
                 <span>{t('settings.version')}</span>
@@ -411,28 +428,6 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Logout & Delete Account */}
-        {user && (
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setShowLogoutModal(true)}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              {t('settings.logout')}
-            </Button>
-            <Button
-              variant="danger"
-              className="w-full"
-              onClick={() => setShowDeleteAccountModal(true)}
-            >
-              <UserX className="mr-2 h-4 w-4" />
-              {t('settings.deleteAccount')}
-            </Button>
-          </div>
-        )}
 
         {/* Language Modal */}
         <Modal

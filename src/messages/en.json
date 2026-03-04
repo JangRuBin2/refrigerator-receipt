@@ -27,6 +27,7 @@
   },
   "home": {
     "welcome": "Hello!",
+    "welcomeUser": "Hello, {name}!",
     "scanReceipt": "Scan Receipt",
     "scanDescription": "Take a photo of your receipt to automatically add ingredients",
     "expiringItems": "Expiring Soon",
@@ -129,6 +130,7 @@
     "matchRate": "Match Rate",
     "noRecipes": "No recipes to recommend",
     "externalRecommend": "External Recipe Search",
+    "externalSearchDesc": "Search recipes on YouTube and Google - coming soon.",
     "searchByIngredients": "Search with my ingredients",
     "searching": "Searching recipes...",
     "youtube": "YouTube",
@@ -202,7 +204,8 @@
     "selectedCount": "{selected}/{total} selected",
     "selectAll": "Select All",
     "deselectAll": "Deselect All",
-    "noIngredientsSelected": "Please select at least 1 ingredient"
+    "noIngredientsSelected": "Please select at least 1 ingredient",
+    "searchKeyword": "recipe"
   },
   "scan": {
     "title": "Scan Receipt",
@@ -213,6 +216,7 @@
     "foundItems": "Found {count} items",
     "noItems": "No items found",
     "confirmItems": "Confirm Items",
+    "selectedCount": "{count} items selected",
     "addToFridge": "Add to Fridge",
     "retry": "Scan Again",
     "aiVisionMode": "AI Mode",
@@ -226,7 +230,28 @@
     "adRequiredDescription": "Premium members scan without ads",
     "adRequired": "Please watch an ad to scan",
     "watchingAd": "Preparing ad...",
-    "adWatchingDescription": "Scan will start after the ad"
+    "adWatchingDescription": "Scan will start after the ad",
+    "guide": {
+      "title": "Scan Guide",
+      "good": "Good",
+      "bad": "Bad",
+      "tipFullReceipt": "Capture the entire receipt",
+      "tipBrightPlace": "Shoot in a bright place",
+      "tipFlatSurface": "Place flat on a surface",
+      "tipPartialOnly": "Only partially captured",
+      "tipBlurryDark": "Blurry or too dark",
+      "tipCrumpledTilted": "Crumpled or tilted"
+    },
+    "failure": {
+      "title": "Scan Failed",
+      "errorReason": "Error Reason",
+      "tipsTitle": "Scan Tips",
+      "tipCheckReceipt": "Make sure it is a receipt",
+      "tipClearText": "Check that text is clearly visible",
+      "tipBrightEnv": "Try again in a bright environment",
+      "retryCapture": "Take Photo Again",
+      "manualAdd": "Add Manually"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -278,7 +303,15 @@
     "billingYearly": "Annual",
     "premiumFeatures": "Premium Services",
     "managePlan": "Manage Plan",
-    "manualRenewNotice": "Subscription does not auto-renew. Please repurchase before expiry."
+    "manualRenewNotice": "Subscription does not auto-renew. Please repurchase before expiry.",
+    "guestUser": "Guest User",
+    "autoDeleteExpired": "Auto-delete expired items",
+    "autoDeleteExpiredDesc": "Automatically removes expired ingredients when the app starts",
+    "expiredCleanupDone": "{count} expired items have been removed",
+    "sectionAccount": "Account",
+    "sectionPreferences": "Preferences",
+    "sectionSubscription": "Subscription",
+    "sectionAppInfo": "App Info"
   },
   "auth": {
     "login": "Login",
@@ -392,6 +425,15 @@
       "monthlyNet": "+$10.5/mo"
     }
   },
+  "checkout": {
+    "discount": "off",
+    "orderSummary": "Order Summary",
+    "totalAmount": "Total",
+    "checkingPayment": "Checking payment environment...",
+    "payAmount": "Pay {amount}",
+    "tossPay": "Payment via TossPay",
+    "goBack": "Go Back"
+  },
   "features": {
     "scan": "Receipt Scan",
     "expiry": "Expiry Alerts",
@@ -432,6 +474,12 @@
     "aiRecommendations": "AI Recommendations",
     "aiDisclaimer": "This content is AI-generated. Use for reference only.",
     "ingredientDetails": "Ingredient Details",
+    "current": "Current",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "weeklyScore": "Weekly Nutrition Score",
+    "monthlyScore": "Monthly Nutrition Score",
+    "periodAnalysis": "Based on purchases/additions in the last {days} days",
     "statusGood": "Good",
     "statusLow": "Low",
     "statusHigh": "High",

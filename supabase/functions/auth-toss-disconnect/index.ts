@@ -1,4 +1,4 @@
-import { corsHeaders, handleCors } from '../_shared/cors.ts';
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 import { createAdminClient } from '../_shared/supabase.ts';
 
 function validateBasicAuth(req: Request): boolean {
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
   if (!validateBasicAuth(req)) {
     return new Response(
       JSON.stringify({ success: false, error: 'Unauthorized' }),
-      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     if (userKey === null || referrer !== 'UNLINK') {
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid parameters' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     if (Number(userKey) === 0) {
       return new Response(
         JSON.stringify({ success: true, message: 'Test request acknowledged' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     if (!profile) {
       return new Response(
         JSON.stringify({ success: true, message: 'User not found or already deleted' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -87,18 +87,18 @@ Deno.serve(async (req) => {
     if (deleteError) {
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to delete user' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response(
       JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   } catch {
     return new Response(
       JSON.stringify({ success: false, error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

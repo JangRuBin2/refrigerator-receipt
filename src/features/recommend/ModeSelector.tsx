@@ -65,8 +65,8 @@ export function ModeSelector({ isPremium, onSelectMode, onAiModeClick }: ModeSel
             <Wand2 className="h-7 w-7 text-emerald-600" />
           </div>
           <div>
-            <h2 className="text-lg font-bold">AI 맞춤 레시피</h2>
-            <p className="mt-1 text-sm text-gray-500">내 냉장고 재료로 AI가 새로운 레시피를 만들어줘요</p>
+            <h2 className="text-lg font-bold">{t('recommend.aiMode')}</h2>
+            <p className="mt-1 text-sm text-gray-500">{t('recommend.aiDescription')}</p>
           </div>
         </CardContent>
       </Card>

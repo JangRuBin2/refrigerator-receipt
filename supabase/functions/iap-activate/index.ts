@@ -1,4 +1,4 @@
-import { corsHeaders, handleCors } from '../_shared/cors.ts';
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient, createAdminClient } from '../_shared/supabase.ts';
 import { z } from 'https://esm.sh/zod@3.22.4';
 
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     if (!parsed.success) {
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid request body' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     if (!isVerified) {
       return new Response(
         JSON.stringify({ success: false, error: 'Order verification failed' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
     if (error) {
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to activate subscription' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -150,12 +150,12 @@ Deno.serve(async (req) => {
           activatedAt: now.toISOString(),
         },
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   } catch {
     return new Response(
       JSON.stringify({ success: false, error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -1,4 +1,4 @@
-import { corsHeaders, handleCors } from '../_shared/cors.ts';
+import { getCorsHeaders, handleCors } from '../_shared/cors.ts';
 import { createSupabaseClient } from '../_shared/supabase.ts';
 import { callGemini, parseJsonFromText } from '../_shared/gemini.ts';
 import type { Ingredient, ShoppingRecommendation, ScanEvent } from '../_shared/types.ts';
@@ -12,7 +12,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
           source: 'empty',
           message: '냉장고에 등록된 재료가 없습니다. 재료를 먼저 등록해주세요.',
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: 'AI 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.',
         }),
-        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 503, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 
@@ -91,12 +91,12 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ recommendations, source: 'ai' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   } catch {
     return new Response(
       JSON.stringify({ error: 'AI 추천을 가져오지 못했습니다. 다시 시도해주세요.' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     );
   }
 });

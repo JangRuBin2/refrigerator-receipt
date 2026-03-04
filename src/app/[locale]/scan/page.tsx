@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
+import { ScanGuide } from '@/components/scan/ScanGuide';
+import { ScanFailureSheet } from '@/components/scan/ScanFailureSheet';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { usePremium } from '@/hooks/usePremium';
@@ -56,6 +58,8 @@ export default function ScanPage() {
   const [isWatchingAd, setIsWatchingAd] = useState(false);
   const [debugInfo, setDebugInfo] = useState<ScanDebugInfo | null>(null);
   const [showDebug, setShowDebug] = useState(false);
+  const [isFailureSheetOpen, setIsFailureSheetOpen] = useState(false);
+  const [lastErrorMessage, setLastErrorMessage] = useState('');
   // 파일 선택 후 광고 시청 대기 시 임시 저장
   const pendingFileRef = useRef<File | null>(null);
 
@@ -170,7 +174,9 @@ export default function ScanPage() {
       if (scanDebug) setDebugInfo(scanDebug);
       setShowDebug(true);
 
-      toast.error(err instanceof Error ? err.message : 'Scan failed');
+      const errorMsg = err instanceof Error ? err.message : 'Scan failed';
+      setLastErrorMessage(errorMsg);
+      setIsFailureSheetOpen(true);
       setStep('upload');
     }
   };
@@ -312,6 +318,9 @@ export default function ScanPage() {
                   </button>
                 </label>
               </div>
+
+              {/* Scan Guide */}
+              <ScanGuide />
 
               {/* Upload Area */}
               <motion.div
@@ -468,7 +477,7 @@ export default function ScanPage() {
                   <div>
                     <p className="toss-body1 font-semibold">{t('scan.confirmItems')}</p>
                     <p className="toss-caption">
-                      {scannedItems.filter((i) => i.selected).length}개 항목 선택됨
+                      {t('scan.selectedCount', { count: scannedItems.filter((i) => i.selected).length })}
                     </p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -599,8 +608,16 @@ export default function ScanPage() {
         </BottomSheetActions>
       </BottomSheet>
 
-      {/* Debug Panel */}
-      {debugInfo && (
+      {/* Scan Failure BottomSheet */}
+      <ScanFailureSheet
+        isOpen={isFailureSheetOpen}
+        onClose={() => setIsFailureSheetOpen(false)}
+        errorMessage={lastErrorMessage}
+        onRetry={() => handleScanClick(isMobile ? cameraInputRef : fileInputRef)}
+      />
+
+      {/* Debug Panel - disabled in production */}
+      {false && debugInfo && (
         <div className="fixed bottom-16 left-0 right-0 z-50 mx-auto max-w-lg">
           <div className="mx-2 rounded-t-xl border border-red-200 bg-red-50 shadow-lg dark:border-red-800 dark:bg-red-950">
             <button

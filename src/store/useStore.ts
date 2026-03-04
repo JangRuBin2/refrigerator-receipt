@@ -17,6 +17,7 @@ interface FridgeStore {
   deleteIngredient: (id: string) => void;
   clearIngredients: () => void;
   setIngredients: (ingredients: Ingredient[]) => void;
+  removeExpiredIngredients: () => string[];
 
   // DB sync state
   _dbSyncEnabled: boolean;
@@ -121,6 +122,33 @@ export const useStore = create<FridgeStore>()(
         }
       },
       setIngredients: (ingredients) => set({ ingredients }),
+      removeExpiredIngredients: () => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const expired = get().ingredients.filter((item) => {
+          if (!item.expiryDate) return false;
+          const expiry = new Date(item.expiryDate);
+          expiry.setHours(0, 0, 0, 0);
+          return expiry < now;
+        });
+        const expiredNames = expired.map((item) => item.name);
+
+        if (expired.length > 0) {
+          const expiredIds = new Set(expired.map((item) => item.id));
+          set((state) => ({
+            ingredients: state.ingredients.filter((item) => !expiredIds.has(item.id)),
+          }));
+
+          // Sync to DB in background
+          if (get()._dbSyncEnabled) {
+            expired.forEach((item) => {
+              deleteIngredientApi(item.id).catch(() => {});
+            });
+          }
+        }
+
+        return expiredNames;
+      },
 
       // DB sync
       _dbSyncEnabled: false,
@@ -143,6 +171,7 @@ export const useStore = create<FridgeStore>()(
           enabled: true,
           expiryAlertDays: 3,
         },
+        autoDeleteExpired: false,
       },
       updateSettings: (newSettings) =>
         set((state) => ({

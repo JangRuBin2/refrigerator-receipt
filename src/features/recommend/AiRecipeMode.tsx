@@ -67,7 +67,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
 
       setRecipe(data.recipe || null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'AI 레시피 생성에 실패했습니다');
+      setError(err instanceof Error ? err.message : t('recommend.aiGenerateError'));
     } finally {
       setLoading(false);
     }
@@ -88,7 +88,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
       await saveAiRecipeApi({ ...recipe, locale });
       setSaved(true);
     } catch {
-      setError('저장에 실패했습니다');
+      setError(t('recommend.saveError'));
     } finally {
       setSaving(false);
     }
@@ -109,7 +109,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
       <div className="flex items-center gap-2">
         <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
           <Wand2 className="mr-1 h-3 w-3" />
-          AI 맞춤 레시피
+          {t('recommend.aiMode')}
         </Badge>
         {!isPremium && (
           <Badge variant="warning" className="text-xs">
@@ -126,8 +126,8 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
               <Wand2 className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">AI 맞춤 레시피</h2>
-              <p className="text-sm text-gray-500">내 냉장고 재료로 새로운 레시피 생성</p>
+              <h2 className="text-xl font-bold">{t('recommend.aiMode')}</h2>
+              <p className="text-sm text-gray-500">{t('recommend.aiDescription')}</p>
             </div>
           </div>
 
@@ -135,18 +135,18 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
             <div className="rounded-lg bg-white p-6 text-center dark:bg-gray-800">
               <ChefHat className="mx-auto h-12 w-12 text-gray-300" />
               <p className="mt-3 font-medium text-gray-600 dark:text-gray-400">
-                냉장고에 재료가 없어요
+                {t('recommend.noIngredients')}
               </p>
-              <p className="mt-1 text-sm text-gray-500">먼저 재료를 등록해주세요</p>
+              <p className="mt-1 text-sm text-gray-500">{t('recommend.addIngredientsFirst')}</p>
               <Button onClick={() => router.push(`/${locale}/fridge`)} className="mt-4">
-                냉장고로 이동
+                {t('recommend.goToFridge')}
               </Button>
             </div>
           ) : (
             <>
               {/* My Ingredients */}
               <div className="mb-4 rounded-lg bg-white p-4 dark:bg-gray-800">
-                <p className="mb-2 text-sm font-medium text-gray-500">내 냉장고 재료 ({ingredients.length}개)</p>
+                <p className="mb-2 text-sm font-medium text-gray-500">{t('recommend.myIngredients', { count: ingredients.length })}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {ingredients.slice(0, 10).map((ing) => (
                     <Badge key={ing.id} variant="default" className="text-xs">{ing.name}</Badge>
@@ -159,26 +159,26 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
 
               {/* Preferences */}
               <div className="mb-4 space-y-3 rounded-lg bg-white p-4 dark:bg-gray-800">
-                <p className="text-sm font-medium text-gray-500">선호도 설정 (선택)</p>
+                <p className="text-sm font-medium text-gray-500">{t('recommend.preferences')}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Select
                     value={preferences.cookingTime}
                     onChange={(e) => handleCookingTimeChange(e.target.value)}
                     options={[
-                      { value: '', label: '조리 시간' },
-                      { value: 'quick', label: '15분 이내' },
-                      { value: 'medium', label: '30분 이내' },
-                      { value: 'long', label: '60분 이상' },
+                      { value: '', label: t('recommend.cookingTimeLabel') },
+                      { value: 'quick', label: t('recommend.quick') },
+                      { value: 'medium', label: t('recommend.medium') },
+                      { value: 'long', label: t('recommend.long') },
                     ]}
                   />
                   <Select
                     value={preferences.difficulty}
                     onChange={(e) => handleDifficultyChange(e.target.value)}
                     options={[
-                      { value: '', label: '난이도' },
-                      { value: 'easy', label: '쉬움' },
-                      { value: 'medium', label: '보통' },
-                      { value: 'hard', label: '어려움' },
+                      { value: '', label: t('recommend.difficultyLabel') },
+                      { value: 'easy', label: t('recommend.easy') },
+                      { value: 'medium', label: t('recommend.normal') },
+                      { value: 'hard', label: t('recommend.hard') },
                     ]}
                   />
                 </div>
@@ -186,13 +186,13 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
                   value={preferences.cuisine}
                   onChange={(e) => setPreferences(p => ({ ...p, cuisine: e.target.value }))}
                   options={[
-                    { value: '', label: '요리 종류' },
-                    { value: '한식', label: '한식' },
-                    { value: '중식', label: '중식' },
-                    { value: '일식', label: '일식' },
-                    { value: '양식', label: '양식' },
-                    { value: '분식', label: '분식' },
-                    { value: '아시안', label: '아시안' },
+                    { value: '', label: t('recommend.cuisineLabel') },
+                    { value: 'korean', label: t('recommend.korean') },
+                    { value: 'chinese', label: t('recommend.chinese') },
+                    { value: 'japanese', label: t('recommend.japanese') },
+                    { value: 'western', label: t('recommend.western') },
+                    { value: 'snack', label: t('recommend.snack') },
+                    { value: 'asian', label: t('recommend.asian') },
                   ]}
                 />
               </div>
@@ -202,12 +202,12 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    AI가 레시피를 만들고 있어요...
+                    {t('recommend.generating')}
                   </>
                 ) : (
                   <>
                     <Wand2 className="mr-2 h-5 w-5" />
-                    AI 레시피 생성하기
+                    {t('recommend.generate')}
                   </>
                 )}
               </Button>
@@ -224,7 +224,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
           <CardContent className="p-5">
             <div className="mb-2 flex items-center gap-2">
               <Wand2 className="h-4 w-4 text-emerald-500" />
-              <span className="text-sm font-medium text-emerald-600">AI가 만든 레시피</span>
+              <span className="text-sm font-medium text-emerald-600">{t('recommend.aiGenerated')}</span>
             </div>
 
             <h3 className="text-xl font-bold">{recipe.title}</h3>
@@ -233,17 +233,17 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-1 text-xs text-gray-500">
                 <Clock className="h-3 w-3" />
-                {recipe.cookingTime}분
+                {t('recommend.cookingTime', { time: recipe.cookingTime })}
               </span>
               <Badge className={getDifficultyColor(recipe.difficulty)}>
                 {getDifficultyLabel(recipe.difficulty, locale)}
               </Badge>
-              <Badge variant="default" className="text-xs">{recipe.servings}인분</Badge>
+              <Badge variant="default" className="text-xs">{t('recommend.servings', { count: recipe.servings })}</Badge>
             </div>
 
             {/* Ingredients */}
             <div className="mt-4">
-              <h4 className="mb-2 font-semibold">재료</h4>
+              <h4 className="mb-2 font-semibold">{t('recipe.ingredients')}</h4>
               <div className="space-y-1">
                 {recipe.ingredients.map((ing, idx) => (
                   <div key={idx} className="flex justify-between rounded bg-gray-50 px-3 py-1.5 text-sm dark:bg-gray-700">
@@ -256,7 +256,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
 
             {/* Instructions */}
             <div className="mt-4">
-              <h4 className="mb-2 font-semibold">조리 방법</h4>
+              <h4 className="mb-2 font-semibold">{t('recipe.instructions')}</h4>
               <ol className="list-inside list-decimal space-y-2 text-sm">
                 {recipe.instructions.map((step, idx) => (
                   <li key={idx} className="text-gray-600 dark:text-gray-400">{step}</li>
@@ -268,7 +268,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
             {recipe.tips && (
               <div className="mt-4 rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20">
                 <p className="text-sm">
-                  <span className="font-medium text-emerald-700 dark:text-emerald-400">💡 팁: </span>
+                  <span className="font-medium text-emerald-700 dark:text-emerald-400">{t('recommend.tip')}: </span>
                   <span className="text-emerald-600 dark:text-emerald-300">{recipe.tips}</span>
                 </p>
               </div>
@@ -294,16 +294,16 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
                 ) : (
                   <Heart className="mr-1.5 h-4 w-4" />
                 )}
-                {saved ? '저장됨' : '즐겨찾기에 저장'}
+                {saved ? t('recommend.saved') : t('recommend.saveToFavorites')}
               </Button>
               <a
-                href={getSearchUrl(recipe.title)}
+                href={getSearchUrl(recipe.title, locale)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
               >
                 <Search className="h-4 w-4" />
-                유튜브 검색
+                {t('recommend.searchYoutube')}
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>
@@ -316,7 +316,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
         {recipe && (
           <Button variant="outline" onClick={generate} disabled={loading} className="flex-1">
             <RotateCcw className="mr-2 h-4 w-4" />
-            다른 레시피 생성
+            {t('recommend.generateAnother')}
           </Button>
         )}
         <Button
@@ -324,7 +324,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
           onClick={() => { onBack(); reset(); }}
           className={recipe ? 'flex-1' : 'w-full'}
         >
-          처음으로
+          {t('recommend.backToSelect')}
         </Button>
       </div>
     </div>

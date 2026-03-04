@@ -1,7 +1,7 @@
 // 앱인토스 광고 SDK 클라이언트 래퍼
 // GoogleAdMob SDK는 이벤트 콜백 기반 → Promise로 래핑
 
-import { GoogleAdMob } from '@apps-in-toss/web-framework';
+import { GoogleAdMob, TossAds } from '@apps-in-toss/web-framework';
 
 import type {
   AdLoadResult,
@@ -105,6 +105,73 @@ export function showRewardedAd(adGroupId: string): Promise<AdShowResult> {
       });
     }
   });
+}
+
+// --- TossAds 배너 광고 ---
+
+// TossAds 배너 지원 여부 확인
+export function isTossAdsBannerSupported(): boolean {
+  try {
+    return TossAds.attach.isSupported() === true;
+  } catch {
+    return false;
+  }
+}
+
+// TossAds SDK 초기화
+export function initializeTossAds(): void {
+  try {
+    if (TossAds.initialize.isSupported()) {
+      TossAds.initialize({
+        callbacks: {
+          onInitialized: () => {
+            // SDK initialized
+          },
+          onInitializationFailed: () => {
+            // initialization failed
+          },
+        },
+      });
+    }
+  } catch {
+    // SDK not available
+  }
+}
+
+// 배너 광고를 DOM 요소에 부착
+export function attachBannerAd(
+  adGroupId: string,
+  target: HTMLElement,
+  options?: {
+    theme?: 'light' | 'dark';
+    padding?: string;
+    onRendered?: () => void;
+    onFailed?: () => void;
+  }
+): (() => void) | null {
+  try {
+    if (!TossAds.attach.isSupported()) return null;
+
+    TossAds.attach(adGroupId, target, {
+      theme: options?.theme,
+      padding: options?.padding,
+      callbacks: {
+        onAdRendered: () => options?.onRendered?.(),
+        onAdFailedToRender: () => options?.onFailed?.(),
+      },
+    });
+
+    // 클린업 함수 반환
+    return () => {
+      try {
+        TossAds.destroyAll();
+      } catch {
+        // ignore cleanup errors
+      }
+    };
+  } catch {
+    return null;
+  }
 }
 
 // 광고 로드 및 표시 (편의 함수)

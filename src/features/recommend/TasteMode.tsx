@@ -117,7 +117,7 @@ export function TasteMode({ locale, onBack }: TasteModeProps) {
               onClick={() => setCurrentStep(currentStep - 1)}
               className="flex-1"
             >
-              ← 이전
+              {t('recommend.previous')}
             </Button>
           )}
           <Button
@@ -175,7 +175,7 @@ export function TasteMode({ locale, onBack }: TasteModeProps) {
                             {recipe.cooking_time && (
                               <span className="flex items-center gap-1 text-xs text-gray-500">
                                 <Clock className="h-3 w-3" />
-                                {recipe.cooking_time}분
+                                {t('recommend.cookingTime', { time: recipe.cooking_time })}
                               </span>
                             )}
                             {recipe.difficulty && (
@@ -186,7 +186,7 @@ export function TasteMode({ locale, onBack }: TasteModeProps) {
                           </div>
                         </div>
                         <a
-                          href={getSearchUrl(getTitle(recipe.title, locale))}
+                          href={getSearchUrl(getTitle(recipe.title, locale), locale)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-full p-2 text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -212,7 +212,7 @@ export function TasteMode({ locale, onBack }: TasteModeProps) {
         onClick={() => { onBack(); reset(); }}
         className="w-full"
       >
-        처음으로
+        {t('recommend.backToSelect')}
       </Button>
     </div>
   );

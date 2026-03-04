@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { cn } from '@/lib/utils';
@@ -22,10 +23,14 @@ export function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmText = '확인',
-  cancelText = '취소',
+  confirmText,
+  cancelText,
   variant = 'default',
 }: ConfirmDialogProps) {
+  const t = useTranslations();
+  const resolvedConfirmText = confirmText ?? t('common.confirm');
+  const resolvedCancelText = cancelText ?? t('common.cancel');
+
   const handleConfirm = () => {
     onConfirm();
     onClose();
@@ -53,14 +58,14 @@ export function ConfirmDialog({
             onClick={onClose}
             className="flex-1"
           >
-            {cancelText}
+            {resolvedCancelText}
           </Button>
           <Button
             variant={variant === 'danger' ? 'danger' : 'primary'}
             onClick={handleConfirm}
             className="flex-1"
           >
-            {confirmText}
+            {resolvedConfirmText}
           </Button>
         </div>
       </div>
