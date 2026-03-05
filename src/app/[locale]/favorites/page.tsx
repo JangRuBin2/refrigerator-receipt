@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
+import { getDifficultyLabel } from '@/lib/constants';
 import { getFavorites, removeFavorite } from '@/lib/api/favorites';
 import { toast } from '@/store/useToastStore';
 
@@ -77,14 +78,6 @@ export default function FavoritesPage() {
     return field[locale] || field.ko || field.en || Object.values(field)[0] || '';
   };
 
-  const getDifficultyLabel = (difficulty?: string) => {
-    if (!difficulty) return '';
-    if (locale === 'ko') {
-      return { easy: '쉬움', medium: '보통', hard: '어려움' }[difficulty] ?? difficulty;
-    }
-    return difficulty;
-  };
-
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -150,7 +143,7 @@ export default function FavoritesPage() {
                             )}
                             {recipe.difficulty && (
                               <Badge className="text-xs bg-gray-100 text-gray-600 dark:bg-gray-800">
-                                {getDifficultyLabel(recipe.difficulty)}
+                                {getDifficultyLabel(recipe.difficulty, locale)}
                               </Badge>
                             )}
                             {recipe.source === 'ai' && (

@@ -51,7 +51,6 @@ export default function ScanPage() {
   const [step, setStep] = useState<Step>('upload');
   const [scannedItems, setScannedItems] = useState<ExtendedScannedItem[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [scanMode, setScanMode] = useState<string>('');
   const [useAIVision, setUseAIVision] = useState(false);
   const [isResultSheetOpen, setIsResultSheetOpen] = useState(false);
   const [isWatchingAd, setIsWatchingAd] = useState(false);
@@ -157,7 +156,6 @@ export default function ScanPage() {
       });
 
       setScannedItems(items);
-      setScanMode(String(response.mode ?? ''));
       setStep('confirm');
       setIsResultSheetOpen(true);
     } catch (err) {

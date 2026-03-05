@@ -159,7 +159,7 @@ export default function ShoppingPage() {
     try {
       await updateShoppingItem(list.id, itemId, { checked });
     } catch (err) {
-      console.error('Failed to toggle check:', err);
+      // Optimistic update rollback
       fetchList();
     }
   };
@@ -180,7 +180,7 @@ export default function ShoppingPage() {
     try {
       await deleteShoppingItemApi(list.id, itemId);
     } catch (err) {
-      console.error('Failed to delete item:', err);
+      // Optimistic update rollback
       fetchList();
     }
   };
@@ -193,7 +193,7 @@ export default function ShoppingPage() {
       await completeShoppingList(list.id);
       fetchList();
     } catch (err) {
-      console.error('Failed to complete list:', err);
+      toast.error(t('common.error'));
     }
   };
 

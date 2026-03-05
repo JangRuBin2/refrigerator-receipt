@@ -1,18 +1,7 @@
 import type { Recipe, Ingredient } from '@/types';
 import type { RecipeWithAvailability } from './types';
 
-export const getDifficultyColor = (difficulty: string) => {
-  switch (difficulty) {
-    case 'easy':
-      return 'bg-green-100 text-green-700';
-    case 'medium':
-      return 'bg-yellow-100 text-yellow-700';
-    case 'hard':
-      return 'bg-red-100 text-red-700';
-    default:
-      return 'bg-gray-100 text-gray-700';
-  }
-};
+export { getDifficultyColor } from '@/lib/constants';
 
 export const enrichRecipeWithAvailability = (
   recipe: Recipe,
