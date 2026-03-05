@@ -4,14 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { Camera, Upload, Check, RefreshCw, Clock, ChevronRight, Crown, PlayCircle, AlertTriangle } from 'lucide-react';
+import { Camera, PlayCircle } from 'lucide-react';
 
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
-import { ScanGuide } from '@/components/scan/ScanGuide';
-import { ScanFailureSheet } from '@/components/scan/ScanFailureSheet';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { usePremium } from '@/hooks/usePremium';
@@ -19,18 +13,15 @@ import { useAppsInTossAds } from '@/hooks/useAppsInTossAds';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
 import { scanReceipt } from '@/lib/api/scan';
-import type { ScannedItem, StorageType } from '@/types';
+import { ScanFailureSheet } from '@/components/scan/ScanFailureSheet';
 import { CATEGORIES, UNITS } from '@/lib/constants';
+import type { StorageType } from '@/types';
+import { ScanUploadStep } from '@/features/scan/ScanUploadStep';
+import { ScanConfirmStep } from '@/features/scan/ScanConfirmStep';
+import { ScanResultsSheet } from '@/features/scan/ScanResultsSheet';
+import { STEPS, type Step, type ExtendedScannedItem } from '@/features/scan/types';
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-interface ExtendedScannedItem extends ScannedItem {
-  confidence?: number;
-  estimatedExpiryDays?: number;
-  expiryDate?: string;
-}
-
-const STEPS = ['upload', 'scanning', 'confirm'] as const;
-type Step = typeof STEPS[number];
 
 export default function ScanPage() {
   const t = useTranslations();
@@ -42,7 +33,7 @@ export default function ScanPage() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const { isPremium } = usePremium();
-  const { isAvailable: isAdsAvailable, adState, watchAdForReward } = useAppsInTossAds();
+  const { isAvailable: isAdsAvailable, watchAdForReward } = useAppsInTossAds();
 
   useEffect(() => {
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
@@ -56,81 +47,22 @@ export default function ScanPage() {
   const [isWatchingAd, setIsWatchingAd] = useState(false);
   const [isFailureSheetOpen, setIsFailureSheetOpen] = useState(false);
   const [lastErrorMessage, setLastErrorMessage] = useState('');
-  // 파일 선택 후 광고 시청 대기 시 임시 저장
   const pendingFileRef = useRef<File | null>(null);
 
   const currentStepIndex = STEPS.indexOf(step);
 
-  // 스캔 버튼 클릭 → 프리미엄이면 바로 스캔, 일반이면 광고 후 스캔
   const handleScanClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
     inputRef.current?.click();
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error(t('scan.fileTooLarge'));
-      e.target.value = '';
-      return;
-    }
-
-    // 이미지 미리보기 설정
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const result = ev.target?.result;
-      if (typeof result === 'string') {
-        setPreviewImage(result);
-      }
-    };
-    reader.readAsDataURL(file);
-
-    // 프리미엄: 바로 스캔
-    if (isPremium) {
-      await startScanning(file);
-      return;
-    }
-
-    // 일반 회원: 광고 시청 후 스캔
-    if (isAdsAvailable) {
-      pendingFileRef.current = file;
-      setIsWatchingAd(true);
-
-      const rewarded = await watchAdForReward(() => {
-        // 광고 보상 콜백 - 여기서는 별도 처리 불필요
-      });
-
-      setIsWatchingAd(false);
-
-      if (rewarded) {
-        // 광고 시청 완료 → 스캔 진행
-        const pendingFile = pendingFileRef.current;
-        pendingFileRef.current = null;
-        if (pendingFile) {
-          await startScanning(pendingFile);
-        }
-      } else {
-        // 광고 시청 실패/취소
-        toast.error(t('scan.adRequired'));
-        pendingFileRef.current = null;
-      }
-    } else {
-      // 토스 환경이 아닌 경우 (웹 브라우저) → 바로 스캔 허용
-      await startScanning(file);
-    }
-  };
-
   const startScanning = async (file: File) => {
     setStep('scanning');
-
     try {
       const data = await scanReceipt(file, useAIVision);
-
       const response = data as Record<string, unknown>;
       const rawItems = Array.isArray(response.items) ? response.items : [];
-
       const today = new Date().toISOString().split('T')[0];
+
       const items: ExtendedScannedItem[] = rawItems.map((item) => {
         const raw = item as unknown as Record<string, unknown>;
         const category = (CATEGORIES.includes(String(raw.category) as Category)
@@ -159,18 +91,56 @@ export default function ScanPage() {
       setStep('confirm');
       setIsResultSheetOpen(true);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Scan failed';
-      setLastErrorMessage(errorMsg);
+      setLastErrorMessage(err instanceof Error ? err.message : 'Scan failed');
       setIsFailureSheetOpen(true);
       setStep('upload');
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(t('scan.fileTooLarge'));
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = ev.target?.result;
+      if (typeof result === 'string') setPreviewImage(result);
+    };
+    reader.readAsDataURL(file);
+
+    if (isPremium) {
+      await startScanning(file);
+      return;
+    }
+
+    if (isAdsAvailable) {
+      pendingFileRef.current = file;
+      setIsWatchingAd(true);
+      const rewarded = await watchAdForReward(() => {});
+      setIsWatchingAd(false);
+
+      if (rewarded) {
+        const pendingFile = pendingFileRef.current;
+        pendingFileRef.current = null;
+        if (pendingFile) await startScanning(pendingFile);
+      } else {
+        toast.error(t('scan.adRequired'));
+        pendingFileRef.current = null;
+      }
+    } else {
+      await startScanning(file);
+    }
+  };
+
   const toggleItem = (index: number) => {
     setScannedItems((items) =>
-      items.map((item, i) =>
-        i === index ? { ...item, selected: !item.selected } : item
-      )
+      items.map((item, i) => (i === index ? { ...item, selected: !item.selected } : item))
     );
   };
 
@@ -209,16 +179,8 @@ export default function ScanPage() {
     if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
-  const getConfidenceColor = (confidence?: number) => {
-    if (!confidence) return 'bg-gray-200';
-    if (confidence >= 0.8) return 'bg-green-500';
-    if (confidence >= 0.6) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-
       <div className="p-toss-md pb-8">
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-2 mb-toss-lg">
@@ -247,123 +209,18 @@ export default function ScanPage() {
 
         <AnimatePresence mode="wait">
           {step === 'upload' && (
-            <motion.div
-              key="upload"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={spring.gentle}
-              className="space-y-toss-md"
-            >
-              {/* 프리미엄 안내 배지 */}
-              {isPremium ? (
-                <div className="toss-card border-l-4 border-yellow-500">
-                  <div className="flex items-center gap-toss-sm">
-                    <Crown className="h-5 w-5 text-yellow-500" />
-                    <p className="toss-body2 font-medium text-yellow-700 dark:text-yellow-400">
-                      {t('scan.premiumUnlimited')}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="toss-card border-l-4 border-blue-500">
-                  <div className="flex items-center gap-toss-sm">
-                    <PlayCircle className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="toss-body2 font-medium">{t('scan.adRequiredNotice')}</p>
-                      <p className="toss-caption">{t('scan.adRequiredDescription')}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* AI 모드 토글 */}
-              <div className="toss-card">
-                <label className="flex items-center justify-between cursor-pointer">
-                  <div>
-                    <p className="toss-body2 font-medium">{t('scan.aiVisionMode')}</p>
-                    <p className="toss-caption text-gray-500">{t('scan.aiVisionDescription')}</p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={useAIVision}
-                    onClick={() => setUseAIVision((v) => !v)}
-                    className={cn(
-                      'relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors',
-                      useAIVision ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform mt-0.5',
-                        useAIVision ? 'translate-x-[22px]' : 'translate-x-0.5'
-                      )}
-                    />
-                  </button>
-                </label>
-              </div>
-
-              {/* Scan Guide */}
-              <ScanGuide />
-
-              {/* Upload Area */}
-              <motion.div
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleScanClick(isMobile ? cameraInputRef : fileInputRef)}
-                className="toss-card cursor-pointer border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
-              >
-                <div className="flex flex-col items-center py-12">
-                  <motion.div
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="rounded-full bg-primary-100 p-6 dark:bg-primary-900/30"
-                  >
-                    {isMobile ? (
-                      <Camera className="h-12 w-12 text-primary-600" />
-                    ) : (
-                      <Upload className="h-12 w-12 text-primary-600" />
-                    )}
-                  </motion.div>
-                  <p className="toss-h3 mt-toss-md">
-                    {isMobile ? t('scan.takePhoto') : t('scan.uploadPhoto')}
-                  </p>
-                  <p className="toss-caption mt-toss-xs text-center">
-                    {t('home.scanDescription')}
-                  </p>
-                </div>
-              </motion.div>
-
-              {isMobile && (
-                <Button
-                  variant="outline"
-                  onClick={() => handleScanClick(fileInputRef)}
-                  className="w-full"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  {t('scan.uploadPhoto')}
-                </Button>
-              )}
-
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-            </motion.div>
+            <ScanUploadStep
+              isPremium={isPremium}
+              isMobile={isMobile}
+              useAIVision={useAIVision}
+              onToggleAIVision={() => setUseAIVision((v) => !v)}
+              onScanClick={handleScanClick}
+              onFileSelect={handleFileSelect}
+              fileInputRef={fileInputRef}
+              cameraInputRef={cameraInputRef}
+            />
           )}
 
-          {/* 광고 시청 중 */}
           {isWatchingAd && (
             <motion.div
               key="ad"
@@ -397,8 +254,6 @@ export default function ScanPage() {
                   className="mb-toss-lg max-h-48 rounded-2xl object-contain shadow-lg"
                 />
               )}
-
-              {/* Pulse Animation */}
               <div className="relative">
                 <motion.div
                   animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
@@ -414,193 +269,37 @@ export default function ScanPage() {
                   <Camera className="h-8 w-8 text-white" />
                 </div>
               </div>
-
               <p className="toss-h3 mt-toss-lg">{t('scan.scanning')}</p>
             </motion.div>
           )}
 
           {step === 'confirm' && (
-            <motion.div
-              key="confirm"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={spring.gentle}
-            >
-              {/* 올바르지 않은 항목 안내 */}
-              <div className="toss-card mb-toss-md border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
-                <div className="flex items-start gap-toss-sm">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
-                  <div>
-                    <p className="toss-body2 font-medium text-yellow-800 dark:text-yellow-300">
-                      {t('scan.reviewItemsNotice')}
-                    </p>
-                    <p className="toss-caption text-yellow-700 dark:text-yellow-400">
-                      {t('scan.reviewItemsDescription')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Preview Image */}
-              {previewImage && (
-                <div className="toss-card mb-toss-md">
-                  <img
-                    src={previewImage}
-                    alt="Receipt"
-                    className="w-full max-h-40 object-contain rounded-lg"
-                  />
-                </div>
-              )}
-
-              {/* Results Summary */}
-              <button
-                onClick={() => setIsResultSheetOpen(true)}
-                className="toss-card w-full text-left"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="toss-body1 font-semibold">{t('scan.confirmItems')}</p>
-                    <p className="toss-caption">
-                      {t('scan.selectedCount', { count: scannedItems.filter((i) => i.selected).length })}
-                    </p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
-                </div>
-              </button>
-
-              {/* Actions */}
-              <div className="flex gap-toss-sm mt-toss-md">
-                <Button variant="outline" onClick={reset} className="flex-1">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  {t('scan.retry')}
-                </Button>
-                <Button
-                  onClick={addToFridge}
-                  disabled={scannedItems.filter((i) => i.selected).length === 0}
-                  className="flex-1"
-                >
-                  {t('scan.addToFridge')}
-                </Button>
-              </div>
-            </motion.div>
+            <ScanConfirmStep
+              previewImage={previewImage}
+              scannedItems={scannedItems}
+              onOpenResults={() => setIsResultSheetOpen(true)}
+              onReset={reset}
+              onAddToFridge={addToFridge}
+            />
           )}
         </AnimatePresence>
       </div>
 
-      {/* Results BottomSheet */}
-      <BottomSheet
+      <ScanResultsSheet
         isOpen={isResultSheetOpen}
         onClose={() => setIsResultSheetOpen(false)}
-        title={t('scan.confirmItems')}
-        snapPoints={[80]}
-      >
-        <div className="space-y-toss-sm">
-          {scannedItems.map((item, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className={cn(
-                'rounded-xl border-2 p-toss-sm transition-colors',
-                item.selected
-                  ? 'border-primary-200 bg-primary-50 dark:border-primary-800 dark:bg-primary-900/20'
-                  : 'border-gray-100 bg-gray-50 opacity-50 dark:border-gray-800 dark:bg-gray-800'
-              )}
-            >
-              <div className="flex items-start gap-toss-sm">
-                <button
-                  onClick={() => toggleItem(index)}
-                  className={cn(
-                    'mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2',
-                    item.selected
-                      ? 'border-primary-600 bg-primary-600 text-white'
-                      : 'border-gray-300 dark:border-gray-600'
-                  )}
-                >
-                  {item.selected && <Check className="h-4 w-4" />}
-                </button>
+        items={scannedItems}
+        onToggleItem={toggleItem}
+        onUpdateItem={updateItem}
+        onAddToFridge={addToFridge}
+      />
 
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      value={item.name}
-                      onChange={(e) => updateItem(index, { name: e.target.value })}
-                      className="h-9 flex-1"
-                    />
-                    {item.confidence && (
-                      <div className="flex items-center gap-1">
-                        <div className={cn('h-2 w-2 rounded-full', getConfidenceColor(item.confidence))} />
-                        <span className="toss-caption">{Math.round(item.confidence * 100)}%</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <Input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => updateItem(index, { quantity: parseFloat(e.target.value) || 1 })}
-                      className="h-9"
-                    />
-                    <Select
-                      value={item.unit}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (UNITS.includes(val as Unit)) updateItem(index, { unit: val as Unit });
-                      }}
-                      options={UNITS.map((u) => ({ value: u, label: t(`units.${u}`) }))}
-                      className="h-9"
-                    />
-                    <Select
-                      value={item.category}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (CATEGORIES.includes(val as Category)) updateItem(index, { category: val as Category });
-                      }}
-                      options={CATEGORIES.map((c) => ({ value: c, label: t(`categories.${c}`) }))}
-                      className="h-9"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-3 w-3 shrink-0 text-gray-400" />
-                    <Input
-                      type="date"
-                      value={item.expiryDate || ''}
-                      onChange={(e) => updateItem(index, { expiryDate: e.target.value })}
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <BottomSheetActions>
-          <Button
-            onClick={() => {
-              setIsResultSheetOpen(false);
-              addToFridge();
-            }}
-            disabled={scannedItems.filter((i) => i.selected).length === 0}
-            className="w-full"
-          >
-            {t('scan.addToFridge')} ({scannedItems.filter((i) => i.selected).length})
-          </Button>
-        </BottomSheetActions>
-      </BottomSheet>
-
-      {/* Scan Failure BottomSheet */}
       <ScanFailureSheet
         isOpen={isFailureSheetOpen}
         onClose={() => setIsFailureSheetOpen(false)}
         errorMessage={lastErrorMessage}
         onRetry={() => handleScanClick(isMobile ? cameraInputRef : fileInputRef)}
       />
-
     </div>
   );
 }

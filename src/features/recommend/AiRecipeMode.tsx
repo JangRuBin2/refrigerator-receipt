@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Wand2, Crown, ChefHat, Loader2, RotateCcw, Clock, Search, ExternalLink, Heart, Check, Share2, Download } from 'lucide-react';
+import { Wand2, Crown, ChefHat, Loader2, RotateCcw } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -17,7 +17,7 @@ import { addFavorite } from '@/lib/api/favorites';
 import { renderRecipeToImage, shareImage, saveImageToDevice } from '@/lib/shareImage';
 import { shareTossRecipeLink, isTossEnvironment } from '@/lib/tossShare';
 import type { AIGeneratedRecipe } from './types';
-import { getSearchUrl, getDifficultyLabel, getDifficultyColor } from './utils';
+import { RecipeResult } from './RecipeResult';
 
 interface AiRecipeModeProps {
   locale: string;
@@ -53,21 +53,14 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
   const toggleIngredient = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
   const toggleAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(ingredients.map(i => i.id)));
-    }
+    setSelectedIds(allSelected ? new Set() : new Set(ingredients.map(i => i.id)));
   };
 
   const [recipe, setRecipe] = useState<AIGeneratedRecipe | null>(null);
@@ -84,7 +77,6 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
 
   const generate = useCallback(async () => {
     if (selectedCount === 0) return;
-
     setLoading(true);
     setError('');
     setRecipe(null);
@@ -96,7 +88,6 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
         .filter(i => selectedIds.has(i.id))
         .map(i => i.name);
       const prefs: Record<string, unknown> = {};
-
       if (preferences.cookingTime) prefs.cookingTime = preferences.cookingTime;
       if (preferences.difficulty) prefs.difficulty = preferences.difficulty;
       if (preferences.cuisine) prefs.cuisine = preferences.cuisine;
@@ -105,7 +96,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
         ingredients: ingredientNames,
         preferences: Object.keys(prefs).length > 0 ? prefs : undefined,
         locale,
-      }) as { recipe?: AIGeneratedRecipe; freeTrial?: { remainingCount: number; limit: number }; error?: string };
+      }) as { recipe?: AIGeneratedRecipe };
 
       setRecipe(data.recipe || null);
     } catch (err) {
@@ -124,7 +115,6 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
 
   const save = useCallback(async () => {
     if (!recipe || saving || saved) return;
-
     setSaving(true);
     try {
       const result = await saveAiRecipeApi({ ...recipe, locale });
@@ -147,7 +137,6 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
   const autoSaveIfNeeded = useCallback(async (): Promise<string | null> => {
     if (saved && savedRecipeId) return savedRecipeId;
     if (!recipe || saving) return savedRecipeId;
-
     try {
       setSaving(true);
       const result = await saveAiRecipeApi({ ...recipe, locale });
@@ -168,13 +157,8 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
 
   const handleSaveImage = useCallback(async () => {
     if (!recipe) return;
-
     try {
-      const file = await renderRecipeToImage(
-        recipe,
-        locale,
-        `mealkeeper-${recipe.title.slice(0, 20)}.png`
-      );
+      const file = await renderRecipeToImage(recipe, locale, `mealkeeper-${recipe.title.slice(0, 20)}.png`);
       await saveImageToDevice(file);
       toast.success(t('share.imageSaved'));
     } catch {
@@ -184,49 +168,21 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
 
   const handleShare = useCallback(async () => {
     if (!recipe) return;
-
-    // Toss: auto-save + getTossShareLink with OG image
     if (isTossEnvironment()) {
       const recipeId = await autoSaveIfNeeded();
-      if (!recipeId) {
-        toast.error(t('recommend.saveError'));
-        return;
-      }
-      try {
-        await shareTossRecipeLink(recipeId, locale);
-      } catch {
-        toast.error(t('recommend.saveError'));
-      }
+      if (!recipeId) { toast.error(t('recommend.saveError')); return; }
+      try { await shareTossRecipeLink(recipeId, locale); } catch { toast.error(t('recommend.saveError')); }
       return;
     }
-
-    // Web: share captured image via Web Share API
     await autoSaveIfNeeded();
-
     try {
-      const file = await renderRecipeToImage(
-        recipe,
-        locale,
-        `mealkeeper-${recipe.title.slice(0, 20)}.png`
-      );
+      const file = await renderRecipeToImage(recipe, locale, `mealkeeper-${recipe.title.slice(0, 20)}.png`);
       const shared = await shareImage(file, recipe.title);
-      if (shared) {
-        toast.success(t('share.linkCopied'));
-      }
+      if (shared) toast.success(t('share.linkCopied'));
     } catch {
       toast.error(t('recommend.saveError'));
     }
   }, [recipe, autoSaveIfNeeded, locale]);
-
-  const handleCookingTimeChange = (value: string) => {
-    const valid = COOKING_TIME_VALUES.includes(value as CookingTime);
-    setPreferences(p => ({ ...p, cookingTime: valid ? (value as CookingTime) : '' }));
-  };
-
-  const handleDifficultyChange = (value: string) => {
-    const valid = DIFFICULTY_VALUES.includes(value as Difficulty);
-    setPreferences(p => ({ ...p, difficulty: valid ? (value as Difficulty) : '' }));
-  };
 
   return (
     <div className="space-y-4">
@@ -258,9 +214,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
           {ingredients.length === 0 ? (
             <div className="rounded-lg bg-white p-6 text-center dark:bg-gray-800">
               <ChefHat className="mx-auto h-12 w-12 text-gray-300" />
-              <p className="mt-3 font-medium text-gray-600 dark:text-gray-400">
-                {t('recommend.noIngredients')}
-              </p>
+              <p className="mt-3 font-medium text-gray-600 dark:text-gray-400">{t('recommend.noIngredients')}</p>
               <p className="mt-1 text-sm text-gray-500">{t('recommend.addIngredientsFirst')}</p>
               <Button onClick={() => router.push(`/${locale}/fridge`)} className="mt-4">
                 {t('recommend.goToFridge')}
@@ -268,7 +222,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
             </div>
           ) : (
             <>
-              {/* My Ingredients - Selectable */}
+              {/* Ingredient Selection */}
               <div className="mb-4 rounded-lg bg-white p-4 dark:bg-gray-800">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-sm font-medium text-gray-500">
@@ -277,35 +231,28 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
                       ({t('recommend.selectedCount', { selected: selectedCount, total: ingredients.length })})
                     </span>
                   </p>
-                  <button
-                    type="button"
-                    onClick={toggleAll}
-                    className="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
-                  >
+                  <button type="button" onClick={toggleAll} className="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">
                     {allSelected ? t('recommend.deselectAll') : t('recommend.selectAll')}
                   </button>
                 </div>
                 <p className="mb-2 text-xs text-gray-400">{t('recommend.selectIngredients')}</p>
                 <div className="max-h-32 overflow-y-auto">
                   <div className="flex flex-wrap gap-1.5">
-                    {ingredients.map((ing) => {
-                      const isSelected = selectedIds.has(ing.id);
-                      return (
-                        <button
-                          key={ing.id}
-                          type="button"
-                          onClick={() => toggleIngredient(ing.id)}
-                          className={cn(
-                            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
-                            isSelected
-                              ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-400 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-600'
-                              : 'bg-gray-100 text-gray-400 line-through dark:bg-gray-700 dark:text-gray-500'
-                          )}
-                        >
-                          {ing.name}
-                        </button>
-                      );
-                    })}
+                    {ingredients.map((ing) => (
+                      <button
+                        key={ing.id}
+                        type="button"
+                        onClick={() => toggleIngredient(ing.id)}
+                        className={cn(
+                          'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+                          selectedIds.has(ing.id)
+                            ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-400 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-600'
+                            : 'bg-gray-100 text-gray-400 line-through dark:bg-gray-700 dark:text-gray-500'
+                        )}
+                      >
+                        {ing.name}
+                      </button>
+                    ))}
                   </div>
                 </div>
                 {selectedCount === 0 && (
@@ -319,7 +266,10 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
                 <div className="grid grid-cols-2 gap-3">
                   <Select
                     value={preferences.cookingTime}
-                    onChange={(e) => handleCookingTimeChange(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setPreferences(p => ({ ...p, cookingTime: COOKING_TIME_VALUES.includes(v as CookingTime) ? (v as CookingTime) : '' }));
+                    }}
                     options={[
                       { value: '', label: t('recommend.cookingTimeLabel') },
                       { value: 'quick', label: t('recommend.quick') },
@@ -329,7 +279,10 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
                   />
                   <Select
                     value={preferences.difficulty}
-                    onChange={(e) => handleDifficultyChange(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setPreferences(p => ({ ...p, difficulty: DIFFICULTY_VALUES.includes(v as Difficulty) ? (v as Difficulty) : '' }));
+                    }}
                     options={[
                       { value: '', label: t('recommend.difficultyLabel') },
                       { value: 'easy', label: t('recommend.easy') },
@@ -353,18 +306,11 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
                 />
               </div>
 
-              {/* Generate Button */}
               <Button onClick={generate} disabled={loading || selectedCount === 0} className="w-full" size="lg">
                 {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    {t('recommend.generating')}
-                  </>
+                  <><Loader2 className="mr-2 h-5 w-5 animate-spin" />{t('recommend.generating')}</>
                 ) : (
-                  <>
-                    <Wand2 className="mr-2 h-5 w-5" />
-                    {t('recommend.generate')}
-                  </>
+                  <><Wand2 className="mr-2 h-5 w-5" />{t('recommend.generate')}</>
                 )}
               </Button>
             </>
@@ -374,111 +320,18 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
         </CardContent>
       </Card>
 
-      {/* AI Generated Recipe */}
       {recipe && (
-        <Card className="overflow-hidden ring-2 ring-emerald-500 shadow-lg">
-          <CardContent className="p-5">
-            <div className="mb-2 flex items-center gap-2">
-              <Wand2 className="h-4 w-4 text-emerald-500" />
-              <span className="text-sm font-medium text-emerald-600">{t('recommend.aiGenerated')}</span>
-            </div>
-
-            <h3 className="text-xl font-bold">{recipe.title}</h3>
-            <p className="mt-1 text-sm text-gray-500">{recipe.description}</p>
-
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1 text-xs text-gray-500">
-                <Clock className="h-3 w-3" />
-                {t('recommend.cookingTime', { time: recipe.cookingTime })}
-              </span>
-              <Badge className={getDifficultyColor(recipe.difficulty)}>
-                {getDifficultyLabel(recipe.difficulty, locale)}
-              </Badge>
-              <Badge variant="default" className="text-xs">{t('recommend.servings', { count: recipe.servings })}</Badge>
-            </div>
-
-            {/* Ingredients */}
-            <div className="mt-4">
-              <h4 className="mb-2 font-semibold">{t('recipe.ingredients')}</h4>
-              <div className="space-y-1">
-                {recipe.ingredients.map((ing, idx) => (
-                  <div key={idx} className="flex justify-between rounded bg-gray-50 px-3 py-1.5 text-sm dark:bg-gray-700">
-                    <span>{ing.name}</span>
-                    <span className="text-gray-500">{ing.quantity}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="mt-4">
-              <h4 className="mb-2 font-semibold">{t('recipe.instructions')}</h4>
-              <ol className="list-inside list-decimal space-y-2 text-sm">
-                {recipe.instructions.map((step, idx) => (
-                  <li key={idx} className="text-gray-600 dark:text-gray-400">{step}</li>
-                ))}
-              </ol>
-            </div>
-
-            {/* Tips */}
-            {recipe.tips && (
-              <div className="mt-4 rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20">
-                <p className="text-sm">
-                  <span className="font-medium text-emerald-700 dark:text-emerald-400">{t('recommend.tip')}: </span>
-                  <span className="text-emerald-600 dark:text-emerald-300">{recipe.tips}</span>
-                </p>
-              </div>
-            )}
-
-            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-              {t('common.aiDisclaimer')}
-            </p>
-
-            {/* Action Buttons */}
-            <div className="mt-5 space-y-3">
-              <Button
-                onClick={save}
-                disabled={saving || saved}
-                variant={saved ? 'primary' : 'outline'}
-                size="sm"
-                className={cn('w-full', saved && 'bg-red-500 hover:bg-red-500 text-white')}
-              >
-                {saving ? (
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                ) : saved ? (
-                  <Check className="mr-1.5 h-4 w-4" />
-                ) : (
-                  <Heart className="mr-1.5 h-4 w-4" />
-                )}
-                {saved ? t('recommend.saved') : t('share.saveRecipe')}
-              </Button>
-              <div className="flex items-center gap-3">
-                <Button onClick={handleSaveImage} variant="outline" size="sm" className="flex-1">
-                  <Download className="mr-1.5 h-4 w-4" />
-                  {t('share.saveImage')}
-                </Button>
-                <Button onClick={handleShare} variant="outline" size="sm" className="flex-1">
-                  <Share2 className="mr-1.5 h-4 w-4" />
-                  {t('share.share')}
-                </Button>
-              </div>
-              <a
-                href={getSearchUrl(recipe.title, locale)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
-              >
-                <Search className="h-4 w-4" />
-                {t('recommend.searchYoutube')}
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-
-          </CardContent>
-        </Card>
+        <RecipeResult
+          recipe={recipe}
+          locale={locale}
+          saving={saving}
+          saved={saved}
+          onSave={save}
+          onSaveImage={handleSaveImage}
+          onShare={handleShare}
+        />
       )}
 
-      {/* Actions */}
       <div className="flex gap-2">
         {recipe && (
           <Button variant="outline" onClick={generate} disabled={loading} className="flex-1">

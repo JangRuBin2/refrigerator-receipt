@@ -3,28 +3,28 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { Crown, CreditCard, Shield, Check, Loader2, ArrowLeft, Sparkles, AlertCircle, TrendingDown, Percent, Coffee } from 'lucide-react';
+import { Crown, CreditCard, Shield, Check, Loader2, ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 import { useAppsInToss } from '@/hooks/useAppsInToss';
 import { IAP_PRODUCTS } from '@/types/apps-in-toss';
 import type { IapProductItem } from '@/types/apps-in-toss';
+import { PlanSelector } from '@/features/checkout/PlanSelector';
+import { ValueProposition } from '@/features/checkout/ValueProposition';
+import { OrderSummary } from '@/features/checkout/OrderSummary';
 
 type Plan = 'monthly' | 'yearly';
 
-// SDK 상품에서 가격 가져오기 (판매가 = displayAmount)
 function getProductPrice(products: IapProductItem[], sku: string): string | null {
   const product = products.find((p) => p.sku === sku);
   return product?.displayAmount ?? null;
 }
 
-// 하드코딩 폴백 가격 (판매가 = VAT 포함 기준)
 const FALLBACK_PRICES = {
-  monthly: { price: '₩1,980', total: '₩1,980' },
-  yearly: { price: '₩1,386', total: '₩16,632' },
+  monthly: { price: '\u20A91,980', total: '\u20A91,980' },
+  yearly: { price: '\u20A91,386', total: '\u20A916,632' },
 };
 
 function CheckoutContent() {
@@ -40,7 +40,6 @@ function CheckoutContent() {
   const [isComplete, setIsComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 앱인토스 SDK
   const {
     isAvailable: isAppsInToss,
     isLoading: isAppsInTossLoading,
@@ -50,24 +49,20 @@ function CheckoutContent() {
     restorePendingOrders,
   } = useAppsInToss();
 
-  // 미결 주문 복원 시도
   useEffect(() => {
     if (isAppsInToss && pendingOrders.length > 0) {
       restorePendingOrders();
     }
   }, [isAppsInToss, pendingOrders.length, restorePendingOrders]);
 
-  // SDK 상품 가격 (판매가) 또는 폴백
   const monthlyTotal = getProductPrice(iapProducts, IAP_PRODUCTS.PREMIUM_MONTHLY) ?? FALLBACK_PRICES.monthly.total;
   const yearlyTotal = getProductPrice(iapProducts, IAP_PRODUCTS.PREMIUM_YEARLY) ?? FALLBACK_PRICES.yearly.total;
 
-  // 연간 월 환산 가격 계산
   const yearlyMonthlyPrice = (() => {
     const match = yearlyTotal.match(/[\d,]+/);
     if (match) {
       const num = parseInt(match[0].replace(/,/g, ''), 10);
-      const monthly = Math.round(num / 12);
-      return `₩${monthly.toLocaleString()}`;
+      return `\u20A9${Math.round(num / 12).toLocaleString()}`;
     }
     return FALLBACK_PRICES.yearly.price;
   })();
@@ -89,50 +84,35 @@ function CheckoutContent() {
   };
 
   const premiumFeatures = [
-    { icon: '📸', text: t('pricing.feature.unlimitedScan') },
-    { icon: '🤖', text: t('pricing.feature.aiRecipe') },
-    { icon: '📊', text: t('pricing.feature.nutritionAnalysis') },
-    { icon: '🛒', text: t('pricing.feature.smartShopping') },
-    { icon: '🔍', text: t('pricing.feature.externalSearch') },
+    { icon: '\uD83D\uDCF8', text: t('pricing.feature.unlimitedScan') },
+    { icon: '\uD83E\uDD16', text: t('pricing.feature.aiRecipe') },
+    { icon: '\uD83D\uDCCA', text: t('pricing.feature.nutritionAnalysis') },
+    { icon: '\uD83D\uDED2', text: t('pricing.feature.smartShopping') },
+    { icon: '\uD83D\uDD0D', text: t('pricing.feature.externalSearch') },
   ];
 
   const handleSubscribe = async () => {
     setIsProcessing(true);
     setError(null);
 
-    // 앱인토스 환경에서는 인앱결제 사용
     if (isAppsInToss) {
-      const sku = selectedPlan === 'yearly'
-        ? IAP_PRODUCTS.PREMIUM_YEARLY
-        : IAP_PRODUCTS.PREMIUM_MONTHLY;
-
+      const sku = selectedPlan === 'yearly' ? IAP_PRODUCTS.PREMIUM_YEARLY : IAP_PRODUCTS.PREMIUM_MONTHLY;
       const result = await purchase(sku);
 
       if (result.type === 'success') {
         setIsComplete(true);
       } else {
-        // 에러 처리
         switch (result.errorCode) {
-          case 'USER_CANCELED':
-            // 사용자 취소는 에러 메시지 표시 안함
-            break;
-          case 'NETWORK_ERROR':
-            setError(t('pricing.error.network'));
-            break;
-          case 'PRODUCT_NOT_GRANTED_BY_PARTNER':
-            setError(t('pricing.error.grantFailed'));
-            break;
-          default:
-            setError(result.errorMessage || t('pricing.error.unknown'));
+          case 'USER_CANCELED': break;
+          case 'NETWORK_ERROR': setError(t('pricing.error.network')); break;
+          case 'PRODUCT_NOT_GRANTED_BY_PARTNER': setError(t('pricing.error.grantFailed')); break;
+          default: setError(result.errorMessage || t('pricing.error.unknown'));
         }
       }
-
       setIsProcessing(false);
       return;
     }
 
-    // 앱인토스 환경이 아닌 경우 (웹 브라우저)
-    // 토스 앱에서 열도록 안내
     setError(t('pricing.error.openInToss'));
     setIsProcessing(false);
   };
@@ -146,9 +126,7 @@ function CheckoutContent() {
           </div>
           <h2 className="mb-2 text-2xl font-bold">{t('pricing.success')}</h2>
           <p className="mb-8 text-gray-500">{t('pricing.successDescription')}</p>
-          <Button onClick={() => router.push(`/${locale}`)}>
-            {t('common.confirm')}
-          </Button>
+          <Button onClick={() => router.push(`/${locale}`)}>{t('common.confirm')}</Button>
         </div>
       </div>
     );
@@ -156,51 +134,8 @@ function CheckoutContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-
       <div className="space-y-6 p-4">
-        {/* Plan Selection */}
-        <div className="grid grid-cols-2 gap-3">
-          {(['monthly', 'yearly'] as const).map((plan) => (
-            <button
-              key={plan}
-              onClick={() => setSelectedPlan(plan)}
-              className={cn(
-                'relative rounded-xl border-2 p-4 text-left transition-all',
-                selectedPlan === plan
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
-              )}
-            >
-              {plans[plan].badge && (
-                <Badge
-                  variant={plan === 'yearly' ? 'success' : 'info'}
-                  className="absolute -top-2 right-2 text-xs"
-                >
-                  {plans[plan].badge}
-                </Badge>
-              )}
-              <p className="text-sm font-medium text-gray-500">
-                {plan === 'monthly' ? t('settings.billingMonthly') : t('settings.billingYearly')}
-              </p>
-              <p className="mt-1 text-xl font-bold">
-                {plans[plan].price}
-                <span className="text-sm font-normal text-gray-500">/{plans[plan].period}</span>
-              </p>
-              {plan === 'yearly' && (
-                <p className="mt-1 text-xs text-green-600">
-                  {plans[plan].discount} {t('checkout.discount')}
-                </p>
-              )}
-              {selectedPlan === plan && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-500">
-                    <Check className="h-3 w-3 text-white" />
-                  </div>
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
+        <PlanSelector selectedPlan={selectedPlan} onSelect={setSelectedPlan} plans={plans} />
 
         {/* Features */}
         <Card>
@@ -222,64 +157,7 @@ function CheckoutContent() {
           </CardContent>
         </Card>
 
-        {/* Value Proposition */}
-        <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base text-green-700 dark:text-green-400">
-              <TrendingDown className="h-5 w-5" />
-              {t('pricing.value.title')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Food Waste Savings */}
-            <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-800">
-                <Percent className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t('pricing.value.wasteReduction')}
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {t('pricing.value.wasteDetail')} <span className="font-semibold text-green-600">{t('pricing.value.wasteSaving')}</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Price Comparison */}
-            <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-800">
-                <Coffee className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t('pricing.value.coffeePrice')}
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {t('pricing.value.coffeeDetail')}
-                </p>
-              </div>
-            </div>
-
-            {/* ROI Summary */}
-            <div className="rounded-lg bg-white p-3 dark:bg-gray-800">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">{t('pricing.value.expectedSaving')}</span>
-                <span className="font-bold text-green-600">{t('pricing.value.monthlySaving')}</span>
-              </div>
-              <div className="mt-1 flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">{t('pricing.value.premiumCost')}</span>
-                <span className="font-bold text-gray-900 dark:text-white">{plans.monthly.total}</span>
-              </div>
-              <div className="mt-2 border-t pt-2 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">{t('pricing.value.netBenefit')}</span>
-                  <span className="font-bold text-green-600">{t('pricing.value.monthlyNet')}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ValueProposition monthlyTotal={plans.monthly.total} />
 
         {/* AI Recipe Highlight */}
         <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
@@ -290,58 +168,18 @@ function CheckoutContent() {
               </div>
               <div>
                 <h3 className="font-semibold">{t('recommend.aiMode')}</h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  {t('pricing.feature.aiRecipeDesc')}
-                </p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{t('pricing.feature.aiRecipeDesc')}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Order Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('checkout.orderSummary')}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">
-                Premium {selectedPlan === 'monthly' ? t('settings.billingMonthly') : t('settings.billingYearly')}
-              </span>
-              <span className="font-medium">{plans[selectedPlan].total}</span>
-            </div>
-            {selectedPlan === 'yearly' && (() => {
-              // 월간 × 12 - 연간 = 할인액
-              const mMatch = monthlyTotal.match(/[\d,]+/);
-              const yMatch = yearlyTotal.match(/[\d,]+/);
-              if (mMatch && yMatch) {
-                const mNum = parseInt(mMatch[0].replace(/,/g, ''), 10);
-                const yNum = parseInt(yMatch[0].replace(/,/g, ''), 10);
-                const discount = mNum * 12 - yNum;
-                if (discount > 0) {
-                  return (
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>{t('checkout.discount')}</span>
-                      <span>-₩{discount.toLocaleString()}</span>
-                    </div>
-                  );
-                }
-              }
-              return null;
-            })()}
-            <div className="border-t pt-3">
-              <div className="flex justify-between font-semibold">
-                <span>{t('checkout.totalAmount')}</span>
-                <span className="text-primary-600">{plans[selectedPlan].total}</span>
-              </div>
-              {selectedPlan === 'yearly' && (
-                <p className="mt-1 text-right text-xs text-gray-500">
-                  ({plans[selectedPlan].price}/{t('pricing.month')})
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <OrderSummary
+          selectedPlan={selectedPlan}
+          plans={plans}
+          monthlyTotal={monthlyTotal}
+          yearlyTotal={yearlyTotal}
+        />
 
         {/* Payment Method */}
         <Card>
@@ -373,7 +211,6 @@ function CheckoutContent() {
           </div>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-red-600 dark:bg-red-900/20 dark:text-red-400">
             <AlertCircle className="h-5 w-5 flex-shrink-0" />
@@ -381,7 +218,6 @@ function CheckoutContent() {
           </div>
         )}
 
-        {/* AppsInToss Loading */}
         {isAppsInTossLoading && (
           <div className="flex items-center justify-center gap-2 py-4">
             <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -389,7 +225,6 @@ function CheckoutContent() {
           </div>
         )}
 
-        {/* Subscribe Button */}
         <div className="space-y-3">
           <Button
             onClick={handleSubscribe}
@@ -398,19 +233,12 @@ function CheckoutContent() {
             size="lg"
           >
             {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                {t('pricing.processing')}
-              </>
+              <><Loader2 className="mr-2 h-5 w-5 animate-spin" />{t('pricing.processing')}</>
             ) : (
-              <>
-                <Crown className="mr-2 h-5 w-5" />
-                {t('checkout.payAmount', { amount: plans[selectedPlan].total })}
-              </>
+              <><Crown className="mr-2 h-5 w-5" />{t('checkout.payAmount', { amount: plans[selectedPlan].total })}</>
             )}
           </Button>
 
-          {/* 앱인토스 환경 표시 */}
           {isAppsInToss && (
             <div className="flex items-center justify-center gap-1 text-xs text-blue-600">
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -420,20 +248,11 @@ function CheckoutContent() {
             </div>
           )}
 
-          <p className="text-center text-xs text-gray-500">
-            {t('pricing.cancelDescription')}
-          </p>
-          <p className="text-center text-xs text-gray-400">
-            {t('pricing.terms')}
-          </p>
+          <p className="text-center text-xs text-gray-500">{t('pricing.cancelDescription')}</p>
+          <p className="text-center text-xs text-gray-400">{t('pricing.terms')}</p>
         </div>
 
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="w-full"
-        >
+        <Button variant="ghost" onClick={() => router.back()} className="w-full">
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('checkout.goBack')}
         </Button>

@@ -1,34 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import {
-  Activity,
-  Loader2,
-  RefreshCw,
-  Sparkles,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Flame,
-  Beef,
-  Wheat,
-  Droplets,
-  Leaf,
-  Cookie,
-  AlertCircle,
-  Calendar,
-  BarChart3,
-} from 'lucide-react';
+import { Activity, Loader2, RefreshCw, Sparkles, AlertCircle, Calendar, BarChart3 } from 'lucide-react';
 
 import { PremiumGate } from '@/components/premium/PremiumGate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 import { getCategoryIcon } from '@/lib/constants';
 import { analyzeNutrition, analyzePeriodNutrition } from '@/lib/api/nutrition';
+import { NutritionScoreCard } from '@/features/nutrition/NutritionScoreCard';
+import { MacroNutrients } from '@/features/nutrition/MacroNutrients';
+import { CategoryBalanceCard } from '@/features/nutrition/CategoryBalanceCard';
 
 type ViewMode = 'current' | 'week' | 'month';
 
@@ -91,67 +76,7 @@ export default function NutritionPage() {
     }
   }, [t]);
 
-  const handleAnalyze = () => {
-    fetchReport(viewMode);
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-500';
-    if (score >= 60) return 'text-yellow-500';
-    if (score >= 40) return 'text-orange-500';
-    return 'text-red-500';
-  };
-
-  const getScoreGrade = (score: number) => {
-    if (score >= 80) return 'A';
-    if (score >= 60) return 'B';
-    if (score >= 40) return 'C';
-    if (score >= 20) return 'D';
-    return 'F';
-  };
-
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'good':
-        return <Minus className="h-4 w-4 text-green-500" />;
-      case 'low':
-        return <TrendingDown className="h-4 w-4 text-orange-500" />;
-      case 'high':
-        return <TrendingUp className="h-4 w-4 text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'good':
-        return t('nutrition.statusGood');
-      case 'low':
-        return t('nutrition.statusLow');
-      case 'high':
-        return t('nutrition.statusHigh');
-      default:
-        return '';
-    }
-  };
-
-  // 매크로 영양소 비율 계산
-  const calculateMacroRatio = (nutrition: NutritionData) => {
-    const proteinCal = nutrition.protein * 4;
-    const carbsCal = nutrition.carbs * 4;
-    const fatCal = nutrition.fat * 9;
-    const total = proteinCal + carbsCal + fatCal;
-
-    if (total === 0) return { protein: 0, carbs: 0, fat: 0 };
-
-    return {
-      protein: Math.round((proteinCal / total) * 100),
-      carbs: Math.round((carbsCal / total) * 100),
-      fat: Math.round((fatCal / total) * 100),
-    };
-  };
+  const handleAnalyze = () => fetchReport(viewMode);
 
   if (error) {
     return (
@@ -168,52 +93,31 @@ export default function NutritionPage() {
     );
   }
 
-  const currentNutrition = report?.totalNutrition;
-  const macroRatio = currentNutrition ? calculateMacroRatio(currentNutrition) : { protein: 0, carbs: 0, fat: 0 };
-
   return (
     <PremiumGate feature="nutrition_analysis">
     <div className="min-h-screen pb-8">
-
       <div className="space-y-4 p-4">
         {/* View Mode Tabs */}
         <div className="flex gap-2 p-1 bg-gray-100 rounded-lg dark:bg-gray-800">
-          <button
-            onClick={() => setViewMode('current')}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors',
-              viewMode === 'current'
-                ? 'bg-white text-primary-600 shadow-sm dark:bg-gray-700 dark:text-primary-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
-            )}
-          >
-            <Activity className="h-4 w-4" />
-            {t('nutrition.current')}
-          </button>
-          <button
-            onClick={() => setViewMode('week')}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors',
-              viewMode === 'week'
-                ? 'bg-white text-primary-600 shadow-sm dark:bg-gray-700 dark:text-primary-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
-            )}
-          >
-            <Calendar className="h-4 w-4" />
-            {t('nutrition.weekly')}
-          </button>
-          <button
-            onClick={() => setViewMode('month')}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors',
-              viewMode === 'month'
-                ? 'bg-white text-primary-600 shadow-sm dark:bg-gray-700 dark:text-primary-400'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
-            )}
-          >
-            <BarChart3 className="h-4 w-4" />
-            {t('nutrition.monthly')}
-          </button>
+          {([
+            { mode: 'current' as const, icon: Activity, label: t('nutrition.current') },
+            { mode: 'week' as const, icon: Calendar, label: t('nutrition.weekly') },
+            { mode: 'month' as const, icon: BarChart3, label: t('nutrition.monthly') },
+          ]).map(({ mode, icon: Icon, label }) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors',
+                viewMode === mode
+                  ? 'bg-white text-primary-600 shadow-sm dark:bg-gray-700 dark:text-primary-400'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
         </div>
 
         {!hasAnalyzed && !loading ? (
@@ -233,248 +137,60 @@ export default function NutritionPage() {
           </div>
         ) : report ? (
           <>
-            {/* Score Card */}
-            <Card className={cn(
-              'text-white',
-              viewMode === 'current'
-                ? 'bg-gradient-to-br from-indigo-500 to-purple-600'
-                : 'bg-gradient-to-br from-emerald-500 to-teal-600'
-            )}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/80 text-sm">
-                      {viewMode === 'current'
-                        ? t('nutrition.balanceScore')
-                        : viewMode === 'week' ? t('nutrition.weeklyScore') : t('nutrition.monthlyScore')}
-                    </p>
-                    <div className="flex items-baseline gap-2 mt-1">
-                      <span className="text-5xl font-bold">{report.score}</span>
-                      <span className="text-2xl font-bold text-white/80">/100</span>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className={cn(
-                      'w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold',
-                      report.score >= 60 ? 'bg-white/20' : 'bg-white/10'
-                    )}>
-                      {getScoreGrade(report.score)}
-                    </div>
-                  </div>
-                </div>
+            <NutritionScoreCard score={report.score} viewMode={viewMode} onRefresh={handleAnalyze} />
+            <MacroNutrients nutrition={report.totalNutrition} />
+            <CategoryBalanceCard categories={report.categoryBalance} />
 
-                {viewMode !== 'current' && (
-                  <p className="text-sm text-white/60 mt-2">
-                    {t('nutrition.periodAnalysis', { days: viewMode === 'week' ? '7' : '30' })}
-                  </p>
-                )}
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleAnalyze}
-                  className="mt-4 text-white hover:bg-white/20"
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  {t('nutrition.refresh')}
-                </Button>
-              </CardContent>
-            </Card>
-
-        {/* Macro Nutrients */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary-600" />
-              {t('nutrition.macroNutrients')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Macro Bar */}
-            <div className="h-6 rounded-full overflow-hidden flex mb-4">
-              <div
-                className="bg-blue-500 flex items-center justify-center text-xs text-white font-medium"
-                style={{ width: `${macroRatio.protein}%` }}
-              >
-                {macroRatio.protein > 10 && `${macroRatio.protein}%`}
-              </div>
-              <div
-                className="bg-amber-500 flex items-center justify-center text-xs text-white font-medium"
-                style={{ width: `${macroRatio.carbs}%` }}
-              >
-                {macroRatio.carbs > 10 && `${macroRatio.carbs}%`}
-              </div>
-              <div
-                className="bg-red-400 flex items-center justify-center text-xs text-white font-medium"
-                style={{ width: `${macroRatio.fat}%` }}
-              >
-                {macroRatio.fat > 10 && `${macroRatio.fat}%`}
-              </div>
-            </div>
-
-            {/* Nutrient Details */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-orange-50 p-3 dark:bg-orange-900/20">
-                <div className="flex items-center gap-2 text-orange-600">
-                  <Flame className="h-4 w-4" />
-                  <span className="text-sm font-medium">{t('nutrition.calories')}</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{report.totalNutrition.calories.toLocaleString()}</p>
-                <p className="text-xs text-gray-500">kcal</p>
-              </div>
-
-              <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
-                <div className="flex items-center gap-2 text-blue-600">
-                  <Beef className="h-4 w-4" />
-                  <span className="text-sm font-medium">{t('nutrition.protein')}</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{report.totalNutrition.protein}</p>
-                <p className="text-xs text-gray-500">g</p>
-              </div>
-
-              <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
-                <div className="flex items-center gap-2 text-amber-600">
-                  <Wheat className="h-4 w-4" />
-                  <span className="text-sm font-medium">{t('nutrition.carbs')}</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{report.totalNutrition.carbs}</p>
-                <p className="text-xs text-gray-500">g</p>
-              </div>
-
-              <div className="rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
-                <div className="flex items-center gap-2 text-red-500">
-                  <Droplets className="h-4 w-4" />
-                  <span className="text-sm font-medium">{t('nutrition.fat')}</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{report.totalNutrition.fat}</p>
-                <p className="text-xs text-gray-500">g</p>
-              </div>
-
-              <div className="rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
-                <div className="flex items-center gap-2 text-green-600">
-                  <Leaf className="h-4 w-4" />
-                  <span className="text-sm font-medium">{t('nutrition.fiber')}</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{report.totalNutrition.fiber}</p>
-                <p className="text-xs text-gray-500">g</p>
-              </div>
-
-              <div className="rounded-lg bg-pink-50 p-3 dark:bg-pink-900/20">
-                <div className="flex items-center gap-2 text-pink-500">
-                  <Cookie className="h-4 w-4" />
-                  <span className="text-sm font-medium">{t('nutrition.sugar')}</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{report.totalNutrition.sugar}</p>
-                <p className="text-xs text-gray-500">g</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Category Balance */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('nutrition.categoryBalance')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {report.categoryBalance.length === 0 ? (
-              <p className="text-center text-gray-500 py-4">{t('nutrition.noData')}</p>
-            ) : (
-              <div className="space-y-3">
-                {report.categoryBalance.map((cat) => (
-                  <div key={cat.category}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span>{getCategoryIcon(cat.category)}</span>
-                        <span className="font-medium">{t(`categories.${cat.category}`)}</span>
-                        <Badge
-                          variant={cat.status === 'good' ? 'success' : cat.status === 'low' ? 'warning' : 'danger'}
-                          className="text-xs"
-                        >
-                          {getStatusText(cat.status)}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(cat.status)}
-                        <span className="text-sm font-medium">{cat.percentage}%</span>
-                      </div>
-                    </div>
-                    <div className="h-2 rounded-full bg-gray-200 overflow-hidden dark:bg-gray-700">
-                      <div
-                        className={cn(
-                          'h-full rounded-full transition-all',
-                          cat.status === 'good' && 'bg-green-500',
-                          cat.status === 'low' && 'bg-orange-500',
-                          cat.status === 'high' && 'bg-red-500'
-                        )}
-                        style={{ width: `${Math.min(cat.percentage, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {/* AI Recommendations */}
+            {report.recommendations.length > 0 && (
+              <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                    {t('nutrition.aiRecommendations')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {report.recommendations.map((rec, index) => (
+                      <li key={index} className="flex items-start gap-3 rounded-lg bg-white/70 p-3 dark:bg-gray-800/70">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-600 dark:bg-purple-900/50">
+                          {index + 1}
+                        </span>
+                        <span className="flex-1">{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">{t('nutrition.aiDisclaimer')}</p>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
 
-        {/* AI Recommendations */}
-        {report.recommendations.length > 0 && (
-          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-                {t('nutrition.aiRecommendations')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {report.recommendations.map((rec, index) => (
-                  <li
-                    key={index}
-                    className="flex items-start gap-3 rounded-lg bg-white/70 p-3 dark:bg-gray-800/70"
-                  >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-sm font-medium text-purple-600 dark:bg-purple-900/50">
-                      {index + 1}
-                    </span>
-                    <span className="flex-1">{rec}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                {t('nutrition.aiDisclaimer')}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Ingredient Details */}
-        {report.ingredients.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('nutrition.ingredientDetails')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {report.ingredients.slice(0, 10).map((ing, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{getCategoryIcon(ing.category)}</span>
-                      <span className="font-medium">{ing.name}</span>
-                    </div>
-                    <div className="text-right text-sm text-gray-500">
-                      <span>{ing.nutrition.calories} kcal</span>
-                      <span className="mx-1">·</span>
-                      <span>P {ing.nutrition.protein}g</span>
-                    </div>
+            {/* Ingredient Details */}
+            {report.ingredients.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('nutrition.ingredientDetails')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {report.ingredients.slice(0, 10).map((ing, index) => (
+                      <div key={index} className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-700">
+                        <div className="flex items-center gap-2">
+                          <span>{getCategoryIcon(ing.category)}</span>
+                          <span className="font-medium">{ing.name}</span>
+                        </div>
+                        <div className="text-right text-sm text-gray-500">
+                          <span>{ing.nutrition.calories} kcal</span>
+                          <span className="mx-1">·</span>
+                          <span>P {ing.nutrition.protein}g</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                </CardContent>
+              </Card>
+            )}
           </>
         ) : (
           <Card>
