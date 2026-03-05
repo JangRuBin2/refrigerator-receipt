@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { Wand2, Crown, ChefHat, Loader2, RotateCcw, Clock, Search, ExternalLink, Heart, Check, Share2 } from 'lucide-react';
+import { Wand2, Crown, ChefHat, Loader2, RotateCcw, Clock, Search, ExternalLink, Heart, Check, Share2, Download } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -14,9 +14,9 @@ import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { aiGenerateRecipe, saveAiRecipe as saveAiRecipeApi } from '@/lib/api/recipes';
 import { addFavorite } from '@/lib/api/favorites';
-import { captureElementAsImage, shareImage } from '@/lib/shareImage';
+import { renderRecipeToImage, shareImage, saveImageToDevice } from '@/lib/shareImage';
+import { shareTossRecipeLink, isTossEnvironment } from '@/lib/tossShare';
 import type { AIGeneratedRecipe } from './types';
-import { RecipeShareCard } from './RecipeShareCard';
 import { getSearchUrl, getDifficultyLabel, getDifficultyColor } from './utils';
 
 interface AiRecipeModeProps {
@@ -35,7 +35,6 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
   const t = useTranslations();
   const router = useRouter();
   const { ingredients, toggleFavorite } = useStore();
-  const shareCardRef = useRef<HTMLDivElement>(null);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set(ingredients.map(i => i.id))
@@ -82,8 +81,6 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [savedRecipeId, setSavedRecipeId] = useState<string | null>(null);
-  const [debugLog, setDebugLog] = useState<string[]>([]);
-  const addDebug = (msg: string) => setDebugLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
   const generate = useCallback(async () => {
     if (selectedCount === 0) return;
@@ -126,79 +123,100 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
   }, []);
 
   const save = useCallback(async () => {
-    if (!recipe || saving || saved) {
-      addDebug(`save blocked: recipe=${!!recipe}, saving=${saving}, saved=${saved}`);
-      return;
-    }
+    if (!recipe || saving || saved) return;
 
     setSaving(true);
-    addDebug('save: start');
     try {
       const result = await saveAiRecipeApi({ ...recipe, locale });
-      addDebug(`saveAiRecipeApi result: id=${result?.id}`);
       if (result?.id) {
         await addFavorite(result.id);
-        addDebug(`addFavorite done: ${result.id}`);
         toggleFavorite(result.id);
         setSavedRecipeId(result.id);
         setSaved(true);
         toast.success(t('recommend.saved'));
-        addDebug('save: SUCCESS');
       } else {
-        addDebug('save: result.id is falsy');
         toast.error(t('recommend.saveError'));
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      addDebug(`save ERROR: ${msg}`);
+    } catch {
       toast.error(t('recommend.saveError'));
     } finally {
       setSaving(false);
     }
   }, [recipe, saving, saved, locale, toggleFavorite]);
 
-  const handleShare = useCallback(async () => {
-    if (!recipe || !shareCardRef.current) return;
-    addDebug('handleShare: capturing image');
-
-    // 저장 안 된 레시피면 자동 저장
-    if (!saved && !saving) {
-      try {
-        setSaving(true);
-        addDebug('handleShare: auto-saving');
-        const result = await saveAiRecipeApi({ ...recipe, locale });
-        if (result?.id) {
-          await addFavorite(result.id);
-          toggleFavorite(result.id);
-          setSavedRecipeId(result.id);
-          setSaved(true);
-          addDebug(`handleShare: auto-save SUCCESS id=${result.id}`);
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        addDebug(`handleShare auto-save ERROR: ${msg}`);
-      } finally {
-        setSaving(false);
-      }
-    }
+  const autoSaveIfNeeded = useCallback(async (): Promise<string | null> => {
+    if (saved && savedRecipeId) return savedRecipeId;
+    if (!recipe || saving) return savedRecipeId;
 
     try {
-      const file = await captureElementAsImage(
-        shareCardRef.current,
+      setSaving(true);
+      const result = await saveAiRecipeApi({ ...recipe, locale });
+      if (result?.id) {
+        await addFavorite(result.id);
+        toggleFavorite(result.id);
+        setSavedRecipeId(result.id);
+        setSaved(true);
+        return result.id;
+      }
+    } catch {
+      // auto-save failed silently
+    } finally {
+      setSaving(false);
+    }
+    return savedRecipeId;
+  }, [recipe, saved, saving, savedRecipeId, locale, toggleFavorite]);
+
+  const handleSaveImage = useCallback(async () => {
+    if (!recipe) return;
+
+    try {
+      const file = await renderRecipeToImage(
+        recipe,
+        locale,
         `mealkeeper-${recipe.title.slice(0, 20)}.png`
       );
-      addDebug(`image captured: ${(file.size / 1024).toFixed(1)}KB`);
+      await saveImageToDevice(file);
+      toast.success(t('share.imageSaved'));
+    } catch {
+      toast.error(t('recommend.saveError'));
+    }
+  }, [recipe, locale]);
+
+  const handleShare = useCallback(async () => {
+    if (!recipe) return;
+
+    // Toss: auto-save + getTossShareLink with OG image
+    if (isTossEnvironment()) {
+      const recipeId = await autoSaveIfNeeded();
+      if (!recipeId) {
+        toast.error(t('recommend.saveError'));
+        return;
+      }
+      try {
+        await shareTossRecipeLink(recipeId, locale);
+      } catch {
+        toast.error(t('recommend.saveError'));
+      }
+      return;
+    }
+
+    // Web: share captured image via Web Share API
+    await autoSaveIfNeeded();
+
+    try {
+      const file = await renderRecipeToImage(
+        recipe,
+        locale,
+        `mealkeeper-${recipe.title.slice(0, 20)}.png`
+      );
       const shared = await shareImage(file, recipe.title);
       if (shared) {
         toast.success(t('share.linkCopied'));
       }
-      addDebug('share done');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      addDebug(`share image ERROR: ${msg}`);
+    } catch {
       toast.error(t('recommend.saveError'));
     }
-  }, [recipe, saved, saving, locale, toggleFavorite]);
+  }, [recipe, autoSaveIfNeeded, locale]);
 
   const handleCookingTimeChange = (value: string) => {
     const valid = COOKING_TIME_VALUES.includes(value as CookingTime);
@@ -356,9 +374,6 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
         </CardContent>
       </Card>
 
-      {/* Hidden share card for image capture */}
-      {recipe && <RecipeShareCard ref={shareCardRef} recipe={recipe} locale={locale} />}
-
       {/* AI Generated Recipe */}
       {recipe && (
         <Card className="overflow-hidden ring-2 ring-emerald-500 shadow-lg">
@@ -420,31 +435,31 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
             </p>
 
             {/* Action Buttons */}
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={save}
-                  disabled={saving || saved}
-                  variant={saved ? 'primary' : 'outline'}
-                  size="sm"
-                  className={cn(saved && 'bg-red-500 hover:bg-red-500 text-white')}
-                >
-                  {saving ? (
-                    <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                  ) : saved ? (
-                    <Check className="mr-1.5 h-4 w-4" />
-                  ) : (
-                    <Heart className="mr-1.5 h-4 w-4" />
-                  )}
-                  {saved ? t('recommend.saved') : t('recommend.saveToFavorites')}
+            <div className="mt-5 space-y-3">
+              <Button
+                onClick={save}
+                disabled={saving || saved}
+                variant={saved ? 'primary' : 'outline'}
+                size="sm"
+                className={cn('w-full', saved && 'bg-red-500 hover:bg-red-500 text-white')}
+              >
+                {saving ? (
+                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                ) : saved ? (
+                  <Check className="mr-1.5 h-4 w-4" />
+                ) : (
+                  <Heart className="mr-1.5 h-4 w-4" />
+                )}
+                {saved ? t('recommend.saved') : t('share.saveRecipe')}
+              </Button>
+              <div className="flex items-center gap-3">
+                <Button onClick={handleSaveImage} variant="outline" size="sm" className="flex-1">
+                  <Download className="mr-1.5 h-4 w-4" />
+                  {t('share.saveImage')}
                 </Button>
-                <Button
-                  onClick={handleShare}
-                  variant="outline"
-                  size="sm"
-                >
+                <Button onClick={handleShare} variant="outline" size="sm" className="flex-1">
                   <Share2 className="mr-1.5 h-4 w-4" />
-                  {t('share.shareRecipe')}
+                  {t('share.share')}
                 </Button>
               </div>
               <a
@@ -459,23 +474,6 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
               </a>
             </div>
 
-            {/* Debug Panel */}
-            <div className="mt-3 rounded-lg border-2 border-yellow-400 bg-yellow-50 p-3 dark:bg-yellow-900/20">
-              <div className="mb-1 flex items-center justify-between">
-                <span className="text-xs font-bold text-yellow-700">DEBUG</span>
-                <button type="button" onClick={() => setDebugLog([])} className="text-xs text-yellow-600 underline">Clear</button>
-              </div>
-              <p className="text-[10px] text-gray-500">
-                saved={String(saved)} | savedRecipeId={savedRecipeId ?? 'null'} | saving={String(saving)}
-              </p>
-              {debugLog.length > 0 && (
-                <div className="mt-1 max-h-40 overflow-y-auto">
-                  {debugLog.map((log, idx) => (
-                    <p key={idx} className="break-all text-[10px] text-yellow-800 dark:text-yellow-300">{log}</p>
-                  ))}
-                </div>
-              )}
-            </div>
           </CardContent>
         </Card>
       )}

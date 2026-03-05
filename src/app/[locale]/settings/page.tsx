@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { User, Globe, Bell, Palette, Database, LogOut, UserX, ChevronRight, Moon, Sun, Crown, Check, Trash2 } from 'lucide-react';
+import { User, Globe, Bell, Palette, Database, LogOut, UserX, ChevronRight, Moon, Sun, Crown, Check, Trash2, Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { BottomSheet } from '@/components/ui/BottomSheet';
@@ -378,6 +378,17 @@ export default function SettingsPage() {
               </div>
               <ChevronRight className="h-4 w-4 text-gray-400" />
             </button>
+          </CardContent>
+        </Card>
+
+        {/* Saved Recipes */}
+        <Card>
+          <CardContent className="p-4">
+            <SettingsItem
+              icon={Heart}
+              label={t('favorites.title')}
+              onClick={() => router.push(`/${locale}/favorites`)}
+            />
           </CardContent>
         </Card>
 

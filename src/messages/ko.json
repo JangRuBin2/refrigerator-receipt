@@ -484,10 +484,15 @@
     "statusGood": "적정",
     "statusLow": "부족",
     "statusHigh": "과다",
-    "noData": "분석할 재료가 없습니다"
+    "noData": "분석할 재료가 없습니다",
+    "analyze": "영양 분석하기"
   },
   "share": {
     "shareRecipe": "레시피 공유",
+    "saveRecipe": "레시피 저장",
+    "saveImage": "이미지 저장",
+    "share": "공유",
+    "imageSaved": "이미지가 저장되었습니다",
     "linkCopied": "링크가 복사되었습니다",
     "ctaTitle": "밀키퍼에서 더 많은 레시피를 만나보세요",
     "ctaDescription": "AI가 냉장고 재료로 맞춤 레시피를 만들어드려요",
@@ -498,6 +503,12 @@
     "notFoundDescription": "삭제되었거나 잘못된 링크입니다",
     "sharedRecipe": "공유된 레시피",
     "goHome": "홈으로 이동"
+  },
+  "favorites": {
+    "title": "저장한 레시피",
+    "empty": "저장한 레시피가 없습니다",
+    "removed": "레시피가 삭제되었습니다",
+    "goToRecipes": "레시피 만들기"
   },
   "terms": {
     "title": "밀키퍼(MealKeeper) 서비스 이용약관",

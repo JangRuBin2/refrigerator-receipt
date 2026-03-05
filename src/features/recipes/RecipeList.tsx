@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChefHat, Clock, Heart, Loader2 } from 'lucide-react';
 
@@ -25,7 +25,7 @@ export function RecipeList({ locale, onRecipeClick, onRecipesLoaded }: RecipeLis
   const t = useTranslations();
   const { ingredients, favoriteRecipeIds, toggleFavorite } = useStore();
 
-  const [recipes, setRecipes] = useState<RecipeWithAvailability[]>([]);
+  const [rawRecipes, setRawRecipes] = useState<ReturnType<typeof mapDBRecipeToRecipe>[]>([]);
   const [recipesLoading, setRecipesLoading] = useState(true);
   const [filter, setFilter] = useState<RecipeFilter>('all');
   const [hasMore, setHasMore] = useState(true);
@@ -49,15 +49,11 @@ export function RecipeList({ locale, onRecipeClick, onRecipesLoaded }: RecipeLis
 
       const data = await getRecipes({ limit: RECIPES_PER_PAGE, offset: currentOffset });
       const mapped = (data.recipes || []).map(mapDBRecipeToRecipe);
-      const enriched = mapped.map(r => enrichRecipeWithAvailability(r, ingredients, favoriteRecipeIds));
 
       if (append) {
-        setRecipes(prev => {
-          const updated = [...prev, ...enriched];
-          return updated;
-        });
+        setRawRecipes(prev => [...prev, ...mapped]);
       } else {
-        setRecipes(enriched);
+        setRawRecipes(mapped);
       }
 
       const newHasMore = data.total != null
@@ -72,7 +68,13 @@ export function RecipeList({ locale, onRecipeClick, onRecipesLoaded }: RecipeLis
       setLoadingMore(false);
       loadingRef.current = false;
     }
-  }, [ingredients, favoriteRecipeIds]);
+  }, []);
+
+  // Enrich with availability/favorite status reactively (no refetch)
+  const recipes = useMemo(
+    () => rawRecipes.map(r => enrichRecipeWithAvailability(r, ingredients, favoriteRecipeIds)),
+    [rawRecipes, ingredients, favoriteRecipeIds]
+  );
 
   // Initial fetch
   useEffect(() => {
@@ -104,16 +106,22 @@ export function RecipeList({ locale, onRecipeClick, onRecipesLoaded }: RecipeLis
     };
   }, [fetchRecipes]);
 
-  // Notify parent of filtered recipes
-  const filteredRecipes = recipes.filter((recipe) => {
-    if (filter === 'favorites') return recipe.isFavorite;
-    if (filter === 'available') return recipe.matchRate >= 50;
-    return true;
-  });
+  // Notify parent of filtered recipes (ref-based to avoid dependency on callback identity)
+  const onRecipesLoadedRef = useRef(onRecipesLoaded);
+  onRecipesLoadedRef.current = onRecipesLoaded;
+
+  const filteredRecipes = useMemo(() =>
+    recipes.filter((recipe) => {
+      if (filter === 'favorites') return recipe.isFavorite;
+      if (filter === 'available') return recipe.matchRate >= 50;
+      return true;
+    }),
+    [recipes, filter]
+  );
 
   useEffect(() => {
-    onRecipesLoaded(filteredRecipes);
-  }, [filteredRecipes, onRecipesLoaded]);
+    onRecipesLoadedRef.current(filteredRecipes);
+  }, [filteredRecipes]);
 
   const handleLoadMore = () => {
     const newOffset = offsetRef.current + RECIPES_PER_PAGE;

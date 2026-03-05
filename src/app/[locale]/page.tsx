@@ -217,7 +217,7 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...spring.gentle, delay: 0.05 }}
           >
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 {
                   label: t('home.totalIngredients'),
@@ -342,7 +342,7 @@ export default function HomePage() {
                 )}
               </div>
               {/* Legend */}
-              <div className="grid grid-cols-4 gap-1 text-center">
+              <div className="grid grid-cols-2 gap-1 text-center sm:grid-cols-4">
                 {[
                   { label: t('home.expiredItems'), count: stats.expired.length, color: 'bg-gray-400' },
                   { label: t('home.within3Days'), count: stats.within3.length, color: 'bg-red-500' },
@@ -417,7 +417,7 @@ export default function HomePage() {
           transition={{ ...spring.gentle, delay: 0.2 }}
         >
           <h2 className="toss-h3 mb-toss-sm">{t('home.quickActions')}</h2>
-          <div className="grid grid-cols-4 gap-toss-sm">
+          <div className="grid grid-cols-2 gap-toss-sm sm:grid-cols-4">
             {quickActions.map((action, index) => (
               <motion.div
                 key={action.href}

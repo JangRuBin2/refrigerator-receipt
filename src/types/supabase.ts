@@ -118,6 +118,7 @@ export type Database = {
           external_id: string | null;
           source: string;
           source_url: string | null;
+          created_by: string | null;
           title: Json;
           description: Json | null;
           image_url: string | null;
@@ -136,6 +137,7 @@ export type Database = {
           external_id?: string | null;
           source: string;
           source_url?: string | null;
+          created_by?: string | null;
           title: Json;
           description?: Json | null;
           image_url?: string | null;
@@ -154,6 +156,7 @@ export type Database = {
           external_id?: string | null;
           source?: string;
           source_url?: string | null;
+          created_by?: string | null;
           title?: Json;
           description?: Json | null;
           image_url?: string | null;

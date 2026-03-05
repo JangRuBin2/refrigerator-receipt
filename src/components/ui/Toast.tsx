@@ -98,7 +98,7 @@ const ToastItem = ({ toast }: { toast: ToastType }) => {
       onTouchEnd={() => setIsPaused(false)}
       className={cn(
         'relative overflow-hidden rounded-2xl shadow-lg cursor-grab active:cursor-grabbing',
-        'min-w-[300px] max-w-[380px]',
+        'min-w-0 w-[min(calc(100vw-2rem),380px)]',
         styles[toast.type]
       )}
     >

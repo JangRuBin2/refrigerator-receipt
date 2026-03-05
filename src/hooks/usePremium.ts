@@ -61,8 +61,8 @@ export function usePremium(): UsePremiumReturn {
 
     // User-scoped cache: invalidate if user changed
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    const currentUserId = session?.user?.id ?? null;
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id ?? null;
 
     if (currentUserId !== cachedUserId) {
       cachedSubscription = null;

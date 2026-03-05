@@ -484,10 +484,15 @@
     "statusGood": "Good",
     "statusLow": "Low",
     "statusHigh": "High",
-    "noData": "No ingredients to analyze"
+    "noData": "No ingredients to analyze",
+    "analyze": "Analyze Nutrition"
   },
   "share": {
     "shareRecipe": "Share Recipe",
+    "saveRecipe": "Save Recipe",
+    "saveImage": "Save Image",
+    "share": "Share",
+    "imageSaved": "Image saved",
     "linkCopied": "Link copied to clipboard",
     "ctaTitle": "Discover more recipes on MealKeeper",
     "ctaDescription": "AI creates custom recipes from your fridge ingredients",
@@ -498,6 +503,12 @@
     "notFoundDescription": "This recipe may have been deleted or the link is invalid",
     "sharedRecipe": "Shared Recipe",
     "goHome": "Go Home"
+  },
+  "favorites": {
+    "title": "Saved Recipes",
+    "empty": "No saved recipes yet",
+    "removed": "Recipe removed",
+    "goToRecipes": "Create Recipe"
   },
   "terms": {
     "title": "MealKeeper Terms of Service",

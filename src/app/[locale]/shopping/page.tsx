@@ -90,12 +90,12 @@ export default function ShoppingPage() {
     }
   }, [t]);
 
-  // AI 추천 조회 - 냉장고 실제 재료 기반
+  // AI 추천 조회 - 버튼 클릭 시에만 호출 (ingredients 변경마다 호출 방지)
   const fetchRecommendations = useCallback(async () => {
     setRecommendLoading(true);
     setRecommendError(false);
     try {
-      const ingredientNames = ingredients.map((i) => i.name);
+      const ingredientNames = useStore.getState().ingredients.map((i) => i.name);
       const raw = await getShoppingRecommendations(ingredientNames);
       const data = recommendResponseSchema.parse(raw);
       setRecommendations(data.recommendations);
@@ -105,15 +105,11 @@ export default function ShoppingPage() {
     } finally {
       setRecommendLoading(false);
     }
-  }, [ingredients]);
+  }, []);
 
   useEffect(() => {
     fetchList();
   }, [fetchList]);
-
-  useEffect(() => {
-    fetchRecommendations();
-  }, [fetchRecommendations]);
 
   // 아이템 추가
   const addItem = async (item: Partial<ShoppingItem>) => {

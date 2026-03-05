@@ -107,7 +107,9 @@
       "WebFetch(domain:play.google.com)",
       "Bash(git status:*)",
       "WebFetch(domain:techchat-apps-in-toss.toss.im)",
-      "WebFetch(domain:tosspublic.notion.site)"
+      "WebFetch(domain:tosspublic.notion.site)",
+      "Bash(pnpm add:*)",
+      "Bash(node:*)"
     ]
   }
 }

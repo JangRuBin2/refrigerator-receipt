@@ -18,10 +18,9 @@ import { usePremium } from '@/hooks/usePremium';
 import { useAppsInTossAds } from '@/hooks/useAppsInTossAds';
 import { calculateExpiryDate, cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
-import { scanReceipt, getLastScanDebugInfo, type ScanDebugInfo } from '@/lib/api/scan';
+import { scanReceipt } from '@/lib/api/scan';
 import type { ScannedItem, StorageType } from '@/types';
 import { CATEGORIES, UNITS } from '@/lib/constants';
-import { Bug, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 interface ExtendedScannedItem extends ScannedItem {
@@ -56,8 +55,6 @@ export default function ScanPage() {
   const [useAIVision, setUseAIVision] = useState(false);
   const [isResultSheetOpen, setIsResultSheetOpen] = useState(false);
   const [isWatchingAd, setIsWatchingAd] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<ScanDebugInfo | null>(null);
-  const [showDebug, setShowDebug] = useState(false);
   const [isFailureSheetOpen, setIsFailureSheetOpen] = useState(false);
   const [lastErrorMessage, setLastErrorMessage] = useState('');
   // 파일 선택 후 광고 시청 대기 시 임시 저장
@@ -127,14 +124,9 @@ export default function ScanPage() {
 
   const startScanning = async (file: File) => {
     setStep('scanning');
-    setDebugInfo(null);
 
     try {
       const data = await scanReceipt(file, useAIVision);
-
-      // 디버그 정보 캡처
-      const scanDebug = getLastScanDebugInfo();
-      if (scanDebug) setDebugInfo(scanDebug);
 
       const response = data as Record<string, unknown>;
       const rawItems = Array.isArray(response.items) ? response.items : [];
@@ -169,11 +161,6 @@ export default function ScanPage() {
       setStep('confirm');
       setIsResultSheetOpen(true);
     } catch (err) {
-      // 디버그 정보 캡처 (에러 시에도)
-      const scanDebug = getLastScanDebugInfo();
-      if (scanDebug) setDebugInfo(scanDebug);
-      setShowDebug(true);
-
       const errorMsg = err instanceof Error ? err.message : 'Scan failed';
       setLastErrorMessage(errorMsg);
       setIsFailureSheetOpen(true);
@@ -616,112 +603,6 @@ export default function ScanPage() {
         onRetry={() => handleScanClick(isMobile ? cameraInputRef : fileInputRef)}
       />
 
-      {/* Debug Panel - disabled in production */}
-      {false && debugInfo && (
-        <div className="fixed bottom-16 left-0 right-0 z-50 mx-auto max-w-lg">
-          <div className="mx-2 rounded-t-xl border border-red-200 bg-red-50 shadow-lg dark:border-red-800 dark:bg-red-950">
-            <button
-              onClick={() => setShowDebug(!showDebug)}
-              className="flex w-full items-center justify-between px-4 py-2"
-            >
-              <div className="flex items-center gap-2">
-                <Bug className="h-4 w-4 text-red-600" />
-                <span className="text-sm font-bold text-red-700">
-                  Scan Debug {debugInfo.error ? '(ERROR)' : '(OK)'}
-                </span>
-              </div>
-              {showDebug ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-            </button>
-
-            {showDebug && (
-              <div className="max-h-[50vh] overflow-y-auto px-4 pb-4">
-                <button
-                  onClick={() => {
-                    const text = JSON.stringify(debugInfo, null, 2);
-                    navigator.clipboard?.writeText(text);
-                    toast.success('Debug info copied');
-                  }}
-                  className="mb-2 flex items-center gap-1 rounded bg-red-200 px-2 py-1 text-xs dark:bg-red-800"
-                >
-                  <Copy className="h-3 w-3" />
-                  Copy All
-                </button>
-
-                <div className="space-y-2 text-xs font-mono">
-                  {/* File Info */}
-                  <Section title="File Info">
-                    <Row label="Name" value={debugInfo.fileInfo.name} />
-                    <Row label="Original" value={`${(debugInfo.fileInfo.size / 1024).toFixed(1)} KB`} />
-                    {debugInfo.compression && (
-                      <>
-                        <Row label="Compressed" value={`${(debugInfo.compression.compressedSize / 1024).toFixed(1)} KB (${debugInfo.compression.ratio} saved)`} />
-                      </>
-                    )}
-                    <Row label="MimeType" value={debugInfo.mimeType} />
-                    <Row label="Base64" value={`${debugInfo.base64Length.toLocaleString()} chars`} />
-                    <Row label="AI Vision" value={debugInfo.useAIVision ? 'ON' : 'OFF'} />
-                  </Section>
-
-                  {/* Edge Function Info */}
-                  {debugInfo.edgeDebug && (
-                    <Section title="Edge Function">
-                      <Row label="URL" value={debugInfo.edgeDebug.url} />
-                      <Row label="Session" value={debugInfo.edgeDebug.hasSession ? 'YES' : 'NO'} />
-                      <Row label="Token" value={debugInfo.edgeDebug.tokenPreview} />
-                      <Row label="Status" value={debugInfo.edgeDebug.status !== null ? `${debugInfo.edgeDebug.status} ${debugInfo.edgeDebug.statusText}` : '(no response)'} />
-                      <Row label="Duration" value={`${debugInfo.edgeDebug.durationMs}ms`} />
-                      <Row label="Time" value={debugInfo.edgeDebug.timestamp} />
-                    </Section>
-                  )}
-
-                  {/* Error */}
-                  {debugInfo.error && (
-                    <Section title="Error">
-                      <p className="break-all text-red-700 dark:text-red-400">{debugInfo.error}</p>
-                    </Section>
-                  )}
-
-                  {/* Response Body */}
-                  {debugInfo.edgeDebug?.responseBody && (
-                    <Section title="Response Body">
-                      <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all rounded bg-white p-2 dark:bg-gray-900">
-                        {debugInfo.edgeDebug.responseBody}
-                      </pre>
-                    </Section>
-                  )}
-
-                  {/* Result */}
-                  {debugInfo.result != null && (
-                    <Section title="Parsed Result">
-                      <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all rounded bg-white p-2 dark:bg-gray-900">
-                        {JSON.stringify(debugInfo.result, null, 2)}
-                      </pre>
-                    </Section>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded bg-white/60 p-2 dark:bg-gray-900/60">
-      <p className="mb-1 font-bold text-red-800 dark:text-red-300">{title}</p>
-      {children}
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex gap-2">
-      <span className="shrink-0 text-gray-500">{label}:</span>
-      <span className="break-all text-gray-800 dark:text-gray-200">{value}</span>
     </div>
   );
 }

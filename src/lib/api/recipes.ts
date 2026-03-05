@@ -72,7 +72,8 @@ export async function getRecipes(options?: {
 
   let query = supabase
     .from('recipes')
-    .select('*', { count: 'exact' });
+    .select('*', { count: 'exact' })
+    .or(`source.neq.ai,created_by.eq.${user.id}`);
 
   if (options?.search) {
     // Sanitize: strip PostgREST special characters to prevent filter injection
@@ -99,7 +100,8 @@ export async function getRecommendedRecipes(ingredientNames: string[]) {
 
   const { data, error } = await supabase
     .from('recipes')
-    .select('id, title, description, cooking_time, difficulty, ingredients, tags');
+    .select('id, title, description, cooking_time, difficulty, ingredients, tags')
+    .or(`source.neq.ai,created_by.eq.${user.id}`);
 
   if (error) throw error;
 
@@ -144,6 +146,7 @@ export async function saveAiRecipe(recipe: {
     .from('recipes')
     .insert({
       source: 'ai',
+      created_by: user.id,
       title: { [locale]: recipe.title },
       description: { [locale]: recipe.description || '' },
       cooking_time: recipe.cookingTime,
@@ -179,9 +182,13 @@ export async function searchRecipes(query: string, locale?: string) {
 
 export async function scoreByTaste(answers: Record<string, string>): Promise<ScoredRecipe[]> {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+
   const { data: recipes, error } = await supabase
     .from('recipes')
-    .select('id, title, description, cooking_time, difficulty, ingredients, tags');
+    .select('id, title, description, cooking_time, difficulty, ingredients, tags')
+    .or(`source.neq.ai,created_by.eq.${user.id}`);
 
   if (error) throw error;
   if (!recipes?.length) return [];
@@ -201,10 +208,13 @@ export async function scoreByTaste(answers: Record<string, string>): Promise<Sco
 
 export async function getRandomRecipe() {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
 
   const { count } = await supabase
     .from('recipes')
-    .select('id', { count: 'exact', head: true });
+    .select('id', { count: 'exact', head: true })
+    .or(`source.neq.ai,created_by.eq.${user.id}`);
 
   if (!count || count === 0) throw new Error('No recipes found');
 
@@ -213,6 +223,7 @@ export async function getRandomRecipe() {
   const { data, error } = await supabase
     .from('recipes')
     .select('*')
+    .or(`source.neq.ai,created_by.eq.${user.id}`)
     .range(randomOffset, randomOffset)
     .single();
 

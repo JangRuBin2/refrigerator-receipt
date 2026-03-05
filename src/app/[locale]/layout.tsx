@@ -167,13 +167,13 @@ export default async function LocaleLayout({
         <WebApplicationJsonLd locale={locale} />
         <OrganizationJsonLd />
       </head>
-      <body className="bg-gray-50 font-sans antialiased dark:bg-gray-900">
+      <body className="overflow-x-hidden bg-gray-50 font-sans antialiased dark:bg-gray-900">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <DeepLinkHandler />
           <BackButtonHandler />
           <PinchZoomPrevention />
           <IngredientSyncProvider />
-          <div className="mx-auto min-h-screen max-w-lg bg-white shadow-lg dark:bg-gray-800">
+          <div className="relative mx-auto min-h-screen max-w-lg overflow-x-hidden bg-white shadow-lg dark:bg-gray-800">
             <main>
               <AuthGuard>{children}</AuthGuard>
               <Footer />

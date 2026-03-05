@@ -70,15 +70,19 @@ export default function NutritionPage() {
 
   const [viewMode, setViewMode] = useState<ViewMode>('current');
   const [report, setReport] = useState<NutritionReport | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
-  const fetchCurrentReport = useCallback(async () => {
+  const fetchReport = useCallback(async (mode: ViewMode) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await analyzeNutrition() as { report: NutritionReport };
+      const data = mode === 'current'
+        ? await analyzeNutrition() as { report: NutritionReport }
+        : await analyzePeriodNutrition(mode) as { report: NutritionReport };
       setReport(data.report);
+      setHasAnalyzed(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(`${t('common.error')} [${msg}]`);
@@ -87,34 +91,8 @@ export default function NutritionPage() {
     }
   }, [t]);
 
-  const fetchPeriodReport = useCallback(async (period: 'week' | 'month') => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await analyzePeriodNutrition(period) as { report: NutritionReport };
-      setReport(data.report);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(`${t('common.error')} [${msg}]`);
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
-
-  useEffect(() => {
-    if (viewMode === 'current') {
-      fetchCurrentReport();
-    } else {
-      fetchPeriodReport(viewMode);
-    }
-  }, [viewMode, fetchCurrentReport, fetchPeriodReport]);
-
-  const handleRefresh = () => {
-    if (viewMode === 'current') {
-      fetchCurrentReport();
-    } else {
-      fetchPeriodReport(viewMode);
-    }
+  const handleAnalyze = () => {
+    fetchReport(viewMode);
   };
 
   const getScoreColor = (score: number) => {
@@ -178,11 +156,10 @@ export default function NutritionPage() {
   if (error) {
     return (
       <div className="min-h-screen">
-
         <div className="flex flex-col items-center justify-center py-20">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-gray-500">{error}</p>
-          <Button onClick={handleRefresh} className="mt-4">
+          <Button onClick={handleAnalyze} className="mt-4">
             <RefreshCw className="mr-2 h-4 w-4" />
             {t('common.retry')}
           </Button>
@@ -239,7 +216,18 @@ export default function NutritionPage() {
           </button>
         </div>
 
-        {loading ? (
+        {!hasAnalyzed && !loading ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Activity className="mx-auto h-12 w-12 text-gray-300" />
+              <p className="mt-4 text-gray-500">{t('nutrition.noData')}</p>
+              <Button onClick={handleAnalyze} className="mt-4">
+                <Sparkles className="mr-2 h-4 w-4" />
+                {t('nutrition.analyze')}
+              </Button>
+            </CardContent>
+          </Card>
+        ) : loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
           </div>
@@ -284,7 +272,7 @@ export default function NutritionPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleRefresh}
+                  onClick={handleAnalyze}
                   className="mt-4 text-white hover:bg-white/20"
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />
