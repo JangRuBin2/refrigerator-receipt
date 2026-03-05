@@ -340,7 +340,7 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
           </Button>
         )}
         <Button
-          variant="ghost"
+          variant="outline"
           onClick={() => { onBack(); reset(); }}
           className={recipe ? 'flex-1' : 'w-full'}
         >

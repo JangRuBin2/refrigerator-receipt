@@ -121,12 +121,11 @@ export function TasteMode({ locale, onBack }: TasteModeProps) {
             </Button>
           )}
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={() => { onBack(); reset(); }}
             className="flex-1"
           >
-            <RotateCcw className="mr-2 h-4 w-4" />
-            {t('recommend.retry')}
+            {t('recommend.backToSelect')}
           </Button>
         </div>
       </div>
@@ -203,17 +202,19 @@ export function TasteMode({ locale, onBack }: TasteModeProps) {
         </>
       )}
 
-      <Button variant="outline" onClick={reset} className="w-full">
-        <RotateCcw className="mr-2 h-4 w-4" />
-        {t('recommend.retry')}
-      </Button>
-      <Button
-        variant="ghost"
-        onClick={() => { onBack(); reset(); }}
-        className="w-full"
-      >
-        {t('recommend.backToSelect')}
-      </Button>
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={reset} className="flex-1">
+          <RotateCcw className="mr-2 h-4 w-4" />
+          {t('recommend.retry')}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => { onBack(); reset(); }}
+          className="flex-1"
+        >
+          {t('recommend.backToSelect')}
+        </Button>
+      </div>
     </div>
   );
 }

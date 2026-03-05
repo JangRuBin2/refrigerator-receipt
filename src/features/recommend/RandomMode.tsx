@@ -123,12 +123,11 @@ export function RandomMode({ locale, onBack }: RandomModeProps) {
       {result && !animating && <RecipeCard recipe={result} locale={locale} />}
 
       <Button
-        variant="ghost"
+        variant="outline"
         onClick={() => { onBack(); }}
         className="w-full"
       >
-        <RotateCcw className="mr-2 h-4 w-4" />
-        {t('recommend.retry')}
+        {t('recommend.backToSelect')}
       </Button>
     </div>
   );
