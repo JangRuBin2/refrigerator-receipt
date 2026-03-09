@@ -45,22 +45,22 @@ export function FeatureCards({ locale }: FeatureCardsProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ ...spring.gentle, delay: 0.45 }}
-      className="space-y-toss-md"
+      className="flex flex-col gap-3"
     >
       {cards.map((card) => (
-        <Link key={card.href} href={card.href}>
+        <Link key={card.href} href={card.href} className="block">
           <motion.div
             whileTap={{ scale: 0.98 }}
-            className="toss-card flex items-center gap-toss-md"
+            className="toss-card flex items-center gap-4"
           >
             <div className={`rounded-2xl p-3 ${card.iconBg}`}>
               <card.icon className={`h-6 w-6 ${card.iconColor}`} />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <h3 className="toss-body1 font-semibold">{card.title}</h3>
               <p className="toss-caption">{card.description}</p>
             </div>
-            <ChevronRight className="h-5 w-5 text-gray-400" />
+            <ChevronRight className="h-5 w-5 text-gray-400 shrink-0" />
           </motion.div>
         </Link>
       ))}

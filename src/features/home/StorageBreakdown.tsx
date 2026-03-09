@@ -34,21 +34,13 @@ export function StorageBreakdown({ total, storageCount }: StorageBreakdownProps)
             <motion.div
               key={storage.key}
               whileTap={{ scale: 0.97 }}
-              className={`${storage.lightBg} rounded-2xl p-3`}
+              className={`${storage.lightBg} rounded-2xl p-3 text-center`}
             >
-              <storage.icon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+              <storage.icon className="mx-auto h-5 w-5 text-gray-600 dark:text-gray-300" />
               <p className="mt-2 text-lg font-bold text-gray-900 dark:text-white">
                 {count}<span className="toss-caption ml-0.5 font-normal">{t('home.items')}</span>
               </p>
               <p className="toss-caption">{t(`fridge.${storage.key === 'room_temp' ? 'roomTemp' : storage.key}`)}</p>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/50 dark:bg-gray-600">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${percentage}%` }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                  className={`h-full rounded-full ${storage.color}`}
-                />
-              </div>
             </motion.div>
           );
         })}

@@ -215,18 +215,18 @@ export default function HomePage() {
 
         <ExpiringAlert locale={locale} items={stats.expiringItems} />
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Horizontal scroll chips */}
         <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.gentle, delay: 0.2 }}>
           <h2 className="toss-h3 mb-toss-sm">{t('home.quickActions')}</h2>
-          <div className="grid grid-cols-2 gap-toss-sm sm:grid-cols-4">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-toss-md px-toss-md">
             {quickActions.map((action, index) => (
               <motion.div key={action.href} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ ...spring.snappy, delay: 0.2 + index * 0.05 }}>
-                <Link href={action.href}>
-                  <motion.div whileTap={{ scale: 0.95 }} className="flex flex-col items-center gap-toss-xs">
-                    <div className={`${action.color} rounded-2xl p-3 text-white shadow-sm`}>
-                      <action.icon className="h-6 w-6" />
+                <Link href={action.href} className="block">
+                  <motion.div whileTap={{ scale: 0.95 }} className="flex items-center gap-2 rounded-full bg-white dark:bg-gray-800 pl-1.5 pr-4 py-1.5 shadow-sm border border-gray-100 dark:border-gray-700 whitespace-nowrap">
+                    <div className={`${action.color} rounded-full p-2 text-white`}>
+                      <action.icon className="h-4 w-4" />
                     </div>
-                    <span className="toss-caption text-center line-clamp-1">{action.label}</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{action.label}</span>
                   </motion.div>
                 </Link>
               </motion.div>

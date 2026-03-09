@@ -183,13 +183,13 @@ export default function SettingsPage() {
               <button
                 onClick={() => updateSettings({ autoDeleteExpired: !settings.autoDeleteExpired })}
                 className={cn(
-                  'relative h-6 w-11 rounded-full transition-colors',
+                  'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors',
                   settings.autoDeleteExpired ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
                 )}
               >
                 <span className={cn(
-                  'absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform',
-                  settings.autoDeleteExpired ? 'left-[22px]' : 'left-0.5'
+                  'inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform',
+                  settings.autoDeleteExpired ? 'translate-x-6' : 'translate-x-1'
                 )} />
               </button>
             </div>

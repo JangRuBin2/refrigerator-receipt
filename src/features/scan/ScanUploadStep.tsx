@@ -75,14 +75,14 @@ export function ScanUploadStep({
             aria-checked={useAIVision}
             onClick={onToggleAIVision}
             className={cn(
-              'relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors',
+              'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors',
               useAIVision ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
             )}
           >
             <span
               className={cn(
-                'inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform mt-0.5',
-                useAIVision ? 'translate-x-[22px]' : 'translate-x-0.5'
+                'inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform',
+                useAIVision ? 'translate-x-6' : 'translate-x-0.5'
               )}
             />
           </button>

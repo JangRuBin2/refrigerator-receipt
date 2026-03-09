@@ -161,25 +161,35 @@ export default function FridgePage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
 
-      {/* Search - Fixed at top */}
+      {/* Search + Add - Fixed at top */}
       <div className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm dark:bg-gray-900/95 p-toss-md pb-0">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder={t('common.search')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white dark:bg-gray-800 border-0 shadow-sm"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-              aria-label={t('common.close')}
-            >
-              <X className="h-4 w-4 text-gray-400" />
-            </button>
-          )}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder={t('common.search')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-white dark:bg-gray-800 border-0 shadow-sm"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                aria-label={t('common.close')}
+              >
+                <X className="h-4 w-4 text-gray-400" />
+              </button>
+            )}
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => handleOpenSheet()}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm"
+            aria-label={t('fridge.addIngredient')}
+          >
+            <Plus className="h-5 w-5" />
+          </motion.button>
         </div>
 
         {/* Filter Tabs - Horizontal scroll */}
@@ -291,23 +301,6 @@ export default function FridgePage() {
           </AnimatePresence>
         )}
       </div>
-
-      {/* Animated FAB */}
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={spring.bouncy}
-        className="fixed bottom-24 right-4 z-20"
-      >
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => handleOpenSheet()}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700"
-        >
-          <Plus className="h-6 w-6" />
-        </motion.button>
-      </motion.div>
 
       {/* Add/Edit BottomSheet */}
       <BottomSheet

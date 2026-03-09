@@ -485,6 +485,9 @@
     "statusLow": "부족",
     "statusHigh": "과다",
     "noData": "분석할 재료가 없습니다",
+    "noIngredients": "냉장고에 등록된 재료가 없습니다",
+    "addIngredientsHint": "재료를 추가하면 영양 분석을 확인할 수 있어요",
+    "analyzing": "영양 분석 중...",
     "analyze": "영양 분석하기"
   },
   "share": {

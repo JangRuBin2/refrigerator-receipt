@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Activity, Loader2, RefreshCw, Sparkles, AlertCircle, Calendar, BarChart3 } from 'lucide-react';
@@ -57,7 +57,6 @@ export default function NutritionPage() {
   const [report, setReport] = useState<NutritionReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasAnalyzed, setHasAnalyzed] = useState(false);
 
   const fetchReport = useCallback(async (mode: ViewMode) => {
     setLoading(true);
@@ -67,7 +66,6 @@ export default function NutritionPage() {
         ? await analyzeNutrition() as { report: NutritionReport }
         : await analyzePeriodNutrition(mode) as { report: NutritionReport };
       setReport(data.report);
-      setHasAnalyzed(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(`${t('common.error')} [${msg}]`);
@@ -76,7 +74,18 @@ export default function NutritionPage() {
     }
   }, [t]);
 
-  const handleAnalyze = () => fetchReport(viewMode);
+  // Auto-analyze on mount and when viewMode changes
+  useEffect(() => {
+    fetchReport(viewMode);
+  }, [viewMode, fetchReport]);
+
+  const handleTabChange = (mode: ViewMode) => {
+    if (mode === viewMode) return;
+    setReport(null);
+    setViewMode(mode);
+  };
+
+  const hasIngredients = report !== null && report.ingredients.length > 0;
 
   if (error) {
     return (
@@ -84,7 +93,7 @@ export default function NutritionPage() {
         <div className="flex flex-col items-center justify-center py-20">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-gray-500">{error}</p>
-          <Button onClick={handleAnalyze} className="mt-4">
+          <Button onClick={() => fetchReport(viewMode)} className="mt-4">
             <RefreshCw className="mr-2 h-4 w-4" />
             {t('common.retry')}
           </Button>
@@ -106,7 +115,7 @@ export default function NutritionPage() {
           ]).map(({ mode, icon: Icon, label }) => (
             <button
               key={mode}
-              onClick={() => setViewMode(mode)}
+              onClick={() => handleTabChange(mode)}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors',
                 viewMode === mode
@@ -120,28 +129,31 @@ export default function NutritionPage() {
           ))}
         </div>
 
-        {!hasAnalyzed && !loading ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+            <p className="mt-4 text-sm text-gray-500">{t('nutrition.analyzing')}</p>
+          </div>
+        ) : !hasIngredients ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Activity className="mx-auto h-12 w-12 text-gray-300" />
-              <p className="mt-4 text-gray-500">{t('nutrition.noData')}</p>
-              <Button onClick={handleAnalyze} className="mt-4">
-                <Sparkles className="mr-2 h-4 w-4" />
-                {t('nutrition.analyze')}
-              </Button>
+              <p className="mt-4 text-gray-500">{t('nutrition.noIngredients')}</p>
+              <p className="mt-1 text-sm text-gray-400">{t('nutrition.addIngredientsHint')}</p>
             </CardContent>
           </Card>
-        ) : loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-          </div>
-        ) : report ? (
+        ) : (
           <>
-            <NutritionScoreCard score={report.score} viewMode={viewMode} onRefresh={handleAnalyze} />
+            {/* Section 1: Score */}
+            <NutritionScoreCard score={report.score} viewMode={viewMode} onRefresh={() => fetchReport(viewMode)} />
+
+            {/* Section 2: Calories & Nutrients */}
             <MacroNutrients nutrition={report.totalNutrition} />
+
+            {/* Section 3: Category Balance */}
             <CategoryBalanceCard categories={report.categoryBalance} />
 
-            {/* AI Recommendations */}
+            {/* Section 4: AI Recommendations */}
             {report.recommendations.length > 0 && (
               <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
                 <CardHeader>
@@ -166,7 +178,7 @@ export default function NutritionPage() {
               </Card>
             )}
 
-            {/* Ingredient Details */}
+            {/* Section 5: Ingredient Details */}
             {report.ingredients.length > 0 && (
               <Card>
                 <CardHeader>
@@ -192,13 +204,6 @@ export default function NutritionPage() {
               </Card>
             )}
           </>
-        ) : (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <AlertCircle className="mx-auto h-12 w-12 text-gray-300" />
-              <p className="mt-4 text-gray-500">{t('nutrition.noData')}</p>
-            </CardContent>
-          </Card>
         )}
       </div>
     </div>
