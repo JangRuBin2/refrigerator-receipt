@@ -495,7 +495,9 @@
     "noIngredients": "냉장고에 등록된 재료가 없습니다",
     "addIngredientsHint": "재료를 추가하면 영양 분석을 확인할 수 있어요",
     "analyzing": "영양 분석 중...",
-    "analyze": "영양 분석하기"
+    "analyze": "영양 분석하기",
+    "ageYears": "{age}세",
+    "personalized": "맞춤 분석"
   },
   "share": {
     "shareRecipe": "레시피 공유",

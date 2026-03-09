@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { Activity, Loader2, RefreshCw, Sparkles, AlertCircle, Calendar, BarChart3 } from 'lucide-react';
+import { Activity, Loader2, RefreshCw, Sparkles, AlertCircle, Calendar, BarChart3, User } from 'lucide-react';
 
 import { PremiumGate } from '@/components/premium/PremiumGate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -35,6 +35,7 @@ interface CategoryBalance {
 
 interface NutritionReport {
   totalNutrition: NutritionData;
+  dailyRecommended?: NutritionData | null;
   ingredients: Array<{
     name: string;
     category: string;
@@ -45,6 +46,7 @@ interface NutritionReport {
   categoryBalance: CategoryBalance[];
   score: number;
   recommendations: string[];
+  userProfile?: { gender: string | null; age: number | null } | null;
   period: string;
 }
 
@@ -147,8 +149,22 @@ export default function NutritionPage() {
             {/* Section 1: Score */}
             <NutritionScoreCard score={report.score} viewMode={viewMode} onRefresh={() => fetchReport(viewMode)} />
 
+            {/* User Profile Badge */}
+            {report.userProfile && (report.userProfile.gender || report.userProfile.age) && (
+              <div className="flex items-center gap-2 px-1">
+                <User className="h-4 w-4 text-gray-400" />
+                <span className="text-sm text-gray-500">
+                  {[
+                    report.userProfile.gender === 'male' ? t('settings.male') : report.userProfile.gender === 'female' ? t('settings.female') : null,
+                    report.userProfile.age ? t('nutrition.ageYears', { age: report.userProfile.age }) : null,
+                  ].filter(Boolean).join(' · ')}
+                  {' '}{t('nutrition.personalized')}
+                </span>
+              </div>
+            )}
+
             {/* Section 2: Calories & Nutrients */}
-            <MacroNutrients nutrition={report.totalNutrition} />
+            <MacroNutrients nutrition={report.totalNutrition} dailyRecommended={report.dailyRecommended} />
 
             {/* Section 3: Category Balance */}
             <CategoryBalanceCard categories={report.categoryBalance} />

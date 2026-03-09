@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Activity, Flame, Beef, Wheat, Droplets, Leaf, Cookie } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { cn } from '@/lib/utils';
 
 interface NutritionData {
   calories: number;
@@ -16,6 +17,7 @@ interface NutritionData {
 
 interface MacroNutrientsProps {
   nutrition: NutritionData;
+  dailyRecommended?: NutritionData | null;
 }
 
 function calculateMacroRatio(nutrition: NutritionData) {
@@ -33,16 +35,33 @@ function calculateMacroRatio(nutrition: NutritionData) {
   };
 }
 
+function getPercentage(value: number, recommended: number): number {
+  if (recommended === 0) return 0;
+  return Math.min(Math.round((value / recommended) * 100), 150);
+}
+
+function getPercentageColor(pct: number): string {
+  if (pct < 50) return 'text-orange-500';
+  if (pct <= 120) return 'text-green-600';
+  return 'text-red-500';
+}
+
+function getBarColor(pct: number): string {
+  if (pct < 50) return 'bg-orange-400';
+  if (pct <= 120) return 'bg-green-500';
+  return 'bg-red-400';
+}
+
 const NUTRIENT_CARDS = [
-  { key: 'calories', icon: Flame, color: 'orange', unit: 'kcal', field: 'calories' as const },
-  { key: 'protein', icon: Beef, color: 'blue', unit: 'g', field: 'protein' as const },
-  { key: 'carbs', icon: Wheat, color: 'amber', unit: 'g', field: 'carbs' as const },
-  { key: 'fat', icon: Droplets, color: 'red', unit: 'g', field: 'fat' as const },
-  { key: 'fiber', icon: Leaf, color: 'green', unit: 'g', field: 'fiber' as const },
-  { key: 'sugar', icon: Cookie, color: 'pink', unit: 'g', field: 'sugar' as const },
+  { key: 'calories', icon: Flame, bgColor: 'bg-orange-50 dark:bg-orange-900/20', iconColor: 'text-orange-600', unit: 'kcal', field: 'calories' as const },
+  { key: 'protein', icon: Beef, bgColor: 'bg-blue-50 dark:bg-blue-900/20', iconColor: 'text-blue-600', unit: 'g', field: 'protein' as const },
+  { key: 'carbs', icon: Wheat, bgColor: 'bg-amber-50 dark:bg-amber-900/20', iconColor: 'text-amber-600', unit: 'g', field: 'carbs' as const },
+  { key: 'fat', icon: Droplets, bgColor: 'bg-red-50 dark:bg-red-900/20', iconColor: 'text-red-600', unit: 'g', field: 'fat' as const },
+  { key: 'fiber', icon: Leaf, bgColor: 'bg-green-50 dark:bg-green-900/20', iconColor: 'text-green-600', unit: 'g', field: 'fiber' as const },
+  { key: 'sugar', icon: Cookie, bgColor: 'bg-pink-50 dark:bg-pink-900/20', iconColor: 'text-pink-600', unit: 'g', field: 'sugar' as const },
 ] as const;
 
-export function MacroNutrients({ nutrition }: MacroNutrientsProps) {
+export function MacroNutrients({ nutrition, dailyRecommended }: MacroNutrientsProps) {
   const t = useTranslations();
   const macroRatio = calculateMacroRatio(nutrition);
 
@@ -79,18 +98,43 @@ export function MacroNutrients({ nutrition }: MacroNutrientsProps) {
 
         {/* Nutrient Details */}
         <div className="grid grid-cols-2 gap-3">
-          {NUTRIENT_CARDS.map(({ key, icon: Icon, color, unit, field }) => (
-            <div key={key} className={`rounded-lg bg-${color}-50 p-3 dark:bg-${color}-900/20`}>
-              <div className={`flex items-center gap-2 text-${color}-600`}>
-                <Icon className="h-4 w-4" />
-                <span className="text-sm font-medium">{t(`nutrition.${key}`)}</span>
+          {NUTRIENT_CARDS.map(({ key, icon: Icon, bgColor, iconColor, unit, field }) => {
+            const value = nutrition[field];
+            const recommended = dailyRecommended?.[field];
+            const pct = recommended ? getPercentage(value, recommended) : null;
+
+            return (
+              <div key={key} className={cn('rounded-lg p-3', bgColor)}>
+                <div className={cn('flex items-center gap-2', iconColor)}>
+                  <Icon className="h-4 w-4" />
+                  <span className="text-sm font-medium">{t(`nutrition.${key}`)}</span>
+                </div>
+                <p className="text-2xl font-bold mt-1">
+                  {field === 'calories' ? value.toLocaleString() : value}
+                </p>
+                {pct !== null && recommended ? (
+                  <div className="mt-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-500">
+                        / {field === 'calories' ? recommended.toLocaleString() : recommended}{unit}
+                      </span>
+                      <span className={cn('font-medium', getPercentageColor(pct))}>
+                        {pct}%
+                      </span>
+                    </div>
+                    <div className="mt-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                      <div
+                        className={cn('h-full rounded-full transition-all', getBarColor(pct))}
+                        style={{ width: `${Math.min(pct, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500">{unit}</p>
+                )}
               </div>
-              <p className="text-2xl font-bold mt-1">
-                {field === 'calories' ? nutrition[field].toLocaleString() : nutrition[field]}
-              </p>
-              <p className="text-xs text-gray-500">{unit}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

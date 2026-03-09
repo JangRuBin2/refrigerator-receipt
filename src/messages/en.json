@@ -495,7 +495,9 @@
     "noIngredients": "No ingredients in your fridge",
     "addIngredientsHint": "Add ingredients to see nutrition analysis",
     "analyzing": "Analyzing nutrition...",
-    "analyze": "Analyze Nutrition"
+    "analyze": "Analyze Nutrition",
+    "ageYears": "Age {age}",
+    "personalized": "personalized"
   },
   "share": {
     "shareRecipe": "Share Recipe",
