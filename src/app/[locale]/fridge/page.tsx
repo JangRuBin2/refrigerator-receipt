@@ -8,6 +8,7 @@ import { Plus, Search, Trash2, Edit2, Package, Snowflake, Sun, X } from 'lucide-
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { BannerAd } from '@/components/ads/BannerAd';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
@@ -300,6 +301,8 @@ export default function FridgePage() {
             ))}
           </AnimatePresence>
         )}
+
+        <BannerAd className="mt-4" />
       </div>
 
       {/* Add/Edit BottomSheet */}

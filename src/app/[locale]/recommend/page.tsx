@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 
 import { usePremium } from '@/hooks/usePremium';
 import { PremiumModal } from '@/components/premium/PremiumModal';
+import { BannerAd } from '@/components/ads/BannerAd';
 import { ModeSelector, RandomMode, TasteMode, AiRecipeMode } from '@/features/recommend';
 import type { Mode } from '@/features/recommend';
 
@@ -49,6 +50,8 @@ export default function RecommendPage() {
         {mode === 'ai' && (
           <AiRecipeMode locale={locale} isPremium={isPremium} onBack={goBack} />
         )}
+
+        <BannerAd className="mt-2" />
 
         <PremiumModal
           isOpen={showPremiumModal}

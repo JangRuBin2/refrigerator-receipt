@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
+import { BannerAd } from '@/components/ads/BannerAd';
 import { clearAllUserData } from '@/lib/auth-cleanup';
 import { SettingsItem } from '@/features/settings/SettingsItem';
 import { DeleteAccountModal } from '@/features/settings/DeleteAccountModal';
@@ -242,6 +243,8 @@ export default function SettingsPage() {
             <SettingsItem icon={Database} label={t('settings.deleteAll')} onClick={() => setActiveModal('delete')} danger />
           </CardContent>
         </Card>
+
+        <BannerAd className="my-2" />
 
         {/* App Info */}
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 pt-2">{t('settings.sectionAppInfo')}</p>

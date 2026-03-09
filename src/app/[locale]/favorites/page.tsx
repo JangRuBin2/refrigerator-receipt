@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
+import { BannerAd } from '@/components/ads/BannerAd';
 import { getDifficultyLabel } from '@/lib/constants';
 import { getFavorites, removeFavorite } from '@/lib/api/favorites';
 import { toast } from '@/store/useToastStore';
@@ -176,6 +177,8 @@ export default function FavoritesPage() {
             })}
           </div>
         )}
+
+        <BannerAd className="mt-4" />
       </div>
     </div>
   );

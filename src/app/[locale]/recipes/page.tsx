@@ -4,6 +4,7 @@ import { useState, useCallback, Suspense } from 'react';
 import { useParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
+import { BannerAd } from '@/components/ads/BannerAd';
 import { PremiumGate } from '@/components/premium/PremiumGate';
 import { PremiumModal } from '@/components/premium/PremiumModal';
 import {
@@ -44,6 +45,8 @@ function RecipesContent() {
         onSelectRecipe={handleRouletteSelect}
         onViewRecipe={() => setShowRecipeModal(true)}
       />
+
+      <BannerAd className="my-2" />
 
       <RecipeList
         locale={locale}
