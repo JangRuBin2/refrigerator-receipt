@@ -49,12 +49,12 @@ export default defineConfig({
 
 ## .ait 번들 생성
 
-`granite build` 정상 동작 확인됨 (2026-02, `@apps-in-toss/cli@1.9.4`).
-이전 `pluginHooks` 에러는 해결됨.
+SDK 2.0.1 마이그레이션 완료 (2026-03, `@apps-in-toss/web-framework@2.0.1`).
+빌드 커맨드가 `granite build` -> `ait build`로 변경됨.
 
 ```bash
-pnpm build:ait          # npx granite build 실행
-pnpm build:ait:debug    # AIT_DEBUG=true npx granite build
+pnpm build:ait          # ait build 실행
+pnpm build:ait:debug    # AIT_DEBUG=true ait build
 ```
 
 빌드 플로우:
