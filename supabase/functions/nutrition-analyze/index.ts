@@ -29,6 +29,45 @@ const RECOMMENDED_BALANCE: Record<string, { min: number; max: number }> = {
   etc: { min: 0, max: 10 },
 };
 
+interface UserProfile {
+  gender: string | null;
+  age: number | null;
+}
+
+function calculateAge(birthDate: string): number {
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+// Daily recommended intake based on gender and age (Korean DRI standards)
+function getDailyRecommended(profile: UserProfile): Nutrition {
+  const { gender, age } = profile;
+  // Default: adult male
+  let calories = 2500, protein = 65, carbs = 330, fat = 65, fiber = 25, sugar = 50;
+
+  if (gender === 'female') {
+    calories = 2000; protein = 55; carbs = 260; fat = 55; fiber = 20; sugar = 40;
+  }
+
+  if (age !== null) {
+    if (age < 18) {
+      calories = Math.round(calories * 0.8);
+      protein = Math.round(protein * 0.8);
+    } else if (age >= 65) {
+      calories = Math.round(calories * 0.85);
+      protein = Math.round(protein * 0.9);
+    }
+  }
+
+  return { calories, protein, carbs, fat, fiber, sugar };
+}
+
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -51,6 +90,18 @@ Deno.serve(async (req) => {
         { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
+
+    // Fetch user profile for personalized analysis
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('gender, birth_date')
+      .eq('id', user.id)
+      .single();
+
+    const userProfile = {
+      gender: profile?.gender as string | null,
+      age: profile?.birth_date ? calculateAge(profile.birth_date) : null,
+    };
 
     // Check for period parameter (POST body or GET query)
     let period: string | null = null;
@@ -102,7 +153,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const report = await analyzeNutrition(ingredients, period);
+    const report = await analyzeNutrition(ingredients, period, userProfile);
 
     return new Response(
       JSON.stringify({ report }),
@@ -116,7 +167,7 @@ Deno.serve(async (req) => {
   }
 });
 
-async function analyzeNutrition(ingredients: Ingredient[], period: string | null): Promise<NutritionReport> {
+async function analyzeNutrition(ingredients: Ingredient[], period: string | null, userProfile?: UserProfile): Promise<NutritionReport> {
   // Category count
   const categoryCount: Record<string, number> = {};
   for (const ing of ingredients) {
@@ -193,15 +244,22 @@ async function analyzeNutrition(ingredients: Ingredient[], period: string | null
   if (hasGrains) score += 15;
   score = Math.min(100, score);
 
+  // Daily recommended values (personalized if profile available)
+  const dailyRecommended = userProfile
+    ? getDailyRecommended(userProfile)
+    : getDailyRecommended({ gender: null, age: null });
+
   // AI recommendations
-  const recommendations = await getAIRecommendations(ingredients, categoryBalance, totalNutrition);
+  const recommendations = await getAIRecommendations(ingredients, categoryBalance, totalNutrition, userProfile);
 
   return {
     totalNutrition,
+    dailyRecommended,
     ingredients: ingredientNutrition,
     categoryBalance,
     score,
     recommendations,
+    userProfile: userProfile ? { gender: userProfile.gender, age: userProfile.age } : null,
     period: period || 'current',
   };
 }
@@ -209,7 +267,8 @@ async function analyzeNutrition(ingredients: Ingredient[], period: string | null
 async function getAIRecommendations(
   ingredients: Ingredient[],
   categoryBalance: CategoryBalance[],
-  nutrition: Nutrition
+  nutrition: Nutrition,
+  userProfile?: UserProfile
 ): Promise<string[]> {
   const apiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 
@@ -217,7 +276,15 @@ async function getAIRecommendations(
     return getDefaultRecommendations(categoryBalance);
   }
 
-  const prompt = `당신은 영양사입니다. 사용자의 냉장고 재료와 영양 분석 결과를 보고 간단한 식단 개선 추천을 해주세요.
+  const userContext = userProfile?.gender || userProfile?.age
+    ? `\n사용자 정보: ${userProfile.gender === 'male' ? '남성' : userProfile.gender === 'female' ? '여성' : ''}${userProfile.age ? ` ${userProfile.age}세` : ''}`
+    : '';
+
+  const recommended = userProfile
+    ? getDailyRecommended(userProfile)
+    : getDailyRecommended({ gender: null, age: null });
+
+  const prompt = `당신은 영양사입니다. 사용자의 냉장고 재료와 영양 분석 결과를 보고 간단한 식단 개선 추천을 해주세요.${userContext}
 
 현재 냉장고 재료:
 ${ingredients.map((i: Ingredient) => `- ${i.name} (${i.category})`).join('\n')}
@@ -225,13 +292,13 @@ ${ingredients.map((i: Ingredient) => `- ${i.name} (${i.category})`).join('\n')}
 카테고리별 비율:
 ${categoryBalance.map((c: CategoryBalance) => `- ${c.category}: ${c.percentage}% (${c.status === 'good' ? '적정' : c.status === 'low' ? '부족' : '과다'})`).join('\n')}
 
-총 영양 성분:
-- 칼로리: ${nutrition.calories}kcal
-- 단백질: ${nutrition.protein}g
-- 탄수화물: ${nutrition.carbs}g
-- 지방: ${nutrition.fat}g
+총 영양 성분 (일일 권장량 대비):
+- 칼로리: ${nutrition.calories}kcal (권장 ${recommended.calories}kcal)
+- 단백질: ${nutrition.protein}g (권장 ${recommended.protein}g)
+- 탄수화물: ${nutrition.carbs}g (권장 ${recommended.carbs}g)
+- 지방: ${nutrition.fat}g (권장 ${recommended.fat}g)
 
-3~4개의 짧은 추천을 JSON 배열로 응답. 각 추천은 한 문장.
+3~4개의 짧은 추천을 JSON 배열로 응답. 각 추천은 한 문장.${userContext ? ' 사용자의 성별과 나이를 고려해주세요.' : ''}
 예: ["채소류를 더 구매하세요", "단백질 섭취를 늘리세요"]
 
 JSON 배열만 응답:`;

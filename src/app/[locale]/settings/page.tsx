@@ -2,7 +2,9 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { User, Globe, Database, LogOut, UserX, ChevronRight, Moon, Sun, Crown, Trash2, Heart } from 'lucide-react';
+import { User, Globe, Database, LogOut, UserX, ChevronRight, Moon, Sun, Crown, Trash2, Heart, UserCog } from 'lucide-react';
+import { Select } from '@/components/ui/Select';
+import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useStore } from '@/store/useStore';
@@ -23,6 +25,8 @@ interface UserProfile {
   email: string;
   name?: string;
   avatar_url?: string;
+  gender?: string | null;
+  birth_date?: string | null;
 }
 
 type ActiveModal = 'none' | 'language' | 'delete' | 'logout' | 'deleteAccount' | 'premium';
@@ -44,19 +48,23 @@ export default function SettingsPage() {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          let name = user.user_metadata?.full_name || user.user_metadata?.name;
-          if (!name) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('name')
-              .eq('id', user.id)
-              .single();
-            name = profile?.name;
-          }
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, gender, birth_date')
+            .eq('id', user.id)
+            .single();
+          let name = user.user_metadata?.full_name || user.user_metadata?.name || profile?.name;
           if (!name && user.user_metadata?.auth_provider === 'toss') {
             name = t('settings.tossUser');
           }
-          setUser({ id: user.id, email: user.email || '', name, avatar_url: user.user_metadata?.avatar_url });
+          setUser({
+            id: user.id,
+            email: user.email || '',
+            name,
+            avatar_url: user.user_metadata?.avatar_url,
+            gender: profile?.gender || null,
+            birth_date: profile?.birth_date || null,
+          });
         }
       } catch {
         // Failed to check user
@@ -170,6 +178,47 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Personal Info for Nutrition Analysis */}
+        {user && (
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <UserCog className="h-5 w-5 text-gray-500" />
+                <span className="font-medium">{t('settings.personalInfo')}</span>
+              </div>
+              <p className="text-xs text-gray-500">{t('settings.personalInfoDesc')}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Select
+                  label={t('settings.gender')}
+                  value={user.gender || ''}
+                  onChange={async (e) => {
+                    const gender = e.target.value || null;
+                    setUser({ ...user, gender });
+                    const supabase = createClient();
+                    await supabase.from('profiles').update({ gender }).eq('id', user.id);
+                  }}
+                  options={[
+                    { value: '', label: t('settings.notSet') },
+                    { value: 'male', label: t('settings.male') },
+                    { value: 'female', label: t('settings.female') },
+                  ]}
+                />
+                <Input
+                  label={t('settings.birthDate')}
+                  type="date"
+                  value={user.birth_date || ''}
+                  onChange={async (e) => {
+                    const birth_date = e.target.value || null;
+                    setUser({ ...user, birth_date });
+                    const supabase = createClient();
+                    await supabase.from('profiles').update({ birth_date }).eq('id', user.id);
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardContent className="p-4">

@@ -127,10 +127,18 @@ async function exchangeCodeForToken(
   return { error: data.error?.reason || data.error?.message || 'Token exchange failed' };
 }
 
-// Step 2: Get user info from Toss API (persistent userKey)
+// Toss user info from /login-me endpoint
+interface TossUserInfo {
+  userKey: string;
+  userName?: string;
+  userGender?: string;    // 'male' | 'female'
+  userBirthday?: string;  // 'YYYYMMDD' format
+}
+
+// Step 2: Get user info from Toss API (persistent userKey + consented fields)
 async function getTossUserInfo(
   accessToken: string
-): Promise<{ userKey: string } | { error: string }> {
+): Promise<TossUserInfo | { error: string }> {
   const response = await tossApiFetch(
     `${TOSS_API_URL}/api-partner/v1/apps-in-toss/user/oauth2/login-me`,
     {
@@ -141,11 +149,17 @@ async function getTossUserInfo(
 
   const data = await response.json();
 
-  // Toss API wraps response: { resultType, success: { userKey } }
-  const userKey = data.success?.userKey ?? data.userKey;
+  // Toss API wraps response: { resultType, success: { userKey, userName, userGender, userBirthday, ... } }
+  const success = data.success ?? data;
+  const userKey = success?.userKey;
 
   if (userKey !== undefined && userKey !== null) {
-    return { userKey: String(userKey) };
+    return {
+      userKey: String(userKey),
+      userName: success.userName || undefined,
+      userGender: success.userGender || undefined,
+      userBirthday: success.userBirthday || undefined,
+    };
   }
 
   return { error: 'Failed to retrieve user info' };
@@ -184,10 +198,25 @@ Deno.serve(async (req) => {
     }
 
     const tossUserKey = userResult.userKey;
+    const tossUserName = userResult.userName;
+    const tossGender = userResult.userGender; // 'male' | 'female' | undefined
+    // Convert 'YYYYMMDD' to 'YYYY-MM-DD' date format
+    const tossBirthDate = userResult.userBirthday
+      ? `${userResult.userBirthday.slice(0, 4)}-${userResult.userBirthday.slice(4, 6)}-${userResult.userBirthday.slice(6, 8)}`
+      : undefined;
 
     const supabaseAdmin = createAdminClient();
     const email = generateTossEmail(tossUserKey);
     const password = await generateTossPassword(tossUserKey);
+
+    // Build profile update with available Toss data
+    const profileUpdate: Record<string, unknown> = {
+      toss_user_key: tossUserKey,
+      updated_at: new Date().toISOString(),
+    };
+    if (tossUserName) profileUpdate.name = tossUserName;
+    if (tossGender) profileUpdate.gender = tossGender;
+    if (tossBirthDate) profileUpdate.birth_date = tossBirthDate;
 
     // Try sign in
     const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
@@ -196,6 +225,11 @@ Deno.serve(async (req) => {
     });
 
     if (signInData?.session) {
+      // Update profile with latest Toss data on every login
+      await supabaseAdmin.from('profiles')
+        .update(profileUpdate)
+        .eq('id', signInData.user!.id);
+
       return new Response(
         JSON.stringify({
           success: true,
@@ -250,12 +284,14 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Create profile
+      // Create profile with Toss demographic data
       await supabaseAdmin.from('profiles').upsert({
         id: signUpData.user.id,
         email,
-        name: 'Toss User',
+        name: tossUserName || 'Toss User',
         toss_user_key: tossUserKey,
+        gender: tossGender || null,
+        birth_date: tossBirthDate || null,
         updated_at: new Date().toISOString(),
       });
 
