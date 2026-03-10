@@ -450,6 +450,7 @@
     "aiDisclaimer": "分析冰箱食材和购买记录，为您推荐所需物品。",
     "aiLoading": "正在分析冰箱...",
     "aiEmpty": "请先在冰箱中添加食材。",
+    "aiPrompt": "点击按钮获取AI推荐。",
     "aiError": "无法加载AI推荐。",
     "completeList": "完成购物",
     "loadError": "无法加载购物清单，请重试。",

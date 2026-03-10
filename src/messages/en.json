@@ -457,6 +457,7 @@
     "aiDisclaimer": "Analyzes your fridge items and purchase history to suggest what you need.",
     "aiLoading": "Analyzing your fridge...",
     "aiEmpty": "Add ingredients to your fridge first.",
+    "aiPrompt": "Tap the button to get AI recommendations.",
     "aiError": "Failed to load AI recommendations.",
     "completeList": "Complete Shopping",
     "loadError": "Failed to load shopping list. Please try again.",

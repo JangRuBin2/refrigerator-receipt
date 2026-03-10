@@ -32,6 +32,7 @@ import {
   getShoppingRecommendations,
   type ParsedShoppingList,
 } from '@/lib/api/shopping';
+import { getIngredients } from '@/lib/api/ingredients';
 import { AddItemModal } from '@/features/shopping/AddItemModal';
 import { AiRecommendations } from '@/features/shopping/AiRecommendations';
 import { ShoppingItemGroup } from '@/features/shopping/ShoppingItemGroup';
@@ -65,6 +66,7 @@ export default function ShoppingPage() {
   const [error, setError] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [recommendError, setRecommendError] = useState(false);
+  const [recommendFetched, setRecommendFetched] = useState(false);
 
   const fetchList = useCallback(async () => {
     try {
@@ -82,7 +84,15 @@ export default function ShoppingPage() {
     setRecommendLoading(true);
     setRecommendError(false);
     try {
-      const ingredientNames = useStore.getState().ingredients.map((i) => i.name);
+      // Store에서 먼저 시도, 비어있으면 DB에서 직접 조회
+      let ingredientNames = useStore.getState().ingredients.map((i) => i.name);
+      if (ingredientNames.length === 0) {
+        const dbIngredients = await getIngredients();
+        ingredientNames = dbIngredients.map((i) => i.name);
+        if (dbIngredients.length > 0) {
+          useStore.getState().setIngredients(dbIngredients);
+        }
+      }
       const raw = await getShoppingRecommendations(ingredientNames);
       const data = recommendResponseSchema.parse(raw);
       setRecommendations(data.recommendations);
@@ -91,6 +101,7 @@ export default function ShoppingPage() {
       setRecommendations([]);
     } finally {
       setRecommendLoading(false);
+      setRecommendFetched(true);
     }
   }, []);
 
@@ -268,6 +279,7 @@ export default function ShoppingPage() {
           recommendations={recommendations}
           loading={recommendLoading}
           error={recommendError}
+          hasFetched={recommendFetched}
           onFetch={fetchRecommendations}
           onAdd={addRecommendedItem}
         />

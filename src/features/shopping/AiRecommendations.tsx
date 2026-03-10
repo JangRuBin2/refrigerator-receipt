@@ -22,11 +22,12 @@ interface AiRecommendationsProps {
   recommendations: RecommendedItem[];
   loading: boolean;
   error: boolean;
+  hasFetched: boolean;
   onFetch: () => void;
   onAdd: (item: RecommendedItem) => void;
 }
 
-export function AiRecommendations({ recommendations, loading, error, onFetch, onAdd }: AiRecommendationsProps) {
+export function AiRecommendations({ recommendations, loading, error, hasFetched, onFetch, onAdd }: AiRecommendationsProps) {
   const t = useTranslations();
 
   return (
@@ -108,6 +109,19 @@ export function AiRecommendations({ recommendations, loading, error, onFetch, on
             >
               <RefreshCw className="mr-1 h-3 w-3" />
               {t('common.retry')}
+            </Button>
+          </div>
+        ) : !hasFetched ? (
+          <div className="text-center py-4">
+            <p className="text-sm text-gray-500">{t('shopping.aiPrompt')}</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onFetch}
+              className="mt-2"
+            >
+              <Sparkles className="mr-1 h-3 w-3" />
+              {t('shopping.aiRecommend')}
             </Button>
           </div>
         ) : (
