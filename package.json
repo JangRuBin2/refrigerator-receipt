@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "prebuild:ait": "node -e \"const fs=require('fs');fs.rmSync('out',{recursive:true,force:true})\"",
-    "build:ait": "node node_modules/@apps-in-toss/web-framework/bin.js build",
-    "build:ait:debug": "AIT_DEBUG=true node node_modules/@apps-in-toss/web-framework/bin.js build",
+    "build:ait": "ait build",
+    "build:ait:debug": "AIT_DEBUG=true ait build",
     "deploy:functions": "npx supabase functions deploy && npx supabase functions deploy auth-toss auth-toss-disconnect --no-verify-jwt",
     "deploy:all": "pnpm build:ait && pnpm deploy:functions && echo '✅ .ait 파일을 토스 Partner Console에 업로드하세요'"
   },
