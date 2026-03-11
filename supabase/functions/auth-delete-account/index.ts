@@ -27,30 +27,16 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createAdminClient();
     const userId = user.id;
 
-    // Explicitly delete user data from all tables before deleting auth user
-    // This ensures cleanup even if CASCADE constraints are misconfigured
-    const tables = [
-      'subscriptions',
-      'shopping_lists',
-      'user_favorites',
-      'event_logs',
-      'ingredients',
-    ];
+    // Soft-delete: mark profile as withdrawn instead of physically deleting data
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ status: 'withdrawn' })
+      .eq('id', userId);
 
-    for (const table of tables) {
-      await supabaseAdmin.from(table).delete().eq('user_id', userId);
-    }
-
-    // Delete profile (which is the FK root for most tables)
-    await supabaseAdmin.from('profiles').delete().eq('id', userId);
-
-    // Delete auth user
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-
-    if (deleteError) {
-      console.error('Failed to delete auth user:', deleteError.message);
+    if (updateError) {
+      console.error('Failed to update profile status:', updateError.message);
       return new Response(
-        JSON.stringify({ error: '계정 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.' }),
+        JSON.stringify({ error: '계정 탈퇴 처리에 실패했습니다. 잠시 후 다시 시도해주세요.' }),
         { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }

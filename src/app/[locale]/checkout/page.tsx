@@ -84,11 +84,11 @@ function CheckoutContent() {
   };
 
   const premiumFeatures = [
-    { icon: '\uD83D\uDCF8', text: t('pricing.feature.unlimitedScan') },
-    { icon: '\uD83E\uDD16', text: t('pricing.feature.aiRecipe') },
-    { icon: '\uD83D\uDCCA', text: t('pricing.feature.nutritionAnalysis') },
-    { icon: '\uD83D\uDED2', text: t('pricing.feature.smartShopping') },
-    { icon: '\uD83D\uDD0D', text: t('pricing.feature.externalSearch') },
+    { icon: '🚫', text: t('pricing.feature.noAds') },
+    { icon: '📸', text: t('pricing.feature.unlimitedScan') },
+    { icon: '🤖', text: t('pricing.feature.aiRecipe') },
+    { icon: '📊', text: t('pricing.feature.nutritionAnalysis') },
+    { icon: '🛒', text: t('pricing.feature.aiShopping') },
   ];
 
   const handleSubscribe = async () => {

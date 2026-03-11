@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { User, Globe, Database, LogOut, UserX, ChevronRight, Moon, Sun, Crown, Trash2, Heart, UserCog } from 'lucide-react';
+import { User, Globe, LogOut, UserX, ChevronRight, Moon, Sun, Crown, Trash2, Heart, UserCog } from 'lucide-react';
 import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -29,14 +29,14 @@ interface UserProfile {
   birth_date?: string | null;
 }
 
-type ActiveModal = 'none' | 'language' | 'delete' | 'logout' | 'deleteAccount' | 'premium';
+type ActiveModal = 'none' | 'language' | 'logout' | 'deleteAccount' | 'premium';
 
 export default function SettingsPage() {
   const t = useTranslations();
   const params = useParams();
   const router = useRouter();
   const locale = params.locale as string;
-  const { settings, updateSettings, clearIngredients } = useStore();
+  const { settings, updateSettings } = useStore();
   const { isPremium, isTrialActive, trialDaysRemaining, subscription } = usePremium();
   const [activeModal, setActiveModal] = useState<ActiveModal>('none');
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -287,12 +287,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <SettingsItem icon={Database} label={t('settings.deleteAll')} onClick={() => setActiveModal('delete')} danger />
-          </CardContent>
-        </Card>
-
         <BannerAd className="my-2" />
 
         {/* App Info */}
@@ -336,16 +330,6 @@ export default function SettingsPage() {
                 {locale === loc && <span>✓</span>}
               </button>
             ))}
-          </div>
-        </Modal>
-
-        <Modal isOpen={activeModal === 'delete'} onClose={() => setActiveModal('none')} title={t('settings.deleteAll')}>
-          <div className="space-y-4">
-            <p className="text-gray-600 dark:text-gray-400">{t('settings.deleteWarning')}</p>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setActiveModal('none')} className="flex-1">{t('common.cancel')}</Button>
-              <Button variant="danger" onClick={() => { clearIngredients(); setActiveModal('none'); }} className="flex-1">{t('common.delete')}</Button>
-            </div>
           </div>
         </Modal>
 
