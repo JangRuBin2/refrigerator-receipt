@@ -17,6 +17,12 @@
     "comingSoon": "준비 중",
     "aiDisclaimer": "AI가 생성한 콘텐츠입니다. 참고용으로만 활용하세요."
   },
+  "ads": {
+    "watchingAd": "광고 준비 중...",
+    "adWatchingDescription": "광고가 끝나면 자동으로 진행됩니다",
+    "adLoadFailed": "광고를 불러오지 못했습니다",
+    "adUnavailable": "광고를 사용할 수 없습니다"
+  },
   "nav": {
     "home": "냉장고",
     "fridge": "재료관리",

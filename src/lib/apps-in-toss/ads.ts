@@ -17,20 +17,37 @@ export function isAdMobSupported(): boolean {
   }
 }
 
-// 보상형 광고 로드 (event-based → Promise 래핑)
-export function loadRewardedAd(adGroupId: string): Promise<AdLoadResult> {
+// 보상형 광고 로드 (event-based → Promise 래핑, 타임아웃 포함)
+export function loadRewardedAd(adGroupId: string, timeout = 10000): Promise<AdLoadResult> {
   return new Promise((resolve) => {
+    let resolved = false;
+    const safeResolve = (result: AdLoadResult) => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timer);
+      resolve(result);
+    };
+
+    const timer = setTimeout(() => {
+      safeResolve({
+        type: 'error',
+        adType: 'rewarded',
+        errorCode: 'TIMEOUT',
+        errorMessage: `Ad load timed out after ${timeout}ms`,
+      });
+    }, timeout);
+
     try {
       GoogleAdMob.loadAppsInTossAdMob({
         options: { adGroupId },
         onEvent: (event) => {
           if (event.type === 'loaded') {
-            resolve({ type: 'success', adType: 'rewarded' });
+            safeResolve({ type: 'success', adType: 'rewarded' });
           }
         },
         onError: (error) => {
           const msg = error instanceof Error ? error.message : String(error);
-          resolve({
+          safeResolve({
             type: 'error',
             adType: 'rewarded',
             errorCode: 'AD_LOAD_FAILED',
@@ -40,7 +57,7 @@ export function loadRewardedAd(adGroupId: string): Promise<AdLoadResult> {
       });
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      resolve({
+      safeResolve({
         type: 'error',
         adType: 'rewarded',
         errorCode: 'SDK_NOT_AVAILABLE',
@@ -144,6 +161,8 @@ export function attachBannerAd(
   target: HTMLElement,
   options?: {
     theme?: 'light' | 'dark';
+    tone?: 'blackAndWhite' | 'grey';
+    variant?: 'expanded' | 'card';
     padding?: string;
     onRendered?: () => void;
     onFailed?: () => void;
@@ -154,6 +173,8 @@ export function attachBannerAd(
 
     TossAds.attach(adGroupId, target, {
       theme: options?.theme,
+      tone: options?.tone,
+      variant: options?.variant ?? 'expanded',
       padding: options?.padding,
       callbacks: {
         onAdRendered: () => options?.onRendered?.(),

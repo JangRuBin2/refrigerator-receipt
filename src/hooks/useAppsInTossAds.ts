@@ -21,7 +21,7 @@ export function useAppsInTossAds(): UseAppsInTossAdsReturn {
   const [adState, setAdState] = useState<AdState>('idle');
   const isAvailable = typeof window !== 'undefined' && isAdMobSupported();
 
-  // 보상형 광고 로드
+  // 보상형 광고 로드 (1회 재시도 포함)
   const handleLoadRewardedAd = useCallback(async (
     adGroupId: AdGroupId = AD_GROUP_IDS.SCAN_REWARDED
   ): Promise<boolean> => {
@@ -31,6 +31,13 @@ export function useAppsInTossAds(): UseAppsInTossAdsReturn {
     const result = await loadRewardedAd(adGroupId);
 
     if (result.type === 'success') {
+      setAdState('loaded');
+      return true;
+    }
+
+    // 1회 재시도
+    const retry = await loadRewardedAd(adGroupId);
+    if (retry.type === 'success') {
       setAdState('loaded');
       return true;
     }

@@ -32,12 +32,10 @@ export function BannerAd({
     initializeTossAds();
 
     const cleanup = attachBannerAd(adGroupId, containerRef.current, {
-      theme: undefined, // auto (follows system dark mode)
-      callbacks: {
-        onRendered: () => setIsRendered(true),
-        onFailed: () => setIsRendered(false),
-      },
-    } as Parameters<typeof attachBannerAd>[2]);
+      variant: 'expanded',
+      onRendered: () => setIsRendered(true),
+      onFailed: () => setIsRendered(false),
+    });
 
     cleanupRef.current = cleanup;
 
@@ -47,15 +45,16 @@ export function BannerAd({
     };
   }, [isPremium, adGroupId]);
 
-  // Premium users see no ads
   if (isPremium) return null;
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        'w-full overflow-hidden rounded-xl',
-        !isRendered && 'min-h-0',
+        'min-h-[96px]',
+        isRendered
+          ? '-mx-4 w-[calc(100%+2rem)]'
+          : 'w-full bg-gray-100 dark:bg-gray-800 animate-pulse rounded-xl',
         className
       )}
       aria-label="advertisement"

@@ -13,7 +13,6 @@ import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { PremiumGate } from '@/components/premium/PremiumGate';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { getDaysUntilExpiry, getExpiryColor, calculateExpiryDate, cn } from '@/lib/utils';
@@ -39,7 +38,6 @@ export default function FridgePage() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Ingredient | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-
   // Form state
   const [formData, setFormData] = useState<{
     name: string;
@@ -158,7 +156,6 @@ export default function FridgePage() {
   };
 
   return (
-    <PremiumGate feature="fridge_management">
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
 
 
@@ -411,6 +408,5 @@ export default function FridgePage() {
         variant="danger"
       />
     </div>
-    </PremiumGate>
   );
 }

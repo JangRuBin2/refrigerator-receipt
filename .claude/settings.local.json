@@ -111,7 +111,10 @@
       "Bash(pnpm add:*)",
       "Bash(node:*)",
       "Bash(pnpm remove:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(pnpm build:ait:*)",
+      "Bash(npx which:*)",
+      "Bash(pnpm install:*\\\\)"
     ]
   }
 }

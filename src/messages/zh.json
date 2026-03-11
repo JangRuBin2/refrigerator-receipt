@@ -17,6 +17,12 @@
     "comingSoon": "即将推出",
     "aiDisclaimer": "此内容由AI生成，仅供参考。"
   },
+  "ads": {
+    "watchingAd": "正在准备广告...",
+    "adWatchingDescription": "广告结束后将自动继续",
+    "adLoadFailed": "无法加载广告",
+    "adUnavailable": "广告不可用"
+  },
   "nav": {
     "home": "冰箱",
     "fridge": "食材管理",

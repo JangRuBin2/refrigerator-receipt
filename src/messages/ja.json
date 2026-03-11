@@ -17,6 +17,12 @@
     "comingSoon": "準備中",
     "aiDisclaimer": "AIが生成したコンテンツです。参考情報としてご利用ください。"
   },
+  "ads": {
+    "watchingAd": "広告を準備中...",
+    "adWatchingDescription": "広告が終わると自動的に進みます",
+    "adLoadFailed": "広告を読み込めませんでした",
+    "adUnavailable": "広告を利用できません"
+  },
   "nav": {
     "home": "冷蔵庫",
     "fridge": "食材管理",

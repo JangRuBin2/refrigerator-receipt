@@ -13,7 +13,9 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
-import { PremiumGate } from '@/components/premium/PremiumGate';
+import { PremiumModal } from '@/components/premium/PremiumModal';
+import { AdWatchingOverlay } from '@/components/ads/AdWatchingOverlay';
+import { usePremiumAction } from '@/hooks/usePremiumAction';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -67,6 +69,7 @@ export default function ShoppingPage() {
   const [addError, setAddError] = useState<string | null>(null);
   const [recommendError, setRecommendError] = useState(false);
   const [recommendFetched, setRecommendFetched] = useState(false);
+  const { executeWithPremiumCheck, showPremiumModal, closePremiumModal, isWatchingAd } = usePremiumAction();
 
   const fetchList = useCallback(async () => {
     try {
@@ -222,7 +225,9 @@ export default function ShoppingPage() {
   }
 
   return (
-    <PremiumGate feature="smart_shopping">
+    <>
+    <AdWatchingOverlay isVisible={isWatchingAd} />
+    <PremiumModal isOpen={showPremiumModal} onClose={closePremiumModal} feature="smart_shopping" />
     <div className="min-h-screen pb-8">
       <div className="space-y-4 p-4">
         {/* Progress Card */}
@@ -280,7 +285,7 @@ export default function ShoppingPage() {
           loading={recommendLoading}
           error={recommendError}
           hasFetched={recommendFetched}
-          onFetch={fetchRecommendations}
+          onFetch={() => executeWithPremiumCheck(fetchRecommendations)}
           onAdd={addRecommendedItem}
         />
 
@@ -318,6 +323,6 @@ export default function ShoppingPage() {
         error={addError}
       />
     </div>
-    </PremiumGate>
+    </>
   );
 }

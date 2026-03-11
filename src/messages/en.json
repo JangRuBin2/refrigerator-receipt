@@ -17,6 +17,12 @@
     "comingSoon": "Coming Soon",
     "aiDisclaimer": "This content is AI-generated. Use for reference only."
   },
+  "ads": {
+    "watchingAd": "Preparing ad...",
+    "adWatchingDescription": "Will continue after the ad",
+    "adLoadFailed": "Failed to load ad",
+    "adUnavailable": "Ads are not available"
+  },
   "nav": {
     "home": "Fridge",
     "fridge": "Ingredients",

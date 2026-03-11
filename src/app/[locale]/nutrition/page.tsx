@@ -5,7 +5,9 @@ import { useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { Activity, Loader2, RefreshCw, Sparkles, AlertCircle, Calendar, BarChart3, User } from 'lucide-react';
 
-import { PremiumGate } from '@/components/premium/PremiumGate';
+import { PremiumModal } from '@/components/premium/PremiumModal';
+import { AdWatchingOverlay } from '@/components/ads/AdWatchingOverlay';
+import { usePremiumAction } from '@/hooks/usePremiumAction';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
@@ -59,6 +61,7 @@ export default function NutritionPage() {
   const [report, setReport] = useState<NutritionReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { executeWithPremiumCheck, showPremiumModal, closePremiumModal, isWatchingAd } = usePremiumAction();
 
   const fetchReport = useCallback(async (mode: ViewMode) => {
     setLoading(true);
@@ -76,10 +79,18 @@ export default function NutritionPage() {
     }
   }, [t]);
 
-  // Auto-analyze on mount and when viewMode changes
+  // Auto-analyze on mount and when viewMode changes (premium check on first load)
+  const [hasAccess, setHasAccess] = useState(false);
   useEffect(() => {
-    fetchReport(viewMode);
-  }, [viewMode, fetchReport]);
+    if (hasAccess) {
+      fetchReport(viewMode);
+    } else {
+      executeWithPremiumCheck(() => {
+        setHasAccess(true);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, hasAccess]);
 
   const handleTabChange = (mode: ViewMode) => {
     if (mode === viewMode) return;
@@ -105,7 +116,9 @@ export default function NutritionPage() {
   }
 
   return (
-    <PremiumGate feature="nutrition_analysis">
+    <>
+    <AdWatchingOverlay isVisible={isWatchingAd} />
+    <PremiumModal isOpen={showPremiumModal} onClose={closePremiumModal} feature="nutrition_analysis" />
     <div className="min-h-screen pb-8">
       <div className="space-y-4 p-4">
         {/* View Mode Tabs */}
@@ -223,6 +236,6 @@ export default function NutritionPage() {
         )}
       </div>
     </div>
-    </PremiumGate>
+    </>
   );
 }

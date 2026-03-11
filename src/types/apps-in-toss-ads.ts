@@ -29,31 +29,37 @@ export type AdErrorCode =
   | 'AD_SHOW_FAILED'
   | 'USER_CANCELED'
   | 'NETWORK_ERROR'
+  | 'TIMEOUT'
   | 'SDK_NOT_AVAILABLE'
   | 'UNKNOWN_ERROR';
 
 // 광고 상태
 export type AdState = 'idle' | 'loading' | 'loaded' | 'showing' | 'error';
 
-// 광고 그룹 ID 상수
+// 환경 판별: 프로덕션은 Vercel 배포 또는 토스 WebView
+const isProduction = typeof window !== 'undefined' && (
+  window.location.hostname === 'refrigerator-receipt.vercel.app' ||
+  window.location.hostname.includes('tossmini.com') ||
+  process.env.NODE_ENV === 'production'
+);
+
+// 보상형/전면형 광고 ID (환경별 자동 분리)
 export const AD_GROUP_IDS = {
-  // 테스트용 ID (개발 중에만 사용)
-  TEST_INTERSTITIAL: 'ait-ad-test-interstitial-id',
-  TEST_REWARDED: 'ait-ad-test-rewarded-id',
-
-  // 프로덕션 보상형 광고 ID (토스 콘솔에서 발급)
-  SCAN_REWARDED: 'ait.v2.live.a6680c6229624182',
+  SCAN_REWARDED: isProduction
+    ? 'ait.v2.live.a6680c6229624182'
+    : 'ait-ad-test-rewarded-id',
+  INTERSTITIAL: isProduction
+    ? 'ait-ad-test-interstitial-id' // 프로덕션 ID 미발급 → 테스트 유지
+    : 'ait-ad-test-interstitial-id',
 } as const;
 
-export type AdGroupId = typeof AD_GROUP_IDS[keyof typeof AD_GROUP_IDS];
+export type AdGroupId = string;
 
-// 배너 광고 ID 상수
+// 배너 광고 ID (환경별 자동 분리)
 export const BANNER_AD_IDS = {
-  // 테스트용 ID (개발 중에만 사용)
-  TEST_BANNER: 'ait-ad-test-banner-id',
-
-  // 프로덕션 배너 광고 ID
-  HOME_BANNER: 'ait.v2.live.9c28c530c14a4b96',
+  HOME_BANNER: isProduction
+    ? 'ait.v2.live.9c28c530c14a4b96'
+    : 'ait-ad-test-banner-id',
 } as const;
 
-export type BannerAdId = typeof BANNER_AD_IDS[keyof typeof BANNER_AD_IDS];
+export type BannerAdId = string;

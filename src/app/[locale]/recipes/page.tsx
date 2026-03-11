@@ -5,8 +5,6 @@ import { useParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
 import { BannerAd } from '@/components/ads/BannerAd';
-import { PremiumGate } from '@/components/premium/PremiumGate';
-import { PremiumModal } from '@/components/premium/PremiumModal';
 import {
   RecipeRoulette,
   RecipeList,
@@ -21,9 +19,7 @@ function RecipesContent() {
 
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeWithAvailability | null>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [filteredRecipes, setFilteredRecipes] = useState<RecipeWithAvailability[]>([]);
-
   const handleRecipeClick = useCallback((recipe: RecipeWithAvailability) => {
     setSelectedRecipe(recipe);
     setShowRecipeModal(true);
@@ -63,11 +59,6 @@ function RecipesContent() {
         onClose={() => setShowRecipeModal(false)}
       />
 
-      <PremiumModal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        feature="external_recipe_search"
-      />
     </div>
   );
 }
@@ -82,12 +73,10 @@ function RecipesLoading() {
 
 export default function RecipesPage() {
   return (
-    <PremiumGate feature="recipe_browsing">
-      <div className="min-h-screen">
-        <Suspense fallback={<RecipesLoading />}>
-          <RecipesContent />
-        </Suspense>
-      </div>
-    </PremiumGate>
+    <div className="min-h-screen">
+      <Suspense fallback={<RecipesLoading />}>
+        <RecipesContent />
+      </Suspense>
+    </div>
   );
 }
