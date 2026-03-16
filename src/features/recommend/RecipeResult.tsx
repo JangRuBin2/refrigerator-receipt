@@ -134,7 +134,7 @@ export function RecipeResult({
           <Button
             onClick={onSave}
             disabled={saving || saved}
-            variant={saved ? 'primary' : 'default'}
+            variant={saved ? 'primary' : 'secondary'}
             className={cn(
               'w-full',
               saved

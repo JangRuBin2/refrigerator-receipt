@@ -513,6 +513,12 @@
     "sharedRecipe": "共有レシピ",
     "goHome": "ホームへ"
   },
+  "favorites": {
+    "title": "保存したレシピ",
+    "empty": "保存したレシピがありません",
+    "removed": "レシピが削除されました",
+    "goToRecipes": "レシピを作る"
+  },
   "terms": {
     "title": "MealKeeper 利用規約",
     "article1": {

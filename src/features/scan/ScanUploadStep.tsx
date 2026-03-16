@@ -16,8 +16,8 @@ interface ScanUploadStepProps {
   onToggleAIVision: () => void;
   onScanClick: (ref: React.RefObject<HTMLInputElement | null>) => void;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  fileInputRef: React.RefObject<HTMLInputElement | null>;
-  cameraInputRef: React.RefObject<HTMLInputElement | null>;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  cameraInputRef: React.RefObject<HTMLInputElement>;
 }
 
 export function ScanUploadStep({

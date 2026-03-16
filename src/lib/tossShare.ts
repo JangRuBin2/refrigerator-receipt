@@ -17,9 +17,7 @@ export async function shareTossRecipeLink(
 ): Promise<void> {
   const { getTossShareLink, share } = await import('@apps-in-toss/web-framework');
 
-  // intoss:// 스킴 (정식 출시 후 동작)
   const deepLink = `intoss://acorn/${locale}/recipe?id=${recipeId}`;
-  const ogImageUrl = 'https://jkyvgzfpxghywrfifhel.supabase.co/storage/v1/object/public/public/og-recipe.png';
-  const tossLink = await getTossShareLink(deepLink, ogImageUrl);
+  const tossLink = await getTossShareLink(deepLink);
   await share({ message: tossLink });
 }

@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { cn } from '@/lib/utils';
 import { CATEGORIES, UNITS } from '@/lib/constants';
+import type { Category, Unit } from '@/types';
 import type { ExtendedScannedItem } from './types';
 
 interface ScanResultsSheetProps {

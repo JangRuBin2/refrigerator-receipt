@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 import { getCategoryIcon } from '@/lib/constants';
-import type { Unit } from '@/types/supabase';
+import type { Unit, Category } from '@/types/supabase';
 
 interface RecommendedItem {
   name: string;
   quantity: number;
   unit: Unit;
-  category: string;
+  category: Category;
   reason: string;
 }
 

@@ -3,7 +3,9 @@ import en from '@/messages/en.json';
 import ja from '@/messages/ja.json';
 import zh from '@/messages/zh.json';
 
-const messages: Record<string, typeof ko> = {
+type Messages = Record<string, unknown>;
+
+const messages: Record<string, Messages> = {
   ko,
   en,
   ja,

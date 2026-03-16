@@ -30,9 +30,9 @@ export function RandomMode({ locale, onBack }: RandomModeProps) {
     const fetchNames = async () => {
       try {
         const data = await getRecipes({ limit: 50 });
-        const names = data.recipes?.map((r: RandomResult) =>
-          r.title?.[locale] || r.title?.ko || r.title?.en || ''
-        ).filter(Boolean) ?? [];
+        const names = data.recipes.map((r) =>
+          r.title[locale] || r.title.ko || r.title.en || ''
+        ).filter(Boolean);
         if (names.length > 0) setRecipeNames(names);
       } catch {
         // Keep default names if fetch fails

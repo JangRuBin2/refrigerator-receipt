@@ -16,14 +16,14 @@ export function BackButtonHandler() {
 
     async function setup() {
       try {
-        const { graniteEvent } = await import('@apps-in-toss/web-bridge');
+        const { graniteEvent } = await import('@apps-in-toss/web-framework');
 
         cleanup = graniteEvent.addEventListener('backEvent', {
           onEvent: async () => {
             const isHome = /^\/[a-z]{2}\/?$/.test(pathname);
             if (isHome) {
               try {
-                const { closeView } = await import('@apps-in-toss/web-bridge');
+                const { closeView } = await import('@apps-in-toss/web-framework');
                 await closeView();
               } catch {
                 window.history.back();

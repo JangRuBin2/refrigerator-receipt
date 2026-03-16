@@ -77,10 +77,12 @@ export async function iapActivate(params: {
   orderId: string;
   sku: string;
   tossUserKey: string | null;
-}) {
-  return callEdgeFunction('iap-activate', {
+}): Promise<{ success: boolean }> {
+  const data = await callEdgeFunction('iap-activate', {
     body: params,
   });
+  const result = data as Record<string, unknown>;
+  return { success: result.success === true };
 }
 
 export async function getIapStatus() {

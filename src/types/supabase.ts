@@ -36,6 +36,9 @@ export type Database = {
           locale: string;
           is_premium: boolean;
           subscription_end_date: string | null;
+          gender: string | null;
+          birth_date: string | null;
+          toss_user_key: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -47,6 +50,9 @@ export type Database = {
           locale?: string;
           is_premium?: boolean;
           subscription_end_date?: string | null;
+          gender?: string | null;
+          birth_date?: string | null;
+          toss_user_key?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -58,6 +64,9 @@ export type Database = {
           locale?: string;
           is_premium?: boolean;
           subscription_end_date?: string | null;
+          gender?: string | null;
+          birth_date?: string | null;
+          toss_user_key?: string | null;
           created_at?: string;
           updated_at?: string;
         };

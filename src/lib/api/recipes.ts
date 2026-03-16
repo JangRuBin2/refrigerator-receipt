@@ -33,29 +33,67 @@ function getLocalizedString(json: Json, locale: string): string {
 export interface DBRecipe {
   id: string;
   title: Record<string, string>;
-  description?: Record<string, string>;
-  image_url?: string;
-  cooking_time?: number;
-  difficulty?: string;
-  servings?: number;
-  ingredients?: { name: string; quantity?: string }[];
-  instructions?: Record<string, string[]>;
-  tags?: string[];
+  description: Record<string, string>;
+  image_url?: string | null;
+  cooking_time?: number | null;
+  difficulty?: string | null;
+  servings?: number | null;
+  ingredients: Array<{ name: string; quantity?: string }>;
+  instructions: Record<string, string[]>;
+  tags?: string[] | null;
+}
+
+function safeRecord(v: unknown): Record<string, string> {
+  if (v && typeof v === 'object' && !Array.isArray(v)) return v as Record<string, string>;
+  return {};
+}
+
+function safeRecordArrays(v: unknown): Record<string, string[]> {
+  if (v && typeof v === 'object' && !Array.isArray(v)) return v as Record<string, string[]>;
+  return {};
+}
+
+function safeIngredients(v: unknown): Array<{ name: string; quantity?: string }> {
+  if (!Array.isArray(v)) return [];
+  return v.filter(
+    (item): item is { name: string; quantity?: string } =>
+      item != null && typeof item === 'object' && typeof (item as Record<string, unknown>).name === 'string'
+  );
+}
+
+function parseDBRecipe(raw: unknown): DBRecipe {
+  const r = raw as Record<string, unknown>;
+  return {
+    id: String(r.id ?? ''),
+    title: safeRecord(r.title),
+    description: safeRecord(r.description),
+    image_url: typeof r.image_url === 'string' ? r.image_url : null,
+    cooking_time: typeof r.cooking_time === 'number' ? r.cooking_time : null,
+    difficulty: typeof r.difficulty === 'string' ? r.difficulty : null,
+    servings: typeof r.servings === 'number' ? r.servings : null,
+    ingredients: safeIngredients(r.ingredients),
+    instructions: safeRecordArrays(r.instructions),
+    tags: Array.isArray(r.tags) ? r.tags.filter((t): t is string => typeof t === 'string') : null,
+  };
+}
+
+function parseDBRecipes(data: unknown[]): DBRecipe[] {
+  return data.map(parseDBRecipe);
 }
 
 export const mapDBRecipeToRecipe = (dbRecipe: DBRecipe): Recipe => ({
   id: dbRecipe.id,
-  title: dbRecipe.title || {},
-  description: dbRecipe.description || {},
-  imageUrl: dbRecipe.image_url,
-  cookingTime: dbRecipe.cooking_time || 0,
+  title: dbRecipe.title,
+  description: dbRecipe.description,
+  imageUrl: dbRecipe.image_url ?? undefined,
+  cookingTime: dbRecipe.cooking_time ?? 0,
   difficulty: (dbRecipe.difficulty as Difficulty) || 'easy',
-  ingredients: (dbRecipe.ingredients || []).map(ing => ({
+  ingredients: dbRecipe.ingredients.map(ing => ({
     name: ing.name,
     quantity: parseFloat(ing.quantity || '0') || 0,
     unit: 'g' as const,
   })),
-  instructions: dbRecipe.instructions || {},
+  instructions: dbRecipe.instructions,
 });
 
 export async function getRecipes(options?: {
@@ -90,7 +128,7 @@ export async function getRecipes(options?: {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return { recipes: data, total: count, limit, offset };
+  return { recipes: parseDBRecipes(data ?? []), total: count, limit, offset };
 }
 
 export async function getRecommendedRecipes(ingredientNames: string[]) {

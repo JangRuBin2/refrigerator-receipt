@@ -15,7 +15,7 @@ import { spring } from '@/lib/animations';
 import { scanReceipt } from '@/lib/api/scan';
 import { ScanFailureSheet } from '@/components/scan/ScanFailureSheet';
 import { CATEGORIES, UNITS } from '@/lib/constants';
-import type { StorageType } from '@/types';
+import type { StorageType, Category, Unit } from '@/types';
 import { ScanUploadStep } from '@/features/scan/ScanUploadStep';
 import { ScanConfirmStep } from '@/features/scan/ScanConfirmStep';
 import { ScanResultsSheet } from '@/features/scan/ScanResultsSheet';

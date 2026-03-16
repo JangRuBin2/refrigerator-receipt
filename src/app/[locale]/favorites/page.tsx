@@ -11,25 +11,8 @@ import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 import { BannerAd } from '@/components/ads/BannerAd';
 import { getDifficultyLabel } from '@/lib/constants';
-import { getFavorites, removeFavorite } from '@/lib/api/favorites';
+import { getFavorites, removeFavorite, type FavoriteRecipe } from '@/lib/api/favorites';
 import { toast } from '@/store/useToastStore';
-
-interface FavoriteRecipe {
-  id: string;
-  created_at: string;
-  recipe: {
-    id: string;
-    title: Record<string, string>;
-    description?: Record<string, string>;
-    cooking_time?: number;
-    difficulty?: string;
-    servings?: number;
-    ingredients?: Array<{ name: string; quantity?: string }>;
-    instructions?: string[];
-    tips?: string;
-    source?: string;
-  } | null;
-}
 
 export default function FavoritesPage() {
   const t = useTranslations();
@@ -45,7 +28,7 @@ export default function FavoritesPage() {
     try {
       setLoading(true);
       const data = await getFavorites();
-      setFavorites(data as FavoriteRecipe[]);
+      setFavorites(data);
     } catch {
       toast.error(t('common.error'));
     } finally {

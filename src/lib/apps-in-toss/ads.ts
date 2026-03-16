@@ -173,8 +173,6 @@ export function attachBannerAd(
 
     TossAds.attach(adGroupId, target, {
       theme: options?.theme,
-      tone: options?.tone,
-      variant: options?.variant ?? 'expanded',
       padding: options?.padding,
       callbacks: {
         onAdRendered: () => options?.onRendered?.(),

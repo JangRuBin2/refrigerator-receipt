@@ -57,6 +57,35 @@ const schema = z.object({
 const validated = schema.parse(input)
 ```
 
+## External Data Validation (CRITICAL)
+
+서버/외부에서 넘어오는 타입 추론 불가 데이터는 `as` 캐스팅 절대 금지.
+반드시 Zod 스키마 또는 안전한 파서 함수로 타입을 검증해야 한다.
+
+대상:
+- Supabase 쿼리 결과 (`Json` 타입 컬럼)
+- Edge Function 응답 (`callEdgeFunction` 반환값)
+- 토스 SDK 콜백 데이터
+- 외부 API 응답
+
+```typescript
+// WRONG: as 캐스팅 (런타임 에러 가능)
+const data = await getRecipes() as Recipe[]
+
+// CORRECT: Zod 검증
+const recipeSchema = z.object({
+  id: z.string(),
+  title: z.record(z.string(), z.string()),
+})
+const data = recipeSchema.parse(await getRecipes())
+
+// CORRECT: 안전한 파서 함수
+function safeRecord(v: unknown): Record<string, string> {
+  if (v && typeof v === 'object' && !Array.isArray(v)) return v as Record<string, string>;
+  return {};
+}
+```
+
 ## Code Quality Checklist
 
 Before marking work complete:

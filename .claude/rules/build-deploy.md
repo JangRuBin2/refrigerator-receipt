@@ -15,7 +15,14 @@ MealKeeper는 Next.js SSR 앱으로 두 가지 환경에서 동작:
 pnpm dev           # Next.js dev server (port 3000)
 pnpm build         # next build
 pnpm lint          # next lint
+npx tsc --noEmit   # TypeScript 타입 검사 (빌드 시 필수!)
 ```
+
+## Type Check (CRITICAL)
+
+빌드할 때 반드시 `npx tsc --noEmit`을 실행하여 타입 에러가 0개인지 확인해야 한다.
+`next build`가 통과해도 타입 에러가 숨어있을 수 있다.
+`supabase/functions/` 경로의 Deno 관련 에러는 무시해도 된다 (별도 런타임).
 
 ## Apps-in-Toss SDK
 

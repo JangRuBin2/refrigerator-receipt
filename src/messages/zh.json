@@ -513,6 +513,12 @@
     "sharedRecipe": "分享的食谱",
     "goHome": "返回首页"
   },
+  "favorites": {
+    "title": "收藏的食谱",
+    "empty": "没有收藏的食谱",
+    "removed": "食谱已删除",
+    "goToRecipes": "制作食谱"
+  },
   "terms": {
     "title": "MealKeeper 服务条款",
     "article1": {

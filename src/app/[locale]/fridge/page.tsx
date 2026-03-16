@@ -17,7 +17,7 @@ import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
 import { getDaysUntilExpiry, getExpiryColor, calculateExpiryDate, cn } from '@/lib/utils';
 import { spring, listItem } from '@/lib/animations';
-import type { Ingredient, StorageType } from '@/types';
+import type { Ingredient, StorageType, Category, Unit } from '@/types';
 import { CATEGORIES, UNITS } from '@/lib/constants';
 
 const STORAGE_TYPES: { type: StorageType | 'all'; icon: typeof Package }[] = [
