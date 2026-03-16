@@ -1,183 +1,36 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Camera, PlayCircle } from 'lucide-react';
 
-import { useStore } from '@/store/useStore';
-import { toast } from '@/store/useToastStore';
 import { usePremium } from '@/hooks/usePremium';
 import { useAppsInTossAds } from '@/hooks/useAppsInTossAds';
-import { calculateExpiryDate, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { spring } from '@/lib/animations';
-import { scanReceipt } from '@/lib/api/scan';
 import { ScanFailureSheet } from '@/components/scan/ScanFailureSheet';
-import { CATEGORIES, UNITS } from '@/lib/constants';
-import type { StorageType, Category, Unit } from '@/types';
 import { ScanUploadStep } from '@/features/scan/ScanUploadStep';
 import { ScanConfirmStep } from '@/features/scan/ScanConfirmStep';
 import { ScanResultsSheet } from '@/features/scan/ScanResultsSheet';
-import { STEPS, type Step, type ExtendedScannedItem } from '@/features/scan/types';
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+import { STEPS } from '@/features/scan/types';
+import { useReceiptScan } from '@/features/scan/useReceiptScan';
 
 export default function ScanPage() {
   const t = useTranslations();
   const params = useParams();
-  const router = useRouter();
   const locale = String(params.locale ?? 'ko');
-  const { addIngredient } = useStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const { isPremium } = usePremium();
   const { isAvailable: isAdsAvailable, watchAdForReward } = useAppsInTossAds();
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
   }, []);
 
-  const [step, setStep] = useState<Step>('upload');
-  const [scannedItems, setScannedItems] = useState<ExtendedScannedItem[]>([]);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [useAIVision, setUseAIVision] = useState(false);
-  const [isResultSheetOpen, setIsResultSheetOpen] = useState(false);
-  const [isWatchingAd, setIsWatchingAd] = useState(false);
-  const [isFailureSheetOpen, setIsFailureSheetOpen] = useState(false);
-  const [lastErrorMessage, setLastErrorMessage] = useState('');
-  const pendingFileRef = useRef<File | null>(null);
-
-  const currentStepIndex = STEPS.indexOf(step);
-
-  const handleScanClick = (inputRef: React.RefObject<HTMLInputElement | null>) => {
-    inputRef.current?.click();
-  };
-
-  const startScanning = async (file: File) => {
-    setStep('scanning');
-    try {
-      const data = await scanReceipt(file, useAIVision);
-      const response = data as Record<string, unknown>;
-      const rawItems = Array.isArray(response.items) ? response.items : [];
-      const today = new Date().toISOString().split('T')[0];
-
-      const items: ExtendedScannedItem[] = rawItems.map((item) => {
-        const raw = item as unknown as Record<string, unknown>;
-        const category = (CATEGORIES.includes(String(raw.category) as Category)
-          ? String(raw.category)
-          : 'etc') as Category;
-        const unit = (UNITS.includes(String(raw.unit) as Unit)
-          ? String(raw.unit)
-          : 'ea') as Unit;
-        const estimatedDays = typeof raw.estimatedExpiryDays === 'number' ? raw.estimatedExpiryDays : 0;
-        const expiryDate = estimatedDays > 0
-          ? new Date(Date.now() + estimatedDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          : calculateExpiryDate(today, category, 'refrigerated');
-        return {
-          name: String(raw.name ?? ''),
-          quantity: typeof raw.quantity === 'number' ? raw.quantity : 1,
-          unit,
-          category,
-          confidence: typeof raw.confidence === 'number' ? raw.confidence : undefined,
-          estimatedExpiryDays: estimatedDays || undefined,
-          selected: true,
-          expiryDate,
-        };
-      });
-
-      setScannedItems(items);
-      setStep('confirm');
-      setIsResultSheetOpen(true);
-    } catch (err) {
-      setLastErrorMessage(err instanceof Error ? err.message : 'Scan failed');
-      setIsFailureSheetOpen(true);
-      setStep('upload');
-    }
-  };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error(t('scan.fileTooLarge'));
-      e.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const result = ev.target?.result;
-      if (typeof result === 'string') setPreviewImage(result);
-    };
-    reader.readAsDataURL(file);
-
-    if (isPremium) {
-      await startScanning(file);
-      return;
-    }
-
-    if (isAdsAvailable) {
-      pendingFileRef.current = file;
-      setIsWatchingAd(true);
-      const rewarded = await watchAdForReward(() => {});
-      setIsWatchingAd(false);
-
-      if (rewarded) {
-        const pendingFile = pendingFileRef.current;
-        pendingFileRef.current = null;
-        if (pendingFile) await startScanning(pendingFile);
-      } else {
-        toast.error(t('scan.adRequired'));
-        pendingFileRef.current = null;
-      }
-    } else {
-      await startScanning(file);
-    }
-  };
-
-  const toggleItem = (index: number) => {
-    setScannedItems((items) =>
-      items.map((item, i) => (i === index ? { ...item, selected: !item.selected } : item))
-    );
-  };
-
-  const updateItem = (index: number, updates: Partial<ExtendedScannedItem>) => {
-    setScannedItems((items) =>
-      items.map((item, i) => (i === index ? { ...item, ...updates } : item))
-    );
-  };
-
-  const addToFridge = () => {
-    const selectedItems = scannedItems.filter((item) => item.selected);
-    const today = new Date().toISOString().split('T')[0];
-
-    selectedItems.forEach((item) => {
-      addIngredient({
-        name: item.name,
-        category: item.category || 'etc',
-        quantity: item.quantity || 1,
-        unit: item.unit || 'ea',
-        storageType: 'refrigerated' satisfies StorageType,
-        purchaseDate: today,
-        expiryDate: item.expiryDate || calculateExpiryDate(today, item.category || 'etc', 'refrigerated'),
-      });
-    });
-
-    toast.success(t('scan.foundItems', { count: selectedItems.length }));
-    router.push(`/${locale}/fridge`);
-  };
-
-  const reset = () => {
-    setStep('upload');
-    setScannedItems([]);
-    setPreviewImage(null);
-    setIsResultSheetOpen(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (cameraInputRef.current) cameraInputRef.current.value = '';
-  };
+  const scan = useReceiptScan({ locale, isPremium, isAdsAvailable, watchAdForReward });
+  const currentStepIndex = STEPS.indexOf(scan.step);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -208,20 +61,20 @@ export default function ScanPage() {
         </div>
 
         <AnimatePresence mode="wait">
-          {step === 'upload' && (
+          {scan.step === 'upload' && (
             <ScanUploadStep
               isPremium={isPremium}
               isMobile={isMobile}
-              useAIVision={useAIVision}
-              onToggleAIVision={() => setUseAIVision((v) => !v)}
-              onScanClick={handleScanClick}
-              onFileSelect={handleFileSelect}
-              fileInputRef={fileInputRef}
-              cameraInputRef={cameraInputRef}
+              useAIVision={scan.useAIVision}
+              onToggleAIVision={() => scan.setUseAIVision((v) => !v)}
+              onScanClick={scan.handleScanClick}
+              onFileSelect={scan.handleFileSelect}
+              fileInputRef={scan.fileInputRef}
+              cameraInputRef={scan.cameraInputRef}
             />
           )}
 
-          {isWatchingAd && (
+          {scan.isWatchingAd && (
             <motion.div
               key="ad"
               initial={{ opacity: 0 }}
@@ -236,7 +89,7 @@ export default function ScanPage() {
             </motion.div>
           )}
 
-          {step === 'scanning' && (
+          {scan.step === 'scanning' && (
             <motion.div
               key="scanning"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -245,11 +98,11 @@ export default function ScanPage() {
               transition={spring.gentle}
               className="flex flex-col items-center py-16"
             >
-              {previewImage && (
+              {scan.previewImage && (
                 <motion.img
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  src={previewImage}
+                  src={scan.previewImage}
                   alt="Receipt"
                   className="mb-toss-lg max-h-48 rounded-2xl object-contain shadow-lg"
                 />
@@ -273,32 +126,32 @@ export default function ScanPage() {
             </motion.div>
           )}
 
-          {step === 'confirm' && (
+          {scan.step === 'confirm' && (
             <ScanConfirmStep
-              previewImage={previewImage}
-              scannedItems={scannedItems}
-              onOpenResults={() => setIsResultSheetOpen(true)}
-              onReset={reset}
-              onAddToFridge={addToFridge}
+              previewImage={scan.previewImage}
+              scannedItems={scan.scannedItems}
+              onOpenResults={() => scan.setIsResultSheetOpen(true)}
+              onReset={scan.reset}
+              onAddToFridge={scan.addToFridge}
             />
           )}
         </AnimatePresence>
       </div>
 
       <ScanResultsSheet
-        isOpen={isResultSheetOpen}
-        onClose={() => setIsResultSheetOpen(false)}
-        items={scannedItems}
-        onToggleItem={toggleItem}
-        onUpdateItem={updateItem}
-        onAddToFridge={addToFridge}
+        isOpen={scan.isResultSheetOpen}
+        onClose={() => scan.setIsResultSheetOpen(false)}
+        items={scan.scannedItems}
+        onToggleItem={scan.toggleItem}
+        onUpdateItem={scan.updateItem}
+        onAddToFridge={scan.addToFridge}
       />
 
       <ScanFailureSheet
-        isOpen={isFailureSheetOpen}
-        onClose={() => setIsFailureSheetOpen(false)}
-        errorMessage={lastErrorMessage}
-        onRetry={() => handleScanClick(isMobile ? cameraInputRef : fileInputRef)}
+        isOpen={scan.failureError !== null}
+        onClose={scan.closeFailure}
+        errorMessage={scan.failureError || ''}
+        onRetry={() => scan.handleScanClick(isMobile ? scan.cameraInputRef : scan.fileInputRef)}
       />
     </div>
   );

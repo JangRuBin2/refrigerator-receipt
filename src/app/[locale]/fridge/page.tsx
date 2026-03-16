@@ -1,24 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { useParams } from 'next/navigation';
-import { Plus, Search, Trash2, Edit2, Package, Snowflake, Sun, X } from 'lucide-react';
+import { Plus, Search, Package, Snowflake, Sun, X } from 'lucide-react';
 
-import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { BannerAd } from '@/components/ads/BannerAd';
-import { Select } from '@/components/ui/Select';
-import { Badge } from '@/components/ui/Badge';
-import { BottomSheet, BottomSheetActions } from '@/components/ui/BottomSheet';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useStore } from '@/store/useStore';
 import { toast } from '@/store/useToastStore';
-import { getDaysUntilExpiry, getExpiryColor, calculateExpiryDate, cn } from '@/lib/utils';
-import { spring, listItem } from '@/lib/animations';
-import type { Ingredient, StorageType, Category, Unit } from '@/types';
-import { CATEGORIES, UNITS } from '@/lib/constants';
+import { getDaysUntilExpiry, cn } from '@/lib/utils';
+import type { Ingredient, StorageType } from '@/types';
+import { IngredientList } from '@/features/fridge/IngredientList';
+import { IngredientFormSheet } from '@/features/fridge/IngredientFormSheet';
 
 const STORAGE_TYPES: { type: StorageType | 'all'; icon: typeof Package }[] = [
   { type: 'all', icon: Package },
@@ -29,106 +24,34 @@ const STORAGE_TYPES: { type: StorageType | 'all'; icon: typeof Package }[] = [
 
 export default function FridgePage() {
   const t = useTranslations();
-  const params = useParams();
-  const locale = String(params.locale ?? 'ko');
-  const { ingredients, addIngredient, updateIngredient, deleteIngredient } = useStore();
+  const { ingredients, deleteIngredient } = useStore();
 
   const [filter, setFilter] = useState<StorageType | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Ingredient | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  // Form state
-  const [formData, setFormData] = useState<{
-    name: string;
-    category: Category;
-    quantity: string;
-    unit: Unit;
-    storageType: StorageType;
-    purchaseDate: string;
-    expiryDate: string;
-  }>({
-    name: '',
-    category: 'vegetables',
-    quantity: '',
-    unit: 'g',
-    storageType: 'refrigerated',
-    purchaseDate: new Date().toISOString().split('T')[0],
-    expiryDate: '',
-  });
 
-  // Filter ingredients
-  const filteredIngredients = ingredients
-    .filter((item) => filter === 'all' || item.storageType === filter)
-    .filter((item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .map((item) => ({
-      ...item,
-      daysLeft: getDaysUntilExpiry(item.expiryDate),
-    }))
-    .sort((a, b) => a.daysLeft - b.daysLeft);
+  const filteredIngredients = useMemo(() =>
+    ingredients
+      .filter((item) => filter === 'all' || item.storageType === filter)
+      .filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .map((item) => ({ ...item, daysLeft: getDaysUntilExpiry(item.expiryDate) }))
+      .sort((a, b) => a.daysLeft - b.daysLeft),
+    [ingredients, filter, searchQuery]
+  );
 
-  // Group by category (immutable)
-  const groupedIngredients = filteredIngredients.reduce<Record<string, typeof filteredIngredients>>((acc, item) => ({
-    ...acc,
-    [item.category]: [...(acc[item.category] ?? []), item],
-  }), {});
+  const groupedIngredients = useMemo(() =>
+    filteredIngredients.reduce<Record<string, typeof filteredIngredients>>((acc, item) => ({
+      ...acc,
+      [item.category]: [...(acc[item.category] ?? []), item],
+    }), {}),
+    [filteredIngredients]
+  );
 
   const handleOpenSheet = (item?: Ingredient) => {
-    if (item) {
-      setEditingItem(item);
-      setFormData({
-        name: item.name,
-        category: item.category,
-        quantity: item.quantity.toString(),
-        unit: item.unit,
-        storageType: item.storageType,
-        purchaseDate: item.purchaseDate,
-        expiryDate: item.expiryDate,
-      });
-    } else {
-      setEditingItem(null);
-      const today = new Date().toISOString().split('T')[0];
-      setFormData({
-        name: '',
-        category: 'vegetables',
-        quantity: '',
-        unit: 'g',
-        storageType: 'refrigerated',
-        purchaseDate: today,
-        expiryDate: calculateExpiryDate(today, 'vegetables', 'refrigerated'),
-      });
-    }
+    setEditingItem(item ?? null);
     setIsSheetOpen(true);
-  };
-
-  const handleSubmit = () => {
-    if (!formData.name.trim()) return;
-
-    const ingredientData = {
-      name: formData.name.trim(),
-      category: formData.category,
-      quantity: parseFloat(formData.quantity) || 1,
-      unit: formData.unit,
-      storageType: formData.storageType,
-      purchaseDate: formData.purchaseDate,
-      expiryDate: formData.expiryDate || calculateExpiryDate(formData.purchaseDate, formData.category, formData.storageType),
-    };
-
-    if (editingItem) {
-      updateIngredient(editingItem.id, ingredientData);
-      toast.success(t('common.success'));
-    } else {
-      addIngredient(ingredientData);
-      toast.success(t('common.success'));
-    }
-
-    setIsSheetOpen(false);
-  };
-
-  const handleDelete = (id: string) => {
-    setDeleteTarget(id);
   };
 
   const confirmDelete = () => {
@@ -139,27 +62,12 @@ export default function FridgePage() {
     }
   };
 
-  const handleCategoryChange = (category: Category) => {
-    setFormData((prev) => ({
-      ...prev,
-      category,
-      expiryDate: calculateExpiryDate(prev.purchaseDate, category, prev.storageType),
-    }));
-  };
-
-  const handleStorageChange = (storageType: StorageType) => {
-    setFormData((prev) => ({
-      ...prev,
-      storageType,
-      expiryDate: calculateExpiryDate(prev.purchaseDate, prev.category, storageType),
-    }));
-  };
+  // IngredientFormSheet를 key로 리셋하여 editingItem 변경 시 폼 초기화
+  const sheetKey = isSheetOpen ? (editingItem?.id ?? 'new') : 'closed';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-
-
-      {/* Search + Add - Fixed at top */}
+      {/* Search + Add */}
       <div className="sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm dark:bg-gray-900/95 p-toss-md pb-0">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -190,7 +98,7 @@ export default function FridgePage() {
           </motion.button>
         </div>
 
-        {/* Filter Tabs - Horizontal scroll */}
+        {/* Filter Tabs */}
         <div className="flex gap-2 overflow-x-auto py-toss-sm scrollbar-hide">
           {STORAGE_TYPES.map(({ type, icon: Icon }) => (
             <motion.button
@@ -214,189 +122,23 @@ export default function FridgePage() {
       </div>
 
       <div className="p-toss-md pt-0 pb-8 space-y-toss-md">
-        {/* Ingredients List */}
-        {filteredIngredients.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center py-16"
-          >
-            <div className="rounded-full bg-gray-100 p-6 dark:bg-gray-800">
-              <Package className="h-12 w-12 text-gray-400" />
-            </div>
-            <p className="toss-body1 mt-toss-md text-gray-500">{t('fridge.empty')}</p>
-            <p className="toss-caption mt-toss-xs">{t('fridge.addFirst')}</p>
-            <Button
-              onClick={() => handleOpenSheet()}
-              className="mt-toss-md"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t('fridge.addIngredient')}
-            </Button>
-          </motion.div>
-        ) : (
-          <AnimatePresence>
-            {Object.entries(groupedIngredients).map(([category, items], categoryIndex) => (
-              <motion.div
-                key={category}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ ...spring.gentle, delay: categoryIndex * 0.05 }}
-              >
-                <h3 className="toss-body2 font-semibold text-gray-500 mb-toss-sm px-1">
-                  {t(`categories.${category}`)} ({items.length})
-                </h3>
-                <div className="space-y-2">
-                  {items.map((item, itemIndex) => (
-                    <motion.div
-                      key={item.id}
-                      variants={listItem}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      transition={{ delay: itemIndex * 0.03 }}
-                      className="toss-card"
-                    >
-                      <div className="flex items-center gap-toss-sm">
-                        <div className="flex-1 min-w-0">
-                          <p className="toss-body1 font-medium truncate">{item.name}</p>
-                          <p className="toss-caption">
-                            {item.quantity} {t(`units.${item.unit}`)}
-                          </p>
-                        </div>
-                        <Badge className={getExpiryColor(item.daysLeft)}>
-                          {item.daysLeft < 0
-                            ? t('fridge.expired')
-                            : item.daysLeft === 0
-                              ? t('fridge.today')
-                              : t('fridge.dDay', { days: item.daysLeft })}
-                        </Badge>
-                        <div className="flex gap-1">
-                          <motion.button
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => handleOpenSheet(item)}
-                            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
-                            aria-label={t('common.edit')}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </motion.button>
-                          <motion.button
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => handleDelete(item.id)}
-                            className="rounded-full p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-                            aria-label={t('common.delete')}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </motion.button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
-
+        <IngredientList
+          ingredients={filteredIngredients}
+          groupedIngredients={groupedIngredients}
+          onEdit={handleOpenSheet}
+          onDelete={setDeleteTarget}
+          onAdd={() => handleOpenSheet()}
+        />
         <BannerAd className="mt-4" />
       </div>
 
-      {/* Add/Edit BottomSheet */}
-      <BottomSheet
+      <IngredientFormSheet
+        key={sheetKey}
         isOpen={isSheetOpen}
+        editingItem={editingItem}
         onClose={() => setIsSheetOpen(false)}
-        title={editingItem ? t('fridge.editIngredient') : t('fridge.addIngredient')}
-        snapPoints={[75]}
-      >
-        <div className="space-y-toss-md">
-          <Input
-            label={t('fridge.ingredientName')}
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder={t('fridge.ingredientName')}
-          />
+      />
 
-          <Select
-            label={t('fridge.category')}
-            value={formData.category}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (CATEGORIES.includes(val as Category)) handleCategoryChange(val as Category);
-            }}
-            options={CATEGORIES.map((cat) => ({
-              value: cat,
-              label: t(`categories.${cat}`),
-            }))}
-          />
-
-          <div className="grid grid-cols-2 gap-toss-sm">
-            <Input
-              label={t('fridge.quantity')}
-              type="number"
-              value={formData.quantity}
-              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-              placeholder="1"
-            />
-            <Select
-              label={t('fridge.unit')}
-              value={formData.unit}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (UNITS.includes(val as Unit)) setFormData({ ...formData, unit: val as Unit });
-              }}
-              options={UNITS.map((unit) => ({
-                value: unit,
-                label: t(`units.${unit}`),
-              }))}
-            />
-          </div>
-
-          <Select
-            label={t('fridge.storageType')}
-            value={formData.storageType}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (['refrigerated', 'frozen', 'room_temp'].includes(val)) handleStorageChange(val as StorageType);
-            }}
-            options={[
-              { value: 'refrigerated', label: t('fridge.refrigerated') },
-              { value: 'frozen', label: t('fridge.frozen') },
-              { value: 'room_temp', label: t('fridge.roomTemp') },
-            ]}
-          />
-
-          <div className="grid grid-cols-2 gap-toss-sm">
-            <Input
-              label={t('fridge.purchaseDate')}
-              type="date"
-              value={formData.purchaseDate}
-              onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
-            />
-            <Input
-              label={t('fridge.expiryDate')}
-              type="date"
-              value={formData.expiryDate}
-              onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-            />
-          </div>
-
-          <BottomSheetActions>
-            <Button onClick={handleSubmit} className="w-full">
-              {t('common.save')}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsSheetOpen(false)}
-              className="w-full"
-            >
-              {t('common.cancel')}
-            </Button>
-          </BottomSheetActions>
-        </div>
-      </BottomSheet>
-
-      {/* Delete Confirm Dialog */}
       <ConfirmDialog
         isOpen={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}

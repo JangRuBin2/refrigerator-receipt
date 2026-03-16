@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { useParams } from 'next/navigation';
 import {
   ShoppingCart,
   Plus,
@@ -19,185 +18,52 @@ import { usePremiumAction } from '@/hooks/usePremiumAction';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { z } from 'zod';
-import { cn, extractErrorMessage } from '@/lib/utils';
-import { useStore } from '@/store/useStore';
-import { toast } from '@/store/useToastStore';
-import { categorySchema, unitSchema } from '@/lib/validations';
+import { cn } from '@/lib/utils';
 import type { ShoppingItem } from '@/types/supabase';
-import {
-  getShoppingList,
-  addShoppingItems,
-  updateShoppingItem,
-  deleteShoppingItem as deleteShoppingItemApi,
-  completeShoppingList,
-  getShoppingRecommendations,
-  type ParsedShoppingList,
-} from '@/lib/api/shopping';
-import { getIngredients } from '@/lib/api/ingredients';
 import { AddItemModal } from '@/features/shopping/AddItemModal';
 import { AiRecommendations } from '@/features/shopping/AiRecommendations';
 import { ShoppingItemGroup } from '@/features/shopping/ShoppingItemGroup';
-
-const recommendedItemSchema = z.object({
-  name: z.string(),
-  quantity: z.number(),
-  unit: unitSchema,
-  category: categorySchema,
-  reason: z.string(),
-});
-
-const recommendResponseSchema = z.object({
-  recommendations: z.array(recommendedItemSchema).optional().default([]),
-  source: z.string().optional(),
-});
-
-type RecommendedItem = z.infer<typeof recommendedItemSchema>;
+import { useShoppingList } from '@/features/shopping/useShoppingList';
+import { useShoppingRecommendations } from '@/features/shopping/useShoppingRecommendations';
 
 export default function ShoppingPage() {
   const t = useTranslations();
-  const params = useParams();
-  const locale = typeof params.locale === 'string' ? params.locale : 'ko';
-
-  const [list, setList] = useState<ParsedShoppingList | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [recommendations, setRecommendations] = useState<RecommendedItem[]>([]);
-  const [recommendLoading, setRecommendLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unchecked' | 'checked'>('all');
-  const [error, setError] = useState<string | null>(null);
-  const [addError, setAddError] = useState<string | null>(null);
-  const [recommendError, setRecommendError] = useState(false);
-  const [recommendFetched, setRecommendFetched] = useState(false);
   const { executeWithPremiumCheck, showPremiumModal, closePremiumModal, isWatchingAd } = usePremiumAction();
 
-  const fetchList = useCallback(async () => {
-    try {
-      setError(null);
-      const data = await getShoppingList();
-      setList(data.list);
-    } catch (err) {
-      setError(`${t('shopping.loadError')} ${extractErrorMessage(err)}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
+  const {
+    list, loading, error, addError,
+    fetchList, addItem, toggleCheck, deleteItem, completeList,
+  } = useShoppingList();
 
-  const fetchRecommendations = useCallback(async () => {
-    setRecommendLoading(true);
-    setRecommendError(false);
-    try {
-      // Store에서 먼저 시도, 비어있으면 DB에서 직접 조회
-      let ingredientNames = useStore.getState().ingredients.map((i) => i.name);
-      if (ingredientNames.length === 0) {
-        const dbIngredients = await getIngredients();
-        ingredientNames = dbIngredients.map((i) => i.name);
-        if (dbIngredients.length > 0) {
-          useStore.getState().setIngredients(dbIngredients);
-        }
-      }
-      const raw = await getShoppingRecommendations(ingredientNames);
-      const data = recommendResponseSchema.parse(raw);
-      setRecommendations(data.recommendations);
-    } catch {
-      setRecommendError(true);
-      setRecommendations([]);
-    } finally {
-      setRecommendLoading(false);
-      setRecommendFetched(true);
-    }
-  }, []);
+  const recommend = useShoppingRecommendations();
 
-  useEffect(() => {
-    fetchList();
-  }, [fetchList]);
-
-  const addItem = async (item: Partial<ShoppingItem>) => {
-    if (!item.name?.trim()) return;
-    setAddError(null);
-    try {
-      const data = await addShoppingItems(
-        [{ name: item.name!, quantity: item.quantity, unit: item.unit, category: item.category }],
-        list?.id
-      );
-      setList(data.list);
-      setShowAddModal(false);
-    } catch (err) {
-      setAddError(`${t('shopping.addError')} ${extractErrorMessage(err)}`);
-    }
+  const addRecommendedItem = async (item: { name: string; quantity: number; unit: ShoppingItem['unit']; category: ShoppingItem['category']; reason: string }) => {
+    await addItem({ name: item.name, quantity: item.quantity, unit: item.unit, category: item.category });
+    recommend.removeItem(item.name);
   };
-
-  const addRecommendedItem = async (item: RecommendedItem) => {
-    await addItem({
-      name: item.name,
-      quantity: item.quantity,
-      unit: item.unit,
-      category: item.category,
-    });
-    setRecommendations(prev => prev.filter(r => r.name !== item.name));
-  };
-
-  const toggleCheck = async (itemId: string, checked: boolean) => {
-    if (!list) return;
-    setList(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        items: prev.items.map(item =>
-          item.id === itemId ? { ...item, checked } : item
-        ),
-      };
-    });
-    try {
-      await updateShoppingItem(list.id, itemId, { checked });
-    } catch {
-      fetchList();
-    }
-  };
-
-  const deleteItem = async (itemId: string) => {
-    if (!list) return;
-    setList(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        items: prev.items.filter(item => item.id !== itemId),
-      };
-    });
-    try {
-      await deleteShoppingItemApi(list.id, itemId);
-    } catch {
-      fetchList();
-    }
-  };
-
-  const completeList = async () => {
-    if (!list) return;
-    try {
-      await completeShoppingList(list.id);
-      fetchList();
-    } catch {
-      toast.error(t('common.error'));
-    }
-  };
-
-  const filteredItems = (list?.items || []).filter(item => {
-    if (filter === 'unchecked') return !item.checked;
-    if (filter === 'checked') return item.checked;
-    return true;
-  });
 
   const totalItems = list?.items.length || 0;
   const checkedItems = list?.items.filter(i => i.checked).length || 0;
   const progress = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
 
-  const groupedItems = filteredItems.reduce<Record<string, ShoppingItem[]>>((acc, item) => {
-    const category = item.category || 'etc';
-    return {
-      ...acc,
-      [category]: [...(acc[category] || []), item],
-    };
-  }, {});
+  const filteredItems = useMemo(() =>
+    (list?.items || []).filter(item => {
+      if (filter === 'unchecked') return !item.checked;
+      if (filter === 'checked') return item.checked;
+      return true;
+    }),
+    [list?.items, filter]
+  );
+
+  const groupedItems = useMemo(() =>
+    filteredItems.reduce<Record<string, ShoppingItem[]>>((acc, item) => {
+      const category = item.category || 'etc';
+      return { ...acc, [category]: [...(acc[category] || []), item] };
+    }, {}),
+    [filteredItems]
+  );
 
   if (loading) {
     return (
@@ -281,11 +147,11 @@ export default function ShoppingPage() {
         </div>
 
         <AiRecommendations
-          recommendations={recommendations}
-          loading={recommendLoading}
-          error={recommendError}
-          hasFetched={recommendFetched}
-          onFetch={() => executeWithPremiumCheck(fetchRecommendations)}
+          recommendations={recommend.recommendations}
+          loading={recommend.loading}
+          error={recommend.error}
+          hasFetched={recommend.fetched}
+          onFetch={() => executeWithPremiumCheck(recommend.fetch)}
           onAdd={addRecommendedItem}
         />
 
@@ -319,7 +185,7 @@ export default function ShoppingPage() {
       <AddItemModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onAdd={addItem}
+        onAdd={(item) => addItem(item, () => setShowAddModal(false))}
         error={addError}
       />
     </div>
