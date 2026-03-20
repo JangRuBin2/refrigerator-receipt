@@ -168,19 +168,21 @@ export function AiRecipeMode({ locale, isPremium, onBack }: AiRecipeModeProps) {
 
   const handleShare = useCallback(async () => {
     if (!recipe) return;
-    if (isTossEnvironment()) {
-      const recipeId = await autoSaveIfNeeded();
-      if (!recipeId) { toast.error(t('recommend.saveError')); return; }
-      try { await shareTossRecipeLink(recipeId, locale); } catch { toast.error(t('recommend.saveError')); }
-      return;
-    }
-    await autoSaveIfNeeded();
+    const recipeId = await autoSaveIfNeeded();
+    if (!recipeId) { toast.error(t('recommend.saveError')); return; }
+
     try {
-      const file = await renderRecipeToImage(recipe, locale, `mealkeeper-${recipe.title.slice(0, 20)}.png`);
-      const shared = await shareImage(file, recipe.title);
-      if (shared) toast.success(t('share.linkCopied'));
+      const result = await shareTossRecipeLink(recipeId, locale, recipe.title);
+      if (result === 'copied') toast.success(t('share.linkCopied'));
     } catch {
-      toast.error(t('recommend.saveError'));
+      // Toss/Web Share 실패 시 이미지 공유 fallback
+      try {
+        const file = await renderRecipeToImage(recipe, locale, `mealkeeper-${recipe.title.slice(0, 20)}.png`);
+        const shared = await shareImage(file, recipe.title);
+        if (shared) toast.success(t('share.linkCopied'));
+      } catch {
+        toast.error(t('recommend.saveError'));
+      }
     }
   }, [recipe, autoSaveIfNeeded, locale]);
 

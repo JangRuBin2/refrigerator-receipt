@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams, useParams } from 'next/navigation';
+import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams, useParams, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Clock, Wand2, ChefHat } from 'lucide-react';
 
@@ -65,9 +65,21 @@ function getIngredientsList(json: Json): Array<{ name: string; quantity: string 
 export function RecipeContent() {
   const searchParams = useSearchParams();
   const params = useParams();
+  const pathname = usePathname();
   const t = useTranslations();
   const locale = (params.locale as string) || 'ko';
-  const recipeId = searchParams.get('id');
+
+  // /locale/recipe?id=xxx (쿼리) 또는 /locale/recipe/{id} (path param, 토스 딥링크) 둘 다 지원
+  const recipeId = useMemo(() => {
+    const fromQuery = searchParams.get('id');
+    if (fromQuery) return fromQuery;
+    const segments = pathname.split('/').filter(Boolean);
+    // segments: [locale, 'recipe', recipeId]
+    if (segments.length >= 3 && segments[1] === 'recipe') {
+      return segments[2];
+    }
+    return null;
+  }, [searchParams, pathname]);
 
   const [recipe, setRecipe] = useState<RecipeRow | null>(null);
   const [loading, setLoading] = useState(true);
