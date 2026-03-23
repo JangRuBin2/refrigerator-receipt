@@ -58,10 +58,14 @@ export function FabMenu({ locale }: { locale: string }) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, close]);
 
+  const isLoginPage = pathname.endsWith('/login') || pathname.endsWith('/login/');
+
   const handleToggle = () => {
     light();
     setIsOpen((prev) => !prev);
   };
+
+  if (isLoginPage) return null;
 
   return (
     <>

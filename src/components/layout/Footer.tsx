@@ -1,9 +1,14 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { usePathname } from 'next/navigation';
 
 export function Footer() {
   const t = useTranslations('settings');
+  const pathname = usePathname();
+  const isLoginPage = pathname.endsWith('/login') || pathname.endsWith('/login/');
+
+  if (isLoginPage) return null;
 
   return (
     <footer className="px-4 pb-24 pt-6">

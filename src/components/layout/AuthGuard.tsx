@@ -13,7 +13,7 @@ function isPublicPath(pathname: string): boolean {
       .replace(/\/index$/, '')
       .replace(/\/$/, '')
       .replace(/^\/(ko|en|ja|zh)/, '');
-    return stripped === path || stripped.startsWith(path) || stripped === '';
+    return stripped === path || stripped.startsWith(path);
   });
 }
 
