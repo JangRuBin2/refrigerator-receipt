@@ -331,7 +331,10 @@
     "loginRequired": "请登录以使用服务",
     "loginCancelled": "Toss登录已取消或失败，请重试。",
     "loginFailed": "登录失败，请重试。",
-    "loginError": "登录错误"
+    "loginError": "登录错误",
+    "openInTossDescription": "MealKeeper可在Toss应用中使用。\n请打开Toss应用登录。",
+    "openInTossButton": "打开Toss应用",
+    "tossInstallGuide": "如果没有Toss应用，请先安装。"
   },
   "pricing": {
     "title": "价格方案",

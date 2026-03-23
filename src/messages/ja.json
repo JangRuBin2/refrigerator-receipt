@@ -331,7 +331,10 @@
     "loginRequired": "サービスを利用するにはログインが必要です",
     "loginCancelled": "Tossログインがキャンセルまたは失敗しました。もう一度お試しください。",
     "loginFailed": "ログインに失敗しました。もう一度お試しください。",
-    "loginError": "ログインエラー"
+    "loginError": "ログインエラー",
+    "openInTossDescription": "ミールキーパーはTossアプリ内でご利用いただけます。\nTossアプリを開いてログインしてください。",
+    "openInTossButton": "Tossアプリを開く",
+    "tossInstallGuide": "Tossアプリがインストールされていない場合は、先にインストールしてください。"
   },
   "pricing": {
     "title": "料金プラン",

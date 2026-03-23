@@ -6,8 +6,19 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { createClient } from '@/lib/supabase/client';
-import { tossAppLogin } from '@/lib/apps-in-toss/sdk';
+import { tossAppLogin, isAppsInTossEnvironment } from '@/lib/apps-in-toss/sdk';
 import { tossLogin } from '@/lib/api/auth';
+
+const TOSS_DEEPLINK = 'supertoss://';
+const TOSS_APP_STORE = 'https://apps.apple.com/kr/app/toss/id839333328';
+const TOSS_PLAY_STORE = 'https://play.google.com/store/apps/details?id=viva.republica.toss';
+
+function getStoreUrl(): string {
+  if (typeof navigator === 'undefined') return TOSS_PLAY_STORE;
+  const ua = navigator.userAgent.toLowerCase();
+  if (/iphone|ipad|ipod/.test(ua)) return TOSS_APP_STORE;
+  return TOSS_PLAY_STORE;
+}
 
 export default function LoginPage() {
   const t = useTranslations();
@@ -16,8 +27,11 @@ export default function LoginPage() {
   const locale = params.locale as string;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isTossApp, setIsTossApp] = useState<boolean | null>(null);
 
   useEffect(() => {
+    setIsTossApp(isAppsInTossEnvironment());
+
     const checkExistingSession = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -33,7 +47,6 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // Step 1: 토스 네이티브 로그인 (한 번만 호출)
       const loginResult = await tossAppLogin();
       if (!loginResult) {
         setError(t('auth.loginCancelled'));
@@ -41,7 +54,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Step 2: 서버 토큰 교환 (실패 시 1회 재시도)
       let data = await tossLogin(loginResult.authorizationCode, loginResult.referrer);
 
       if (!data.success) {
@@ -64,6 +76,21 @@ export default function LoginPage() {
     }
   };
 
+  const handleOpenToss = () => {
+    window.location.href = TOSS_DEEPLINK;
+    setTimeout(() => {
+      window.location.href = getStoreUrl();
+    }, 1500);
+  };
+
+  if (isTossApp === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-primary-50 to-white p-4 dark:from-gray-900 dark:to-gray-800">
       <div className="w-full max-w-sm">
@@ -83,41 +110,70 @@ export default function LoginPage() {
         {/* Login Card */}
         <Card>
           <CardContent className="p-6">
-            {error && (
-              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                {error}
-              </div>
-            )}
+            {isTossApp ? (
+              <>
+                {error && (
+                  <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                    {error}
+                  </div>
+                )}
 
-            <Button
-              onClick={handleTossLogin}
-              className="w-full"
-              size="lg"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              ) : (
-                <svg
-                  className="mr-2 h-5 w-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
+                <Button
+                  onClick={handleTossLogin}
+                  className="w-full"
+                  size="lg"
+                  disabled={isLoading}
                 >
-                  <circle cx="12" cy="12" r="10" fill="currentColor" />
-                  <path
-                    d="M8 12h8M12 8v8"
-                    stroke="white"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              )}
-              {t('auth.loginWithToss')}
-            </Button>
+                  {isLoading ? (
+                    <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <svg
+                      className="mr-2 h-5 w-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle cx="12" cy="12" r="10" fill="currentColor" />
+                      <path
+                        d="M8 12h8M12 8v8"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  )}
+                  {t('auth.loginWithToss')}
+                </Button>
 
-            <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
-              {t('auth.loginRequired')}
-            </p>
+                <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
+                  {t('auth.loginRequired')}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="mb-4 whitespace-pre-line text-center text-sm text-gray-600 dark:text-gray-400">
+                  {t('auth.openInTossDescription')}
+                </p>
+
+                <Button
+                  onClick={handleOpenToss}
+                  className="w-full"
+                  size="lg"
+                >
+                  <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="currentColor" />
+                    <path
+                      d="M10 8l6 4-6 4V8z"
+                      fill="white"
+                    />
+                  </svg>
+                  {t('auth.openInTossButton')}
+                </Button>
+
+                <p className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
+                  {t('auth.tossInstallGuide')}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 

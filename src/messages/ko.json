@@ -338,7 +338,10 @@
     "loginRequired": "서비스 이용을 위해 로그인이 필요합니다",
     "loginCancelled": "토스 로그인이 취소되었거나 실패했습니다. 다시 시도해주세요.",
     "loginFailed": "로그인에 실패했습니다. 다시 시도해주세요.",
-    "loginError": "로그인 중 오류"
+    "loginError": "로그인 중 오류",
+    "openInTossDescription": "밀키퍼는 토스 앱에서 이용할 수 있어요.\n토스 앱을 열어 로그인해주세요.",
+    "openInTossButton": "토스 앱으로 이동",
+    "tossInstallGuide": "토스 앱이 없다면 먼저 설치해주세요."
   },
   "pricing": {
     "title": "요금제",

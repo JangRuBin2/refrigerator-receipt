@@ -338,7 +338,10 @@
     "loginRequired": "Please sign in to use the service",
     "loginCancelled": "Toss login was cancelled or failed. Please try again.",
     "loginFailed": "Login failed. Please try again.",
-    "loginError": "Login error"
+    "loginError": "Login error",
+    "openInTossDescription": "MealKeeper is available in the Toss app.\nPlease open the Toss app to log in.",
+    "openInTossButton": "Open Toss App",
+    "tossInstallGuide": "Please install the Toss app first if you don't have it."
   },
   "pricing": {
     "title": "Pricing",
