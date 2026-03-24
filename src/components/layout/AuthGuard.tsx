@@ -3,37 +3,45 @@
 import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { useDebugRender } from '@/hooks/useDebugRender';
 
-const PUBLIC_PATHS = ['/login', '/terms', '/recipe'];
+const PUBLIC_PATHS = ['/login', '/terms', '/recipe', '/guide'];
 
 function isPublicPath(pathname: string): boolean {
+  const stripped = pathname
+    .replace(/\.html$/, '')
+    .replace(/\/index$/, '')
+    .replace(/\/$/, '')
+    .replace(/^\/(ko|en|ja|zh)/, '');
+
+  // Home path (empty after stripping locale) is always accessible
+  if (stripped === '') return true;
+
   return PUBLIC_PATHS.some((path) => {
-    const stripped = pathname
-      .replace(/\.html$/, '')
-      .replace(/\/index$/, '')
-      .replace(/\/$/, '')
-      .replace(/^\/(ko|en|ja|zh)/, '');
     return stripped === path || stripped.startsWith(path);
   });
 }
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
+  useDebugRender('AuthGuard');
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const params = useParams();
   const pathname = usePathname();
   const locale = (params.locale as string) || 'ko';
 
   useEffect(() => {
+    let cancelled = false;
+
     const checkAuth = async () => {
       const currentPath = window.location.pathname;
 
       if (isPublicPath(currentPath)) {
-        setIsAuthed(true);
+        if (!cancelled) setIsAuthed(true);
         return;
       }
 
       if (!isSupabaseConfigured()) {
-        setIsAuthed(true);
+        if (!cancelled) setIsAuthed(true);
         return;
       }
 
@@ -49,20 +57,30 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
           timeoutPromise,
         ]);
 
+        if (cancelled) return;
+
         if (user) {
           setIsAuthed(true);
           return;
         }
 
-        setIsAuthed(false);
-        window.location.href = `/${locale}/login/`;
+        // Prevent redirect loop: only redirect if not already heading to login
+        if (!currentPath.includes('/login')) {
+          setIsAuthed(false);
+          window.location.href = `/${locale}/login/`;
+        }
       } catch {
-        setIsAuthed(false);
-        window.location.href = `/${locale}/login/`;
+        if (cancelled) return;
+        if (!window.location.pathname.includes('/login')) {
+          setIsAuthed(false);
+          window.location.href = `/${locale}/login/`;
+        }
       }
     };
 
     checkAuth();
+
+    return () => { cancelled = true; };
   }, [locale, pathname]);
 
   if (isAuthed === null) {
