@@ -561,5 +561,65 @@
       "content": "1. 因自然灾害、战争、基础通信运营商服务中断等不可抗力因素导致无法提供服务时，服务免于承担责任。2. AI生成的食谱、营养信息等仅供参考，服务不保证其准确性。3. 用户因使用服务未获得预期收益或遭受损失的，服务不承担相关责任。"
     },
     "effectiveDate": "生效日期：2025年2月1日"
+  },
+  "tutorial": {
+    "common": {
+      "next": "下一步"
+    },
+    "welcome": {
+      "title": "了解如何使用MealKeeper！",
+      "description": "亲自体验主要功能",
+      "startButton": "开始体验",
+      "features": {
+        "fridge": { "title": "冰箱管理", "desc": "添加并一目了然地管理食材" },
+        "scan": { "title": "收据扫描", "desc": "一张照片自动登记食材" },
+        "recipe": { "title": "食谱推荐", "desc": "根据现有食材推荐食谱" },
+        "expiry": { "title": "保质期提醒", "desc": "提前查看即将过期的食材" }
+      }
+    },
+    "addIngredient": {
+      "defaultName": "胡萝卜",
+      "intro": { "title": "添加食材", "description": "让我们往冰箱里添加食材吧。点击下方按钮！", "button": "添加食材" },
+      "name": { "title": "食材名称", "hint": "请输入要添加的食材名称", "label": "名称", "placeholder": "例如：胡萝卜、洋葱、牛奶..." },
+      "category": { "title": "分类", "hint": "请选择食材类型" },
+      "storage": { "refrigerated": "冷藏", "frozen": "冷冻", "roomTemp": "常温" },
+      "storageStep": { "title": "存储方式", "hint": "存放在哪里？" },
+      "quantity": { "title": "数量", "hint": "买了多少？", "label": "数量", "unitLabel": "单位" },
+      "confirm": { "title": "确认添加", "button": "放入冰箱", "success": "食材已添加！" },
+      "done": { "title": "做得好！", "description": "第一个食材已放入冰箱。让我们去看看吧！" }
+    },
+    "viewFridge": {
+      "tooltip": { "title": "试试按存储方式筛选！", "description": "点击标签查看冷藏、冷冻或常温食材" },
+      "tabs": { "all": "全部", "refrigerated": "冷藏", "frozen": "冷冻", "room_temp": "常温" },
+      "empty": "还没有食材"
+    },
+    "checkExpiry": {
+      "title": "保质期管理",
+      "description": "一目了然地查看食材保质期，优先消费即将过期的食材！",
+      "expired": "已过期", "today": "今天到期", "daysLeft": "D-{days}",
+      "legend": { "safe": "安全", "warning": "注意", "danger": "危险", "expired": "过期" },
+      "demoItems": { "milk": "牛奶", "chicken": "鸡胸肉", "apple": "苹果" }
+    },
+    "scanReceipt": {
+      "intro": { "title": "收据扫描", "description": "拍摄收据，AI自动识别食材。来试试吧！", "scanButton": "体验扫描", "hint": "体验模式使用虚拟收据" },
+      "scanning": { "title": "正在分析收据..." },
+      "results": { "found": "找到了{count}种食材！", "hint": "选择或取消要添加的食材", "saveButton": "将{count}种食材放入冰箱" },
+      "saved": { "title": "扫描完成！", "description": "一张收据一次性添加了多种食材" },
+      "mockItems": { "egg": "鸡蛋", "tofu": "豆腐", "greenOnion": "大葱", "porkBelly": "五花肉", "kimchi": "泡菜" }
+    },
+    "viewRecipes": {
+      "title": "食谱推荐",
+      "description": "冰箱里有{count}种食材。可以做什么菜呢？",
+      "spinButton": "转动食谱轮盘", "spinning": "推荐中...", "recommended": "推荐食谱",
+      "minutes": "分钟", "match": "食材匹配",
+      "difficulty": { "easy": "简单", "medium": "中等", "hard": "困难" },
+      "recipes": { "eggStew": "蒸蛋", "eggStewDesc": "嫩滑可口的蒸蛋", "porkStirFry": "炒五花肉", "porkStirFryDesc": "大葱炒五花肉", "tofuSoup": "豆腐汤", "tofuSoupDesc": "暖心暖胃的豆腐汤" }
+    },
+    "complete": {
+      "title": "体验完成！", "description": "您已体验了MealKeeper的所有主要功能",
+      "startButton": "开始使用MealKeeper",
+      "features": { "addIngredient": "添加食材", "viewFridge": "查看冰箱", "checkExpiry": "管理保质期", "scanReceipt": "扫描收据", "viewRecipes": "食谱推荐" }
+    },
+    "exit": { "button": "退出", "title": "要退出体验吗？", "description": "体验数据将被删除。您可以随时重新开始。", "confirm": "退出", "cancel": "继续" }
   }
 }

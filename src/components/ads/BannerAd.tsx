@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePremium } from '@/hooks/usePremium';
+import { useDebugRender } from '@/hooks/useDebugRender';
 import {
   isTossAdsBannerSupported,
   initializeTossAds,
@@ -19,6 +20,7 @@ export function BannerAd({
   adGroupId = BANNER_AD_IDS.HOME_BANNER,
   className,
 }: BannerAdProps) {
+  useDebugRender('BannerAd');
   const { isPremium } = usePremium();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRendered, setIsRendered] = useState(false);

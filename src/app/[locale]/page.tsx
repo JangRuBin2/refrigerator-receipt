@@ -7,6 +7,7 @@ import { getDaysUntilExpiry } from '@/lib/utils';
 import { useStore } from '@/store/useStore';
 import { usePremium } from '@/hooks/usePremium';
 import { useExpiredCleanup } from '@/hooks/useExpiredCleanup';
+import { useDebugRender } from '@/hooks/useDebugRender';
 import { TrialWelcomeModal } from '@/components/premium/TrialWelcomeModal';
 import { TrialExpiringModal, isTrialExpiringDismissedToday } from '@/components/premium/TrialExpiringModal';
 import { BannerAd } from '@/components/ads/BannerAd';
@@ -26,6 +27,7 @@ import { RecentItems } from '@/features/home/RecentItems';
 import { FeatureCards } from '@/features/home/FeatureCards';
 
 export default function HomePage() {
+  useDebugRender('HomePage');
   const t = useTranslations();
   useExpiredCleanup();
   const params = useParams();

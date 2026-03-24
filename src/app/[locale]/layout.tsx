@@ -11,6 +11,8 @@ import { BackButtonHandler } from '@/components/layout/BackButtonHandler';
 import { PinchZoomPrevention } from '@/components/layout/PinchZoomPrevention';
 import { IngredientSyncProvider } from '@/components/layout/IngredientSyncProvider';
 import { WebApplicationJsonLd, OrganizationJsonLd } from '@/components/seo/JsonLd';
+import { DebugOverlay } from '@/components/debug/DebugOverlay';
+import { DebugConsoleCapture } from '@/components/debug/DebugConsoleCapture';
 import { Metadata } from 'next';
 import '../globals.css';
 
@@ -181,6 +183,8 @@ export default async function LocaleLayout({
             <FabMenu locale={locale} />
           </div>
           <ToastContainer />
+          <DebugConsoleCapture />
+          <DebugOverlay />
         </NextIntlClientProvider>
       </body>
     </html>

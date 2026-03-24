@@ -578,5 +578,174 @@
       "content": "1. The Service is exempt from liability when it cannot provide services due to force majeure such as natural disasters, war, or service interruption by telecommunications providers. 2. AI-generated recipes, nutritional information, etc. are for reference only, and the Service does not guarantee the accuracy of such information. 3. The Service is not liable for any loss of expected profit or damages incurred by users through use of the Service."
     },
     "effectiveDate": "Effective Date: February 1, 2025"
+  },
+  "tutorial": {
+    "common": {
+      "next": "Next"
+    },
+    "welcome": {
+      "title": "Learn how to use MealKeeper!",
+      "description": "Try out the key features hands-on",
+      "startButton": "Start Tutorial",
+      "features": {
+        "fridge": {
+          "title": "Fridge Management",
+          "desc": "Add and manage your ingredients at a glance"
+        },
+        "scan": {
+          "title": "Receipt Scanning",
+          "desc": "Auto-register ingredients with one photo"
+        },
+        "recipe": {
+          "title": "Recipe Recommendations",
+          "desc": "Get recipes based on your ingredients"
+        },
+        "expiry": {
+          "title": "Expiry Alerts",
+          "desc": "Check expiring items before it's too late"
+        }
+      }
+    },
+    "addIngredient": {
+      "defaultName": "Carrot",
+      "intro": {
+        "title": "Add an Ingredient",
+        "description": "Let's add an ingredient to your fridge. Tap the button below!",
+        "button": "Add Ingredient"
+      },
+      "name": {
+        "title": "Ingredient Name",
+        "hint": "Enter the name of the ingredient to add",
+        "label": "Name",
+        "placeholder": "e.g. Carrot, Onion, Milk..."
+      },
+      "category": {
+        "title": "Category",
+        "hint": "Select the ingredient type"
+      },
+      "storage": {
+        "refrigerated": "Refrigerated",
+        "frozen": "Frozen",
+        "roomTemp": "Room Temp"
+      },
+      "storageStep": {
+        "title": "Storage Method",
+        "hint": "Where will you store it?"
+      },
+      "quantity": {
+        "title": "Quantity",
+        "hint": "How much did you buy?",
+        "label": "Quantity",
+        "unitLabel": "Unit"
+      },
+      "confirm": {
+        "title": "Confirm",
+        "button": "Add to Fridge",
+        "success": "Ingredient added!"
+      },
+      "done": {
+        "title": "Great job!",
+        "description": "Your first ingredient is in the fridge. Let's check it out!"
+      }
+    },
+    "viewFridge": {
+      "tooltip": {
+        "title": "Try filtering by storage type!",
+        "description": "Tap the tabs to view refrigerated, frozen, or room temp items"
+      },
+      "tabs": {
+        "all": "All",
+        "refrigerated": "Fridge",
+        "frozen": "Frozen",
+        "room_temp": "Room"
+      },
+      "empty": "No ingredients yet"
+    },
+    "checkExpiry": {
+      "title": "Expiry Management",
+      "description": "Check expiry dates at a glance and consume expiring items first!",
+      "expired": "Expired",
+      "today": "Due today",
+      "daysLeft": "D-{days}",
+      "legend": {
+        "safe": "Safe",
+        "warning": "Warning",
+        "danger": "Danger",
+        "expired": "Expired"
+      },
+      "demoItems": {
+        "milk": "Milk",
+        "chicken": "Chicken Breast",
+        "apple": "Apple"
+      }
+    },
+    "scanReceipt": {
+      "intro": {
+        "title": "Receipt Scanning",
+        "description": "Snap a receipt and AI auto-detects your ingredients. Want to try?",
+        "scanButton": "Try Scanning",
+        "hint": "Demo mode uses a virtual receipt"
+      },
+      "scanning": {
+        "title": "Analyzing receipt..."
+      },
+      "results": {
+        "found": "Found {count} ingredients!",
+        "hint": "Select or deselect items to add",
+        "saveButton": "Add {count} items to fridge"
+      },
+      "saved": {
+        "title": "Scan Complete!",
+        "description": "Multiple ingredients added at once from a single receipt"
+      },
+      "mockItems": {
+        "egg": "Eggs",
+        "tofu": "Tofu",
+        "greenOnion": "Green Onion",
+        "porkBelly": "Pork Belly",
+        "kimchi": "Kimchi"
+      }
+    },
+    "viewRecipes": {
+      "title": "Recipe Recommendations",
+      "description": "You have {count} ingredients. What can you cook?",
+      "spinButton": "Spin Recipe Roulette",
+      "spinning": "Finding recipe...",
+      "recommended": "Recommended Recipe",
+      "minutes": "min",
+      "match": "ingredient match",
+      "difficulty": {
+        "easy": "Easy",
+        "medium": "Medium",
+        "hard": "Hard"
+      },
+      "recipes": {
+        "eggStew": "Steamed Eggs",
+        "eggStewDesc": "Soft and savory steamed eggs",
+        "porkStirFry": "Stir-fried Pork",
+        "porkStirFryDesc": "Pork belly stir-fried with green onions",
+        "tofuSoup": "Tofu Stew",
+        "tofuSoupDesc": "Warm and hearty tofu stew"
+      }
+    },
+    "complete": {
+      "title": "Tutorial Complete!",
+      "description": "You've tried all the key features of MealKeeper",
+      "startButton": "Start Using MealKeeper",
+      "features": {
+        "addIngredient": "Add ingredients",
+        "viewFridge": "View your fridge",
+        "checkExpiry": "Manage expiry dates",
+        "scanReceipt": "Scan receipts",
+        "viewRecipes": "Get recipe recommendations"
+      }
+    },
+    "exit": {
+      "button": "Exit",
+      "title": "Leave the tutorial?",
+      "description": "Your tutorial data will be deleted. You can restart anytime.",
+      "confirm": "Leave",
+      "cancel": "Continue"
+    }
   }
 }

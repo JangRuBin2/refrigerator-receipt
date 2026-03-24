@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { Crown, ChevronRight, Heart } from 'lucide-react';
+import { useDebugStore } from '@/store/useDebugStore';
 
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -29,6 +30,24 @@ export default function SettingsPage() {
   const locale = params.locale as string;
   const { isPremium, isTrialActive, trialDaysRemaining, subscription } = usePremium();
   const [activeModal, setActiveModal] = useState<ActiveModal>('none');
+  const { isEnabled: debugEnabled, enable: enableDebug, disable: disableDebug } = useDebugStore();
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleVersionTap = useCallback(() => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0; }, 2000);
+
+    if (tapCountRef.current >= 7) {
+      tapCountRef.current = 0;
+      if (debugEnabled) {
+        disableDebug();
+      } else {
+        enableDebug();
+      }
+    }
+  }, [debugEnabled, enableDebug, disableDebug]);
 
   const handleLanguageChange = (newLocale: Locale) => {
     setActiveModal('none');
@@ -111,8 +130,14 @@ export default function SettingsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+              <button
+                onClick={handleVersionTap}
+                className="flex w-full justify-between text-left"
+              >
+                <span>{t('settings.version')}</span>
+                <span>{debugEnabled ? '1.0.0 (Debug)' : '1.0.0'}</span>
+              </button>
               {[
-                [t('settings.version'), '1.0.0'],
                 [t('settings.businessName'), '인프리'],
                 [t('settings.representative'), '장루빈'],
                 [t('settings.businessNumber'), '790-39-01572'],

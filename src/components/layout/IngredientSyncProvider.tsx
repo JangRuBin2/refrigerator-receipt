@@ -5,8 +5,10 @@ import { usePathname } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { getIngredients, createIngredient } from '@/lib/api/ingredients';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { useDebugRender } from '@/hooks/useDebugRender';
 
 export function IngredientSyncProvider() {
+  useDebugRender('IngredientSyncProvider');
   const setIngredients = useStore((s) => s.setIngredients);
   const setDbSyncEnabled = useStore((s) => s.setDbSyncEnabled);
   const hasSynced = useRef(false);

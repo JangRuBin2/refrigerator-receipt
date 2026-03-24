@@ -561,5 +561,65 @@
       "content": "1. サービスは天災地変、戦争、基幹通信事業者のサービス中止等の不可抗力的な事由でサービスを提供できない場合、責任が免除されます。2. AIが生成したレシピ、栄養情報等は参考用であり、サービスは当該情報の正確性を保証しません。3. 利用者がサービスを利用して期待する収益を得られなかったり損害を被った場合、サービスはこれに対して責任を負いません。"
     },
     "effectiveDate": "施行日：2025年2月1日"
+  },
+  "tutorial": {
+    "common": {
+      "next": "次へ"
+    },
+    "welcome": {
+      "title": "ミールキーパーの使い方を学びましょう！",
+      "description": "実際に体験しながら主要機能を覚えましょう",
+      "startButton": "体験を始める",
+      "features": {
+        "fridge": { "title": "冷蔵庫管理", "desc": "食材を登録して一目で管理" },
+        "scan": { "title": "レシートスキャン", "desc": "写真1枚で食材を自動登録" },
+        "recipe": { "title": "レシピ提案", "desc": "手持ちの食材でレシピを提案" },
+        "expiry": { "title": "賞味期限アラート", "desc": "期限が近い食材を事前に確認" }
+      }
+    },
+    "addIngredient": {
+      "defaultName": "にんじん",
+      "intro": { "title": "食材を登録してみよう", "description": "冷蔵庫に食材を追加してみましょう。下のボタンをタップ！", "button": "食材を登録する" },
+      "name": { "title": "食材名入力", "hint": "追加する食材の名前を入力してください", "label": "食材名", "placeholder": "例：にんじん、玉ねぎ、牛乳..." },
+      "category": { "title": "カテゴリ", "hint": "食材の種類を選んでください" },
+      "storage": { "refrigerated": "冷蔵", "frozen": "冷凍", "roomTemp": "常温" },
+      "storageStep": { "title": "保管方法", "hint": "どこに保管しますか？" },
+      "quantity": { "title": "数量", "hint": "どれくらい買いましたか？", "label": "数量", "unitLabel": "単位" },
+      "confirm": { "title": "登録確認", "button": "冷蔵庫に入れる", "success": "食材が登録されました！" },
+      "done": { "title": "よくできました！", "description": "最初の食材が冷蔵庫に入りました。確認してみましょう！" }
+    },
+    "viewFridge": {
+      "tooltip": { "title": "保管方法で絞り込んでみよう！", "description": "タブをタップして冷蔵・冷凍・常温別に確認できます" },
+      "tabs": { "all": "すべて", "refrigerated": "冷蔵", "frozen": "冷凍", "room_temp": "常温" },
+      "empty": "まだ食材がありません"
+    },
+    "checkExpiry": {
+      "title": "賞味期限管理",
+      "description": "食材の賞味期限を一目で確認し、期限が近いものから消費しましょう！",
+      "expired": "期限切れ", "today": "本日まで", "daysLeft": "D-{days}",
+      "legend": { "safe": "余裕", "warning": "注意", "danger": "危険", "expired": "期限切れ" },
+      "demoItems": { "milk": "牛乳", "chicken": "鶏むね肉", "apple": "りんご" }
+    },
+    "scanReceipt": {
+      "intro": { "title": "レシートスキャン", "description": "レシートを撮影するとAIが食材を自動認識します。体験してみましょう！", "scanButton": "スキャン体験", "hint": "体験モードでは仮想のレシートをスキャンします" },
+      "scanning": { "title": "レシートを分析中..." },
+      "results": { "found": "{count}個の食材を見つけました！", "hint": "登録する食材を選択・解除してみましょう", "saveButton": "{count}個の食材を冷蔵庫に入れる" },
+      "saved": { "title": "スキャン完了！", "description": "レシート1枚で複数の食材を一度に登録できました" },
+      "mockItems": { "egg": "卵", "tofu": "豆腐", "greenOnion": "長ねぎ", "porkBelly": "豚バラ肉", "kimchi": "キムチ" }
+    },
+    "viewRecipes": {
+      "title": "レシピ提案",
+      "description": "冷蔵庫に{count}個の食材があります。何が作れるでしょう？",
+      "spinButton": "レシピルーレットを回す", "spinning": "提案中...", "recommended": "おすすめレシピ",
+      "minutes": "分", "match": "食材一致",
+      "difficulty": { "easy": "簡単", "medium": "普通", "hard": "難しい" },
+      "recipes": { "eggStew": "茶碗蒸し", "eggStewDesc": "ふんわり美味しい茶碗蒸し", "porkStirFry": "豚バラ炒め", "porkStirFryDesc": "長ねぎと一緒に炒める豚バラ", "tofuSoup": "豆腐チゲ", "tofuSoupDesc": "温かい純豆腐チゲ" }
+    },
+    "complete": {
+      "title": "体験完了！", "description": "ミールキーパーの主要機能をすべて体験しました",
+      "startButton": "ミールキーパーを始める",
+      "features": { "addIngredient": "食材登録", "viewFridge": "冷蔵庫確認", "checkExpiry": "賞味期限管理", "scanReceipt": "レシートスキャン", "viewRecipes": "レシピ提案" }
+    },
+    "exit": { "button": "退出", "title": "体験を終了しますか？", "description": "体験データは削除されます。いつでも再開できます。", "confirm": "終了する", "cancel": "続ける" }
   }
 }
